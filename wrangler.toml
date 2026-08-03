@@ -2,9 +2,6 @@ name = "solar-tavaoneedu"
 compatibility_date = "2025-01-01"
 pages_build_output_dir = "dist"
 
-[build]
-command = "npm run build"
-
 # KV id: fill in after running: npx wrangler kv namespace create SOLAR_CACHE
 
 [[d1_databases]]
