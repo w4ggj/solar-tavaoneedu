@@ -46,6 +46,16 @@ function parseSfi(rows: any[] | null): number | null {
   return null;
 }
 
+function parseSsn(rows: any[] | null): number | null {
+  if (!Array.isArray(rows) || !rows.length) return null;
+  for (let i = rows.length - 1; i >= 0; i--) {
+    const entry = rows[i];
+    const v = parseFloat(entry['ssn'] ?? entry['smoothed_ssn'] ?? '-1');
+    if (!isNaN(v) && v >= 0) return Math.round(v);
+  }
+  return null;
+}
+
 /** 1-minute Kp stream — last entry is most recent */
 function parseKp(rows: any[] | null): { kp: number | null; time: string | null } {
   if (!rows?.length) return { kp: null, time: null };
@@ -130,6 +140,7 @@ export default {
     ]);
 
     const sfi = parseSfi(cycleRaw);
+    const ssn = parseSsn(cycleRaw);
     const { kp, time: kpTime } = parseKp(kpRaw);
     const a_index = kp !== null ? kpToAp(kp) : null;
     const { xclass, flux: xflux, time: xtime } = parseXray(xrayRaw);
@@ -148,13 +159,13 @@ export default {
     };
 
     await env.SOLAR_CACHE.put('live', JSON.stringify(live), { expirationTtl: 3600 });
-    console.log(`solar-cron: KV updated — SFI=${sfi} Kp=${kp} Ap=${a_index} Xray=${xclass} alerts=${alerts.length}`);
+    console.log(`solar-cron: KV updated — SFI=${sfi} SSN=${ssn} Kp=${kp} Ap=${a_index} Xray=${xclass} alerts=${alerts.length}`);
 
     await env.DB.prepare(
-      `INSERT INTO solar_history (recorded_at, sfi, a_index, k_index, xray_flux, xray_class)
-       VALUES (?, ?, ?, ?, ?, ?)`
+      `INSERT INTO solar_history (recorded_at, sfi, a_index, k_index, xray_flux, xray_class, sunspots)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
     )
-      .bind(live.updated, sfi, a_index, kp, xflux, xclass)
+      .bind(live.updated, sfi, a_index, kp, xflux, xclass, ssn)
       .run();
 
     console.log('solar-cron: D1 row inserted');

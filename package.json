@@ -9,7 +9,8 @@
     "check": "astro check"
   },
   "dependencies": {
-    "astro": "^5.0.0"
+    "astro": "^5.0.0",
+    "chart.js": "^4.5.1"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.0.0",
