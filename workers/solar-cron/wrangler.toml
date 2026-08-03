@@ -5,15 +5,13 @@ compatibility_date = "2025-01-01"
 [triggers]
 crons = ["*/15 * * * *"]
 
-# Replace REPLACE_WITH_* values after creating resources:
-#   npx wrangler d1 create solar-history
-#   npx wrangler kv:namespace create SOLAR_CACHE
+# KV id: fill in after running: npx wrangler kv namespace create SOLAR_CACHE
 
 [[d1_databases]]
 binding = "DB"
 database_name = "solar-history"
-database_id = "REPLACE_WITH_DB_ID"
+database_id = "2a7b5600-3362-421e-94ff-23f5cee5c2c4"
 
 [[kv_namespaces]]
 binding = "SOLAR_CACHE"
-id = "REPLACE_WITH_KV_ID"
+id = "87c78f7686db4af2a323e5fd604ec3ff"

@@ -52,7 +52,7 @@ npx wrangler deploy
    ```
 2. Create KV namespace:
    ```powershell
-   npx wrangler kv:namespace create SOLAR_CACHE
+   npx wrangler kv namespace create SOLAR_CACHE
    ```
 3. Update the `database_id` and `id` values in `wrangler.toml` and `workers/solar-cron/wrangler.toml`
 4. Connect this GitHub repo to a new Cloudflare Pages project in the dashboard
