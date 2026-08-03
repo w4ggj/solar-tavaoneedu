@@ -108,30 +108,41 @@ function fluxToClass(flux: number): string {
   return 'A' + (flux / 1e-8).toFixed(1);
 }
 
-/** GOES X-ray — walk backwards, long-band (0.1-0.8 nm) only */
-function parseXray(rows: any[] | null): { xclass: string | null; flux: number | null; time: string | null } {
+/** GOES X-ray — walk backwards through entire dataset, long-band (0.1-0.8 nm) only */
+function parseXray(rows: any[] | null, label = ''): { xclass: string | null; flux: number | null; time: string | null } {
   if (!Array.isArray(rows) || !rows.length) return { xclass: null, flux: null, time: null };
-  // Search up to 600 entries back (~10 hours of 1-min data across two bands)
-  const start = Math.max(0, rows.length - 600);
-  for (let i = rows.length - 1; i >= start; i--) {
+
+  for (let i = rows.length - 1; i >= 0; i--) {
     const r = rows[i];
     if (!r || typeof r !== 'object' || Array.isArray(r)) continue;
 
-    // Band filter: skip short-band (0.05-0.4 nm) entries; accept long-band or unlabeled
-    const band: string = String(r.energy ?? r.band ?? r.wavelength ?? '');
-    if (band && (band.includes('0.05') || band.includes('0.4nm') || band.startsWith('short'))) continue;
+    // Band filter: skip entries clearly identified as short-band (0.05–0.4 nm / XRS-B)
+    const bandRaw = r.energy ?? r.band ?? r.wavelength;
+    if (bandRaw != null) {
+      const band = String(bandRaw).toLowerCase();
+      const isShort = band.includes('0.05') || band.includes('0.4nm') || band.includes('0.4 nm') ||
+                      band === 'short' || band.startsWith('short') || band === 'b' || band === 'xrs-b';
+      if (isShort) continue;
+    }
 
-    // Flux: try every known NOAA field name; handle number or string
-    const rawFlux = r.observed_flux ?? r.flux ?? r.current_int_xrlong ?? r.flux_observed ?? null;
-    if (rawFlux === null || rawFlux === undefined) continue;
+    // Flux: try every known/observed NOAA field name; handle number or string
+    const rawFlux = r.observed_flux ?? r.flux ?? r.current_int_xrlong ?? r.flux_observed ??
+                    r.xrlong ?? r.xrslong ?? r.long_flux ?? null;
+    if (rawFlux == null) continue;
     const flux = typeof rawFlux === 'number' ? rawFlux : parseFloat(String(rawFlux));
     if (!isFinite(flux) || flux <= 0) continue;
+    // Sanity range: A0.1 background (1e-9) to extreme X-flares (~1e-2)
+    if (flux < 1e-9 || flux > 1e-2) continue;
 
-    // X-ray class: validate format (letter + digit), otherwise compute from flux
-    const cls: string = r.current_class ?? '';
+    // X-ray class: use labeled class if present, else derive from flux
+    const cls: string = r.current_class ?? r.xray_class ?? '';
     const xclass = /^[A-Z]\d/.test(cls) ? cls : fluxToClass(flux);
     return { xclass, flux, time: r.time_tag ?? null };
   }
+
+  // Diagnostic: log a sample of raw rows so we can see what fields NOAA actually sends
+  const sample = rows.filter(r => r && typeof r === 'object' && !Array.isArray(r)).slice(-3);
+  console.log(`solar-cron: parseXray(${label}) no match in ${rows.length} rows. sample=${JSON.stringify(sample)}`);
   return { xclass: null, flux: null, time: null };
 }
 
@@ -171,8 +182,8 @@ export default {
     const { kp, time: kpTime } = parseKp(kpRaw);
     const a_index = kp !== null ? kpToAp(kp) : null;
     // Try 7-day first; fall back to 1-day if 7-day returns nothing
-    let { xclass, flux: xflux, time: xtime } = parseXray(xray7dRaw);
-    if (xclass === null) ({ xclass, flux: xflux, time: xtime } = parseXray(xray1dRaw));
+    let { xclass, flux: xflux, time: xtime } = parseXray(xray7dRaw, '7d');
+    if (xclass === null) ({ xclass, flux: xflux, time: xtime } = parseXray(xray1dRaw, '1d'));
     console.log(`solar-cron: xray7d=${xray7dRaw?.length ?? 'null'} xray1d=${xray1dRaw?.length ?? 'null'} → class=${xclass}`);
     const alerts = parseAlerts(alertsRaw);
 
