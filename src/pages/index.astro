@@ -377,74 +377,74 @@ import Shell from '../layouts/Shell.astro';
     .trend-card--wide { grid-column: auto; }
   }
 
-  /* ── Band conditions ── */
-  .band-grid {
+  /* ── Band conditions — :global() because tiles are injected via innerHTML ── */
+  :global(.band-grid) {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
     margin-top: 24px;
   }
   @media (max-width: 480px) {
-    .band-grid { grid-template-columns: repeat(2, 1fr); }
+    :global(.band-grid) { grid-template-columns: repeat(2, 1fr); }
   }
-  .band-tile {
+  :global(.band-tile) {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 16px 14px 14px;
     transition: border-color .18s, background .18s;
   }
-  .band-tile.bc-excellent { border-color: #10b981; background: rgba(16,185,129,.07); }
-  .band-tile.bc-good      { border-color: #34d399; background: rgba(52,211,153,.05); }
-  .band-tile.bc-fair      { border-color: #fbbf24; background: rgba(251,191,36,.05); }
-  .band-tile.bc-poor      { border-color: #f87171; background: rgba(248,113,113,.05); }
-  .band-tile.bc-closed    { border-color: #1e293b; }
-  .bt-top {
+  :global(.band-tile.bc-excellent) { border-color: #10b981; background: rgba(16,185,129,.07); }
+  :global(.band-tile.bc-good)      { border-color: #34d399; background: rgba(52,211,153,.05); }
+  :global(.band-tile.bc-fair)      { border-color: #fbbf24; background: rgba(251,191,36,.05); }
+  :global(.band-tile.bc-poor)      { border-color: #f87171; background: rgba(248,113,113,.05); }
+  :global(.band-tile.bc-closed)    { border-color: #1e293b; }
+  :global(.bt-top) {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
     margin-bottom: 14px;
   }
-  .bt-band {
+  :global(.bt-band) {
     font-family: var(--mono);
     font-size: .95rem;
     font-weight: 700;
     letter-spacing: .04em;
     color: var(--text);
   }
-  .bt-label {
+  :global(.bt-label) {
     font-size: .6rem;
     font-family: var(--mono);
     letter-spacing: .14em;
     text-transform: uppercase;
   }
-  .bc-excellent .bt-label { color: #10b981; }
-  .bc-good      .bt-label { color: #34d399; }
-  .bc-fair      .bt-label { color: #fbbf24; }
-  .bc-poor      .bt-label { color: #f87171; }
-  .bc-closed    .bt-label { color: #334155; }
+  :global(.bc-excellent .bt-label) { color: #10b981; }
+  :global(.bc-good      .bt-label) { color: #34d399; }
+  :global(.bc-fair      .bt-label) { color: #fbbf24; }
+  :global(.bc-poor      .bt-label) { color: #f87171; }
+  :global(.bc-closed    .bt-label) { color: #334155; }
   /* S-meter bars */
-  .bt-bars {
+  :global(.bt-bars) {
     display: flex;
     align-items: flex-end;
     gap: 3px;
     height: 22px;
   }
-  .bt-seg {
+  :global(.bt-seg) {
     flex: 1;
     border-radius: 2px 2px 1px 1px;
     background: #1e293b;
   }
-  .bt-seg:nth-child(1) { height: 28%; }
-  .bt-seg:nth-child(2) { height: 46%; }
-  .bt-seg:nth-child(3) { height: 64%; }
-  .bt-seg:nth-child(4) { height: 81%; }
-  .bt-seg:nth-child(5) { height: 100%; }
-  .bc-excellent .bt-seg.on { background: #10b981; }
-  .bc-good      .bt-seg.on { background: #34d399; }
-  .bc-fair      .bt-seg.on { background: #fbbf24; }
-  .bc-poor      .bt-seg.on { background: #f87171; }
-  .bc-closed    .bt-seg.on { background: #334155; }
+  :global(.bt-seg:nth-child(1)) { height: 28%; }
+  :global(.bt-seg:nth-child(2)) { height: 46%; }
+  :global(.bt-seg:nth-child(3)) { height: 64%; }
+  :global(.bt-seg:nth-child(4)) { height: 81%; }
+  :global(.bt-seg:nth-child(5)) { height: 100%; }
+  :global(.bc-excellent .bt-seg.on) { background: #10b981; }
+  :global(.bc-good      .bt-seg.on) { background: #34d399; }
+  :global(.bc-fair      .bt-seg.on) { background: #fbbf24; }
+  :global(.bc-poor      .bt-seg.on) { background: #f87171; }
+  :global(.bc-closed    .bt-seg.on) { background: #334155; }
 </style>
 
 <script>
