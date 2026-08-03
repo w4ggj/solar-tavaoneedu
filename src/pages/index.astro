@@ -82,8 +82,59 @@ import Shell from '../layouts/Shell.astro';
       <p class="seclabel">Derived from Live Data</p>
       <h2>HF band conditions</h2>
       <p class="sec-intro" id="band-basis">Loading conditions…</p>
+
+      <div class="bc-time-row">
+        <div class="bc-time-head">
+          <span class="bc-time-label">Simulated time:</span>
+          <span id="bc-time-display" class="bc-time-val">Now</span>
+          <button id="bc-reset" class="bc-reset-btn" type="button" hidden>Reset</button>
+        </div>
+        <input type="range" id="bc-offset" class="bc-slider" min="-12" max="12" step="0.5" value="0" aria-label="Time offset in hours from now">
+        <div class="bc-slider-ticks"><span>−12 h</span><span>now</span><span>+12 h</span></div>
+      </div>
+
       <div class="band-grid" id="band-grid"></div>
       <p class="data-updated" style="margin-top:14px">Estimated from SFI and Kp · real conditions vary by path, antenna, and solar terminator</p>
+    </div>
+  </section>
+
+  <section id="greyline" aria-label="Solar terminator map">
+    <div class="wrap">
+      <p class="seclabel">Solar Terminator</p>
+      <h2>Greyline map</h2>
+      <p class="sec-intro">The greyline is the twilight boundary between day and night. The 30-minute window around it — when the ionosphere is in transition — often produces outstanding long-path propagation on 40 m and 80 m.</p>
+      <div class="gl-outer">
+        <canvas id="gl-canvas" class="gl-canvas" aria-label="Solar terminator world map"></canvas>
+        <div class="gl-info">
+          <span id="gl-utc" class="gl-stat"></span>
+          <span class="gl-sep">·</span>
+          <span id="gl-sun" class="gl-stat"></span>
+        </div>
+      </div>
+      <p class="data-updated" style="margin-top:10px">Equirectangular projection · terminator updates every minute · yellow dot = subsolar point · dashed lines = tropics</p>
+    </div>
+  </section>
+
+  <section id="solar-imagery" aria-label="Live solar images">
+    <div class="wrap">
+      <p class="seclabel">NASA / ESA Live Imagery</p>
+      <h2>The sun right now</h2>
+      <p class="sec-intro">Live solar imagery from NASA's Solar Dynamics Observatory and the ESA/NASA SOHO spacecraft — updated every few minutes.</p>
+      <div class="imagery-grid">
+        <figure class="img-card">
+          <div class="img-wrap"><img id="img-aia193" src="" alt="SDO AIA 193 Å coronal plasma" class="solar-img" loading="lazy" /></div>
+          <figcaption><strong>SDO AIA 193 Å</strong> · Hot coronal plasma at ~1.5 MK. Bright regions are active areas — flare-prone loops and spots that drive X-ray bursts.</figcaption>
+        </figure>
+        <figure class="img-card">
+          <div class="img-wrap"><img id="img-hmi" src="" alt="SDO HMI white-light sunspot map" class="solar-img" loading="lazy" /></div>
+          <figcaption><strong>SDO HMI Continuum</strong> · White-light sunspot map. Dark umbral regions indicate strong magnetic flux — more spots correlate directly with higher SFI.</figcaption>
+        </figure>
+        <figure class="img-card">
+          <div class="img-wrap"><img id="img-lasco" src="" alt="SOHO LASCO C3 coronagraph" class="solar-img" loading="lazy" /></div>
+          <figcaption><strong>SOHO LASCO C3</strong> · Coronagraph — white disk occludes the sun. Bright expanding halos are coronal mass ejections (CMEs) that may reach Earth in 1–3 days.</figcaption>
+        </figure>
+      </div>
+      <p class="data-updated" style="margin-top:14px">NASA SDO (sdo.gsfc.nasa.gov) · ESA/NASA SOHO (soho.nascom.nasa.gov) · Images delayed ~15–60 min from real-time</p>
     </div>
   </section>
 
@@ -427,6 +478,101 @@ import Shell from '../layouts/Shell.astro';
     .trend-card--wide { grid-column: auto; }
   }
 
+  /* ── Band conditions time slider ── */
+  .bc-time-row {
+    margin: 16px 0 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .bc-time-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: .75rem;
+  }
+  .bc-time-label { color: var(--muted); }
+  .bc-time-val   { color: var(--green-lt); font-weight: 600; }
+  .bc-reset-btn {
+    margin-left: auto;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 2px 8px;
+    font-family: var(--mono);
+    font-size: .68rem;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .bc-reset-btn:hover { border-color: var(--green-dk); color: var(--green-lt); }
+  .bc-slider { width: 100%; accent-color: #10b981; cursor: pointer; }
+  .bc-slider-ticks {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: .65rem;
+    color: var(--muted);
+    opacity: .55;
+  }
+
+  /* ── Greyline map ── */
+  #greyline { padding-top: 0; }
+  .gl-outer {
+    margin-top: 24px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .gl-canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+  .gl-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: rgba(0,0,0,.4);
+    font-family: var(--mono);
+    font-size: .72rem;
+  }
+  .gl-stat { color: var(--green-lt); }
+  .gl-sep  { color: var(--muted); opacity: .45; }
+
+  /* ── Solar imagery ── */
+  #solar-imagery { padding-top: 0; }
+  .imagery-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-top: 28px;
+  }
+  .img-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 0;
+    transition: border-color .18s;
+  }
+  .img-card:hover { border-color: var(--green-dk); }
+  .img-wrap {
+    aspect-ratio: 1;
+    background: #060e1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .solar-img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .img-card figcaption {
+    padding: 10px 12px 12px;
+    font-size: .73rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  @media (max-width: 640px) {
+    .imagery-grid { grid-template-columns: 1fr; }
+  }
+
   /* ── Band conditions — :global() because tiles are injected via innerHTML ── */
   :global(.band-grid) {
     display: grid;
@@ -523,6 +669,7 @@ import Shell from '../layouts/Shell.astro';
   let lastData: SolarData | null = null;
   let currentHours = 24;
   let nextRefreshAt = Date.now() + 10 * 60_000;
+  let bcOffset = 0;
 
   /* ── Live tile helpers ── */
   function setTile(tileId: string, valueId: string, text: string, cls: string | null) {
@@ -550,9 +697,10 @@ import Shell from '../layouts/Shell.astro';
   function updateTimestamp(): void {
     const upEl = document.getElementById('data-updated');
     if (!upEl || !lastData?.updated) return;
-    const minsLeft = Math.max(0, Math.round((nextRefreshAt - Date.now()) / 60_000));
-    const next = minsLeft > 1 ? ` · next refresh in ${minsLeft} min` : minsLeft === 1 ? ' · next refresh in 1 min' : ' · refreshing…';
-    upEl.textContent = `Data from NOAA SWPC · ${relTime(lastData.updated)}${next}`;
+    const nx = new Date(nextRefreshAt);
+    const hh = String(nx.getUTCHours()).padStart(2, '0');
+    const mm = String(nx.getUTCMinutes()).padStart(2, '0');
+    upEl.textContent = `Data from NOAA SWPC · ${relTime(lastData.updated)} · next refresh ~${hh}:${mm} UTC`;
   }
 
   /* ── Storm alert banner ── */
@@ -698,12 +846,13 @@ import Shell from '../layouts/Shell.astro';
     return Math.max(0, Math.min(4, sc));
   }
 
-  function renderBandGrid(sfi: number | null, kp: number | null): void {
+  function renderBandGrid(sfi: number | null, kp: number | null, offsetHours = 0): void {
     const grid = document.getElementById('band-grid');
     if (!grid) return;
     const sfiVal = sfi ?? 70;
     const kpVal  = kp  ?? 0;
-    const utcH   = new Date().getUTCHours();
+    const sim    = new Date(Date.now() + offsetHours * 3600_000);
+    const utcH   = sim.getUTCHours() + sim.getUTCMinutes() / 60;
     const isDay  = utcH >= 6 && utcH < 20;
 
     // Filled segments per score: 0=0, 1=1, 2=2, 3=3, 4=5 (skip to full for Excellent)
@@ -731,9 +880,126 @@ import Shell from '../layouts/Shell.astro';
       const parts: string[] = [];
       if (sfi !== null) parts.push(`SFI ${sfi}`);
       if (kp  !== null) parts.push(`Kp ${kp}`);
-      parts.push(isDay ? 'daytime UTC' : 'nighttime UTC');
+      if (offsetHours !== 0) {
+        const hh = String(sim.getUTCHours()).padStart(2, '0');
+        const mm = String(sim.getUTCMinutes()).padStart(2, '0');
+        parts.push(`${offsetHours > 0 ? '+' : ''}${offsetHours}h · UTC ${hh}:${mm}`);
+      } else {
+        parts.push(isDay ? 'daytime UTC' : 'nighttime UTC');
+      }
       basisEl.textContent = `Estimates based on ${parts.join(', ')}.`;
     }
+  }
+
+  /* ── Greyline map ── */
+  function getDayOfYear(d: Date): number {
+    return Math.floor((d.getTime() - Date.UTC(d.getUTCFullYear(), 0, 0)) / 86400_000);
+  }
+
+  function drawGreyline(offsetHours = 0): void {
+    const canvas = document.getElementById('gl-canvas') as HTMLCanvasElement | null;
+    if (!canvas) return;
+    const W = 720, H = 360;
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const sim    = new Date(Date.now() + offsetHours * 3600_000);
+    const doy    = getDayOfYear(sim);
+    const utcF   = sim.getUTCHours() + sim.getUTCMinutes() / 60 + sim.getUTCSeconds() / 3600;
+    const decRad = 23.4397 * (Math.PI / 180) * Math.sin(2 * Math.PI * (doy - 81) / 365);
+    const lonSSRad = (12 - utcF) * 15 * (Math.PI / 180);
+
+    // Ocean background (day side)
+    ctx.fillStyle = '#0a1e33';
+    ctx.fillRect(0, 0, W, H);
+
+    // Night + twilight via pixel data
+    const img  = ctx.createImageData(W, H);
+    const data = img.data;
+    for (let px = 0; px < W; px++) {
+      for (let py = 0; py < H; py++) {
+        const lon = (px / W - 0.5) * 2 * Math.PI;
+        const lat = (0.5 - py / H) * Math.PI;
+        const dot = Math.sin(lat) * Math.sin(decRad) + Math.cos(lat) * Math.cos(decRad) * Math.cos(lon - lonSSRad);
+        const i   = (py * W + px) * 4;
+        if (dot < -0.07) {
+          data[i] = 3; data[i+1] = 8; data[i+2] = 16; data[i+3] = 230;
+        } else if (dot < 0.07) {
+          const t = (dot + 0.07) / 0.14;
+          data[i] = 3; data[i+1] = 8; data[i+2] = 16;
+          data[i+3] = Math.round(230 - t * 230);
+        }
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+
+    // Graticule every 30°
+    ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+    ctx.lineWidth = 1;
+    for (let lon = -180; lon <= 180; lon += 30) {
+      const x = ((lon + 180) / 360) * W;
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (let lat = -90; lat <= 90; lat += 30) {
+      const y = (0.5 - lat / 180) * H;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+
+    // Equator (brighter)
+    ctx.strokeStyle = 'rgba(255,255,255,0.17)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2); ctx.stroke();
+
+    // Tropics (dashed amber)
+    ctx.strokeStyle = 'rgba(251,191,36,0.25)';
+    ctx.setLineDash([5, 5]);
+    for (const tlat of [23.4397, -23.4397]) {
+      const ty = (0.5 - tlat / 180) * H;
+      ctx.beginPath(); ctx.moveTo(0, ty); ctx.lineTo(W, ty); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // Subsolar point
+    const lonSSDeg = lonSSRad * (180 / Math.PI);
+    const latSSDeg = decRad  * (180 / Math.PI);
+    const ssX = ((lonSSDeg + 180 + 360) % 360 / 360) * W;
+    const ssY = (0.5 - latSSDeg / 180) * H;
+    ctx.fillStyle = 'rgba(251,191,36,0.25)';
+    ctx.beginPath(); ctx.arc(ssX, ssY, 14, 0, 2 * Math.PI); ctx.fill();
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath(); ctx.arc(ssX, ssY, 5, 0, 2 * Math.PI); ctx.fill();
+
+    // Info strip
+    const hh  = String(sim.getUTCHours()).padStart(2, '0');
+    const mm  = String(sim.getUTCMinutes()).padStart(2, '0');
+    const lat = Math.abs(latSSDeg).toFixed(1) + '° ' + (latSSDeg >= 0 ? 'N' : 'S');
+    const lon = Math.abs(lonSSDeg).toFixed(1) + '° ' + (lonSSDeg >= 0 ? 'E' : 'W');
+    const glUtc = document.getElementById('gl-utc');
+    const glSun = document.getElementById('gl-sun');
+    if (glUtc) glUtc.textContent = offsetHours !== 0
+      ? `${offsetHours > 0 ? '+' : ''}${offsetHours}h · UTC ${hh}:${mm}`
+      : `UTC ${hh}:${mm}`;
+    if (glSun) glSun.textContent = `subsolar: ${lat}, ${lon}`;
+  }
+
+  /* ── Solar imagery ── */
+  function refreshImages(): void {
+    const t = Math.floor(Date.now() / (15 * 60_000));
+    const imgs: Array<[string, string]> = [
+      ['img-aia193', `https://sdo.gsfc.nasa.gov/assets/img/latest/latest_256_0193.jpg?t=${t}`],
+      ['img-hmi',    `https://sdo.gsfc.nasa.gov/assets/img/latest/latest_256_HMIIC.jpg?t=${t}`],
+      ['img-lasco',  `https://soho.nascom.nasa.gov/data/realtime/c3/512/latest.jpg?t=${t}`],
+    ];
+    imgs.forEach(([id, url]) => {
+      const el = document.getElementById(id) as HTMLImageElement | null;
+      if (!el) return;
+      el.onerror = () => {
+        const wrap = el.closest('.img-wrap');
+        if (wrap) wrap.innerHTML = '<span style="color:#475569;font-family:var(--mono);font-size:.7rem;padding:12px;text-align:center;display:block">Image unavailable</span>';
+      };
+      el.src = url;
+    });
   }
 
   /* ── Load live data ── */
@@ -757,7 +1023,7 @@ import Shell from '../layouts/Shell.astro';
       setTile('tile-kindex', 'val-kindex', d.k_index !== null ? String(d.k_index) : '—', kpCls(d.k_index));
       setTile('tile-xray',   'val-xray',   d.xray_class ?? '—',                          xrayCls(d.xray_class));
 
-      renderBandGrid(d.sfi, d.k_index);
+      renderBandGrid(d.sfi, d.k_index, bcOffset);
 
       const sumEl = document.getElementById('conditions-summary');
       if (sumEl) sumEl.textContent = overallSummary(d);
@@ -909,6 +1175,26 @@ import Shell from '../layouts/Shell.astro';
     }
   });
 
+  // Band conditions time slider
+  function applyBcOffset(offset: number): void {
+    bcOffset = offset;
+    const sim = new Date(Date.now() + offset * 3600_000);
+    const hh  = String(sim.getUTCHours()).padStart(2, '0');
+    const mm  = String(sim.getUTCMinutes()).padStart(2, '0');
+    const disp = document.getElementById('bc-time-display');
+    const rst  = document.getElementById('bc-reset') as HTMLButtonElement | null;
+    if (disp) disp.textContent = offset === 0 ? `Now · UTC ${hh}:${mm}` : `${offset > 0 ? '+' : ''}${offset}h · UTC ${hh}:${mm}`;
+    if (rst)  rst.hidden = offset === 0;
+    renderBandGrid(lastData?.sfi ?? null, lastData?.k_index ?? null, offset);
+    drawGreyline(offset);
+  }
+
+  const bcSlider = document.getElementById('bc-offset') as HTMLInputElement | null;
+  bcSlider?.addEventListener('input', () => applyBcOffset(Number(bcSlider.value)));
+  document.getElementById('bc-reset')?.addEventListener('click', () => {
+    if (bcSlider) { bcSlider.value = '0'; applyBcOffset(0); }
+  });
+
   document.querySelectorAll('.range-tab').forEach(btn => {
     btn.addEventListener('click', () => {
       const h = Number((btn as HTMLElement).dataset.hours);
@@ -916,8 +1202,8 @@ import Shell from '../layouts/Shell.astro';
     });
   });
 
-  // Update "X min ago" label every minute
-  setInterval(updateTimestamp, 60_000);
+  // Update "X min ago" label and greyline every minute
+  setInterval(() => { updateTimestamp(); drawGreyline(bcOffset); }, 60_000);
 
   // Auto-reload data every 10 minutes
   setInterval(() => {
@@ -926,8 +1212,13 @@ import Shell from '../layouts/Shell.astro';
     loadHistory(currentHours);
   }, 10 * 60_000);
 
+  // Refresh solar images every 15 minutes
+  setInterval(refreshImages, 15 * 60_000);
+
   loadSolar();
   loadHistory(24);
+  drawGreyline(0);
+  refreshImages();
 </script>
 
 <script>
