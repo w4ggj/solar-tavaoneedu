@@ -65,6 +65,16 @@ import Shell from '../layouts/Shell.astro';
     </div>
   </section>
 
+  <section id="band-conditions" aria-label="HF band conditions">
+    <div class="wrap">
+      <p class="seclabel">Derived from Live Data</p>
+      <h2>HF band conditions</h2>
+      <p class="sec-intro" id="band-basis">Loading conditions…</p>
+      <div class="band-grid" id="band-grid"></div>
+      <p class="data-updated" style="margin-top:14px">Estimated from SFI and Kp · real conditions vary by path, antenna, and solar terminator</p>
+    </div>
+  </section>
+
   <section id="history" aria-label="Solar history">
     <div class="wrap">
       <div class="history-top">
@@ -366,6 +376,65 @@ import Shell from '../layouts/Shell.astro';
     .trends-grid { grid-template-columns: 1fr; }
     .trend-card--wide { grid-column: auto; }
   }
+
+  /* ── Band conditions ── */
+  .band-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 24px;
+  }
+  @media (max-width: 820px) {
+    .band-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 480px) {
+    .band-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  .band-tile {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 12px 14px;
+    text-align: center;
+    transition: border-color .18s;
+  }
+  .band-tile.bc-excellent { border-color: #10b981; }
+  .band-tile.bc-good      { border-color: #34d399; }
+  .band-tile.bc-fair      { border-color: #fbbf24; }
+  .band-tile.bc-poor      { border-color: #f87171; }
+  .band-tile.bc-closed    { border-color: #334155; }
+  .bt-band {
+    font-family: var(--mono);
+    font-size: .88rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    color: var(--text);
+  }
+  .bt-label {
+    font-size: .65rem;
+    font-family: var(--mono);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-top: 5px;
+  }
+  .bc-excellent .bt-label { color: #10b981; }
+  .bc-good      .bt-label { color: #34d399; }
+  .bc-fair      .bt-label { color: #fbbf24; }
+  .bc-poor      .bt-label { color: #f87171; }
+  .bc-closed    .bt-label { color: #475569; }
+  .bt-bar {
+    height: 3px;
+    border-radius: 2px;
+    margin-top: 10px;
+    background: #1e293b;
+    overflow: hidden;
+  }
+  .bt-bar-fill { height: 100%; border-radius: 2px; }
+  .bc-excellent .bt-bar-fill { background: #10b981; width: 100%; }
+  .bc-good      .bt-bar-fill { background: #34d399; width: 75%; }
+  .bc-fair      .bt-bar-fill { background: #fbbf24; width: 50%; }
+  .bc-poor      .bt-bar-fill { background: #f87171; width: 25%; }
+  .bc-closed    .bt-bar-fill { background: #334155; width: 8%; }
 </style>
 
 <script>
@@ -459,6 +528,88 @@ import Shell from '../layouts/Shell.astro';
     return sw ? `Current conditions: ${sw}.` : kw ? `Current conditions: ${kw}.` : 'Solar data not yet available — populates on the first cron cycle.';
   }
 
+  /* ── Band conditions ── */
+  const HF_BANDS: Array<{band: string; mhz: number}> = [
+    { band: '160 m', mhz: 1.8  },
+    { band: '80 m',  mhz: 3.5  },
+    { band: '40 m',  mhz: 7.0  },
+    { band: '30 m',  mhz: 10.1 },
+    { band: '20 m',  mhz: 14.0 },
+    { band: '17 m',  mhz: 18.1 },
+    { band: '15 m',  mhz: 21.0 },
+    { band: '12 m',  mhz: 24.9 },
+    { band: '10 m',  mhz: 28.0 },
+  ];
+  const BC_LABELS  = ['Closed', 'Poor', 'Fair', 'Good', 'Excellent'];
+  const BC_CLASSES = ['bc-closed', 'bc-poor', 'bc-fair', 'bc-good', 'bc-excellent'];
+
+  function calcBandScore(mhz: number, sfiVal: number, kpVal: number, isDay: boolean): number {
+    const k = kpVal;
+    const s = sfiVal;
+    let sc = 0;
+    if (mhz <= 2.5) {          // 160 m — D-layer absorbs by day; K-noise hurts at night
+      sc = isDay ? (k <= 2 ? 2 : k <= 4 ? 1 : 0) : (k <= 2 ? 3 : k <= 4 ? 2 : 1);
+    } else if (mhz <= 5) {     // 80 m
+      sc = isDay ? (k <= 2 ? 2 : 1) : (k <= 2 ? 4 : k <= 4 ? 3 : 1);
+    } else if (mhz <= 8) {     // 40 m — nighttime DX, daytime regional
+      sc = isDay ? (k <= 2 ? 3 : k <= 4 ? 2 : 1) : (k <= 2 ? 4 : k <= 4 ? 3 : 2);
+    } else if (mhz <= 12) {    // 30 m — reliable anytime; MUF rarely an issue
+      sc = k <= 2 ? 4 : k <= 4 ? 3 : k <= 6 ? 2 : 1;
+    } else if (mhz <= 15) {    // 20 m — workhorse DX
+      sc = k <= 2 ? 4 : k <= 4 ? 3 : k <= 6 ? 2 : 0;
+    } else if (mhz <= 19) {    // 17 m — WARC; needs moderate SFI
+      if      (s >= 130) sc = k <= 2 ? 4 : k <= 4 ? 3 : 1;
+      else if (s >= 100) sc = k <= 2 ? 3 : k <= 4 ? 2 : 1;
+      else if (s >=  80) sc = k <= 2 ? 2 : 1;
+      else               sc = 0;
+    } else if (mhz <= 22) {    // 15 m
+      if      (s >= 150) sc = k <= 2 ? 4 : k <= 4 ? 3 : 1;
+      else if (s >= 120) sc = k <= 2 ? 3 : k <= 4 ? 2 : 1;
+      else if (s >=  95) sc = k <= 2 ? 2 : 1;
+      else               sc = 0;
+    } else if (mhz <= 26) {    // 12 m
+      if      (s >= 160) sc = k <= 2 ? 4 : k <= 4 ? 3 : 1;
+      else if (s >= 135) sc = k <= 2 ? 3 : k <= 4 ? 2 : 0;
+      else if (s >= 110) sc = k <= 2 ? 2 : 0;
+      else               sc = 0;
+    } else {                   // 10 m
+      if      (s >= 160) sc = k <= 2 ? 4 : k <= 4 ? 3 : 1;
+      else if (s >= 140) sc = k <= 2 ? 3 : k <= 4 ? 2 : 0;
+      else if (s >= 120) sc = k <= 2 ? 2 : 0;
+      else               sc = 0;
+    }
+    return Math.max(0, Math.min(4, sc));
+  }
+
+  function renderBandGrid(sfi: number | null, kp: number | null): void {
+    const grid = document.getElementById('band-grid');
+    if (!grid) return;
+    const sfiVal = sfi ?? 70;
+    const kpVal  = kp  ?? 0;
+    const utcH   = new Date().getUTCHours();
+    const isDay  = utcH >= 6 && utcH < 20;
+
+    grid.innerHTML = HF_BANDS.map(({ band, mhz }) => {
+      const sc  = calcBandScore(mhz, sfiVal, kpVal, isDay);
+      const cls = BC_CLASSES[sc];
+      const lbl = BC_LABELS[sc];
+      return `<div class="band-tile ${cls}">
+        <div class="bt-band">${band}</div>
+        <div class="bt-label">${lbl}</div>
+        <div class="bt-bar"><div class="bt-bar-fill"></div></div>
+      </div>`;
+    }).join('');
+
+    const basisEl = document.getElementById('band-basis');
+    if (basisEl) {
+      const parts: string[] = [];
+      if (sfi !== null) parts.push(`SFI ${sfi}`);
+      if (kp  !== null) parts.push(`Kp ${kp}`);
+      parts.push(isDay ? 'daytime UTC' : 'nighttime UTC');
+      basisEl.textContent = `Estimates based on ${parts.join(', ')}.`;
+    }
+  }
+
   /* ── Load live data ── */
   async function loadSolar() {
     try {
@@ -470,6 +621,7 @@ import Shell from '../layouts/Shell.astro';
           const el = document.getElementById(id);
           if (el) el.textContent = 'No data yet.';
         });
+        renderBandGrid(null, null);
         return;
       }
       const d: SolarData = await res.json();
@@ -478,6 +630,8 @@ import Shell from '../layouts/Shell.astro';
       setTile('tile-aindex', 'val-aindex', d.a_index !== null ? String(d.a_index) : '—', apCls(d.a_index));
       setTile('tile-kindex', 'val-kindex', d.k_index !== null ? String(d.k_index) : '—', kpCls(d.k_index));
       setTile('tile-xray',   'val-xray',   d.xray_class ?? '—',                          xrayCls(d.xray_class));
+
+      renderBandGrid(d.sfi, d.k_index);
 
       const sumEl = document.getElementById('conditions-summary');
       if (sumEl) sumEl.textContent = overallSummary(d);
