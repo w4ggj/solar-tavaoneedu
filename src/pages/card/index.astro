@@ -1,84 +1,51 @@
 ---
-// Standalone share card — no Shell layout, screenshot-friendly
+import Shell from '../../layouts/Shell.astro';
 ---
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Solar Conditions — TavaOne Solar</title>
-  <meta name="description" content="Current solar and space weather snapshot for amateur radio." />
-  <meta name="robots" content="noindex, nofollow" />
+<Shell
+  title="Share Solar Conditions — TavaOne Solar"
+  description="Download a branded solar conditions card for social media, or copy auto-generated post text."
+>
 
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
-
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
+<style>
     :root {
-      --bg:       #070b14;
-      --surface:  #0f172a;
-      --surface2: #1a2540;
-      --border:   #1e293b;
-      --text:     #f1f5f9;
-      --muted:    #64748b;
-      --em:       #10b981;
-      --mono:     'JetBrains Mono', monospace;
-      --sans:     'Plus Jakarta Sans', system-ui, sans-serif;
+      --surf:   #0f172a;
+      --surf2:  #1a2540;
+      --em:     #10b981;
+      --em-lt:  #34d399;
+      --em-dk:  #065f46;
+      --warn:   #f59e0b;
+      --danger: #ef4444;
     }
 
-    body {
-      font-family: var(--sans);
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
+    .card-page-wrap {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 1.5rem 1rem 3rem;
+      padding: 2rem 1rem 4rem;
     }
 
-    /* ── top bar ── */
-    .top-bar {
+    /* ── Two-column layout ── */
+    .main-wrap {
       width: 100%;
-      max-width: 780px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.75rem;
+      max-width: 860px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: start;
     }
-    .back {
-      color: var(--muted);
-      text-decoration: none;
-      font-size: 0.875rem;
-      transition: color .2s;
-      display: flex;
-      align-items: center;
-      gap: 0.35rem;
+    @media (max-width: 640px) {
+      .main-wrap { grid-template-columns: 1fr; }
     }
-    .back:hover { color: var(--em); }
-    .site-name {
-      font-family: var(--mono);
-      font-size: 0.85rem;
-      color: var(--muted);
-    }
-    .site-name .slash { color: var(--em); }
 
-    /* ── card ── */
-    .card-wrap { width: 100%; max-width: 780px; margin-bottom: 1.25rem; }
-
+    /* ── Card preview (left column) ── */
     .card {
-      background: var(--surface);
+      background: var(--surf);
       border: 1px solid var(--border);
       border-radius: 18px;
-      padding: 2rem 2rem 1.5rem;
+      padding: 1.5rem 1.5rem 1.25rem;
       position: relative;
       overflow: hidden;
     }
-
     .card::before {
       content: '';
       position: absolute;
@@ -88,210 +55,249 @@
       background-size: 200% 100%;
       animation: shimmer 4s linear infinite;
     }
-    @keyframes shimmer {
-      0%   { background-position: 0% 0%; }
-      100% { background-position: 200% 0%; }
-    }
+    @keyframes shimmer { to { background-position: 200% 0%; } }
 
-    /* card header */
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1.75rem;
+      margin-bottom: 1.25rem;
     }
     .brand {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: .45rem;
       font-family: var(--mono);
-      font-size: 1rem;
+      font-size: .95rem;
       font-weight: 700;
     }
     .brand img { border-radius: 4px; }
-    .brand .slash { color: var(--em); }
-    .brand .solar-word { color: var(--em); }
-
+    .brand .sl  { color: var(--em); }
+    .brand .sw  { color: var(--em); }
     .card-time {
       display: flex;
       align-items: center;
-      gap: 0.4rem;
-      font-size: 0.78rem;
+      gap: .35rem;
+      font-size: .72rem;
       color: var(--muted);
       font-family: var(--mono);
     }
-    .live-dot {
-      color: var(--em);
-      font-size: 0.55rem;
-      animation: blink 2s ease-in-out infinite;
-    }
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.2; }
-    }
+    .live-dot { color: var(--em); font-size: .5rem; animation: blink 2s ease-in-out infinite; }
+    @keyframes blink { 0%,100% { opacity:1 } 50% { opacity:.2 } }
 
-    /* data tiles */
     .card-tiles {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0.875rem;
-      margin-bottom: 1.25rem;
+      grid-template-columns: repeat(4,1fr);
+      gap: .6rem;
+      margin-bottom: .9rem;
     }
-    @media (max-width: 520px) {
-      .card-tiles { grid-template-columns: repeat(2, 1fr); }
-    }
-
     .card-tile {
-      background: var(--surface2);
-      border-radius: 12px;
-      padding: 1rem 0.75rem;
+      background: var(--surf2);
+      border-radius: 10px;
+      padding: .75rem .5rem;
       text-align: center;
-      border: 1px solid transparent;
-      transition: border-color .3s;
     }
-    .ct-label {
-      font-size: 0.65rem;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      color: var(--muted);
-      margin-bottom: 0.45rem;
-    }
-    .ct-value {
-      font-family: var(--mono);
-      font-size: 2.1rem;
-      font-weight: 700;
-      line-height: 1;
-      margin-bottom: 0.3rem;
-      transition: color .4s;
-    }
-    .ct-sub {
-      font-size: 0.65rem;
-      color: var(--muted);
-    }
+    .ct-label { font-size: .6rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: .35rem; }
+    .ct-value { font-family: var(--mono); font-size: 1.55rem; font-weight: 700; line-height: 1; margin-bottom: .2rem; }
+    .ct-sub   { font-size: .58rem; color: var(--muted); }
 
-    /* condition banner */
     .card-condition {
-      background: var(--surface2);
-      border-radius: 12px;
-      padding: 1rem 1.25rem;
-      display: flex;
-      align-items: baseline;
-      gap: 0.75rem;
-      margin-bottom: 1.5rem;
-      flex-wrap: wrap;
+      background: var(--surf2);
+      border-radius: 10px;
+      padding: .8rem 1rem;
+      margin-bottom: .9rem;
     }
-    .cond-label {
-      font-family: var(--mono);
-      font-weight: 700;
-      font-size: 1.05rem;
-      transition: color .4s;
-      white-space: nowrap;
-    }
-    .cond-bands {
-      font-size: 0.85rem;
-      color: var(--muted);
-      flex: 1;
-      min-width: 0;
-    }
+    .cond-label { font-family: var(--mono); font-weight: 700; font-size: .9rem; display: block; margin-bottom: .3rem; }
+    .cond-bands { font-size: .75rem; color: var(--muted); }
 
-    /* alerts */
     .card-alerts {
-      font-size: 0.78rem;
-      color: #f59e0b;
+      font-size: .7rem;
+      color: var(--warn);
       font-family: var(--mono);
-      padding: 0.6rem 1.25rem;
+      padding: .5rem .875rem;
       background: rgba(245,158,11,.08);
       border: 1px solid rgba(245,158,11,.2);
-      border-radius: 8px;
-      margin-bottom: 1.25rem;
+      border-radius: 7px;
+      margin-bottom: .875rem;
       display: none;
     }
     .card-alerts.visible { display: block; }
 
-    /* card footer */
     .card-footer {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      font-size: 0.72rem;
+      font-size: .65rem;
       color: var(--muted);
       font-family: var(--mono);
       border-top: 1px solid var(--border);
-      padding-top: 1rem;
+      padding-top: .875rem;
     }
 
-    /* ── share actions ── */
-    .share-actions {
-      width: 100%;
-      max-width: 780px;
-      display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-      margin-bottom: 1rem;
+    /* ── Social panel (right column) ── */
+    .social-panel { display: flex; flex-direction: column; gap: 12px; }
+
+    .sp-card {
+      background: var(--surf);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
     }
-    .share-btn {
+    .sp-title {
+      font-family: var(--mono);
+      font-size: .68rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    /* Segment controls */
+    .seg-group {
+      display: flex;
+      gap: 3px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 2px;
+    }
+    .seg-btn {
       flex: 1;
-      min-width: 150px;
-      padding: 0.7rem 1rem;
+      background: none;
+      border: none;
+      padding: 5px 8px;
+      border-radius: 5px;
+      font-family: var(--mono);
+      font-size: .68rem;
+      letter-spacing: .04em;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background .12s, color .12s;
+      white-space: nowrap;
+    }
+    .seg-btn:hover { color: var(--text); }
+    .seg-btn.active { background: var(--em-dk); color: var(--em-lt); }
+
+    /* Download button */
+    .dl-btn {
+      width: 100%;
+      padding: 11px;
+      background: var(--em);
+      color: #04221a;
+      border: none;
       border-radius: 10px;
       font-family: var(--sans);
-      font-size: 0.85rem;
-      font-weight: 600;
+      font-size: .9rem;
+      font-weight: 700;
       cursor: pointer;
-      transition: all .2s;
-      background: var(--surface);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.4rem;
-      text-decoration: none;
+      gap: .4rem;
+      transition: background .15s, transform .12s;
     }
-    .btn-x    { border: 1px solid #1d9bf0; color: #1d9bf0; }
-    .btn-x:hover { background: rgba(29,155,240,.12); }
+    .dl-btn:hover:not(:disabled) { background: var(--em-lt); transform: translateY(-1px); }
+    .dl-btn:disabled { opacity: .45; cursor: not-allowed; }
 
-    .btn-masto { border: 1px solid #6364ff; color: #6364ff; }
-    .btn-masto:hover { background: rgba(99,100,255,.12); }
-
-    .btn-copy  { border: 1px solid var(--border); color: var(--text); }
-    .btn-copy:hover { border-color: var(--em); color: var(--em); }
-    .btn-copy.copied { border-color: var(--em); color: var(--em); }
-
-    .share-hint {
+    /* Copy blocks */
+    .copy-block { position: relative; }
+    .copy-field {
+      display: block;
       width: 100%;
-      max-width: 780px;
-      font-size: 0.78rem;
-      color: var(--muted);
-      text-align: center;
+      background: var(--surf2);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 8px 42px 8px 10px;
+      font-family: var(--mono);
+      font-size: .72rem;
+      color: var(--text);
       line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 52px;
     }
+    .copy-btn {
+      position: absolute;
+      top: 7px;
+      right: 7px;
+      background: var(--bord2);
+      border: none;
+      border-radius: 4px;
+      padding: 3px 7px;
+      font-family: var(--mono);
+      font-size: .62rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background .12s, color .12s;
+    }
+    .copy-btn:hover, .copy-btn.copied { background: var(--em-dk); color: var(--em-lt); }
 
-    /* ── loading skeleton ── */
+    /* Hashtag set buttons */
+    .htag-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    .htag-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-family: var(--mono);
+      font-size: .63rem;
+      letter-spacing: .03em;
+      color: var(--muted);
+      cursor: pointer;
+      text-align: left;
+      transition: border-color .12s, color .12s, background .12s;
+    }
+    .htag-btn:hover { border-color: var(--bord2); color: var(--text); }
+    .htag-btn.active { border-color: var(--em-dk); background: rgba(16,185,129,.07); color: var(--em-lt); }
+
+    /* Skeleton */
     .skeleton { animation: sk 1.4s ease-in-out infinite; }
-    @keyframes sk {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.35; }
+    @keyframes sk { 0%,100% { opacity:1 } 50% { opacity:.3 } }
+
+    /* ── Off-screen export card ── */
+    #export-card {
+      display: none;
+      position: fixed;
+      left: -9999px;
+      top: 0;
+      flex-direction: column;
+      background: #070b14;
+      overflow: hidden;
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
     }
+    .ec-bar { height: 4px; background: linear-gradient(90deg,#10b981,#3b82f6,#10b981); flex-shrink: 0; }
+    .ec-body { flex: 1; display: flex; flex-direction: column; padding: 28px 24px 22px; gap: 16px; }
+    .ec-head { display: flex; justify-content: space-between; align-items: flex-start; }
+    .ec-brand { font-size: 14px; font-weight: 700; color: #f1f5f9; letter-spacing: -.01em; }
+    .ec-brand .sl { color: #10b981; }
+    .ec-brand .sw { color: #10b981; }
+    .ec-date  { font-size: 9px; color: #64748b; text-align: right; line-height: 1.4; }
+    .ec-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .ec-tile  { background: #1a2540; border-radius: 10px; padding: 14px 10px; text-align: center; }
+    .ec-t-lbl { font-size: 8px; text-transform: uppercase; letter-spacing: .08em; color: #64748b; margin-bottom: 8px; }
+    .ec-t-val { font-size: 30px; font-weight: 700; line-height: 1; margin-bottom: 4px; }
+    .ec-t-sub { font-size: 7px; color: #64748b; }
+    .ec-cond  { background: #1a2540; border-radius: 10px; padding: 14px 16px; }
+    .ec-c-lbl { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .ec-c-bnd { font-size: 10px; color: #94a3b8; line-height: 1.5; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+    .ec-foot  { margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 12px; border-top: 1px solid #1e293b; }
+    .ec-f-site { font-size: 9px; color: #10b981; }
+    .ec-f-hndl { font-size: 9px; color: #64748b; text-align: right; }
   </style>
-</head>
-<body>
 
-<div class="top-bar">
-  <a href="/" class="back">
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-      <path d="M8.5 2.5 4 7l4.5 4.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    Dashboard
-  </a>
-  <span class="site-name">TavaOne<span class="slash">//</span>Solar</span>
-</div>
+<div class="card-page-wrap">
+<div class="main-wrap">
 
-<div class="card-wrap">
+  <!-- LEFT: card preview -->
   <div class="card" id="share-card">
-
     <div class="card-header">
       <div class="brand">
-        <img src="/tavaone-emblem.png" alt="" width="24" height="24" />
-        <span>Tava<strong>One</strong><span class="slash">//</span><span class="solar-word">Solar</span></span>
+        <img src="/tavaone-emblem.png" alt="" width="22" height="22" />
+        <span>Tava<strong>One</strong><span class="sl">//</span><span class="sw">Solar</span></span>
       </div>
       <div class="card-time">
         <span class="live-dot">●</span>
@@ -316,7 +322,7 @@
         <div class="ct-sub">Ap (3-hour)</div>
       </div>
       <div class="card-tile">
-        <div class="ct-label">X-Ray Class</div>
+        <div class="ct-label">X-Ray</div>
         <div class="ct-value skeleton" id="c-xray">—</div>
         <div class="ct-sub">GOES satellite</div>
       </div>
@@ -331,152 +337,340 @@
 
     <div class="card-footer">
       <span>solar.tavaoneeducation.org</span>
-      <span>73 de TavaOne · NOAA SWPC</span>
+      <span id="card-footer-credit">TavaOne Education · NOAA SWPC</span>
+    </div>
+  </div>
+
+  <!-- RIGHT: social post builder -->
+  <div class="social-panel">
+
+    <div class="sp-card">
+      <div class="sp-title">Card format</div>
+      <div class="seg-group" id="fmt-group" role="group" aria-label="Card format">
+        <button class="seg-btn active" data-fmt="tiktok">TikTok 9:16</button>
+        <button class="seg-btn" data-fmt="square">Square 1:1</button>
+      </div>
+    </div>
+
+    <button class="dl-btn" id="dl-btn" disabled>
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+        <path d="M7 1v8M4 7l3 3 3-3M1 10v2a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-2" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Download PNG
+    </button>
+
+    <div class="sp-card">
+      <div class="sp-title">Overlay text</div>
+      <div class="copy-block">
+        <div class="copy-field" id="overlay-text">Loading…</div>
+        <button class="copy-btn" data-target="overlay-text">COPY</button>
+      </div>
+    </div>
+
+    <div class="sp-card">
+      <div class="sp-title">Caption</div>
+      <div class="copy-block">
+        <div class="copy-field" id="caption-text">Loading…</div>
+        <button class="copy-btn" data-target="caption-text">COPY</button>
+      </div>
+    </div>
+
+    <div class="sp-card">
+      <div class="sp-title">Hashtags</div>
+      <div class="htag-group" id="htag-group">
+        <button class="htag-btn active" data-set="edu">📚 Educational</button>
+        <button class="htag-btn" data-set="pota">🏕 POTA</button>
+        <button class="htag-btn" data-set="gear">🎙 Gear</button>
+        <button class="htag-btn" data-set="fl">🌴 Florida</button>
+      </div>
+      <div class="copy-block">
+        <div class="copy-field" id="htag-text">#hamradio #amateurradio #hamtok #learnontiktok #parksOnTheAir</div>
+        <button class="copy-btn" data-target="htag-text">COPY</button>
+      </div>
+    </div>
+
+    <div class="sp-card">
+      <div class="sp-title">Suggested title</div>
+      <div class="copy-block">
+        <div class="copy-field" id="title-text">Loading…</div>
+        <button class="copy-btn" data-target="title-text">COPY</button>
+      </div>
     </div>
 
   </div>
 </div>
 
-<div class="share-actions">
-  <button class="share-btn btn-x" id="btn-x">
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-      <path d="M1 1.5h3.5L7 5.5 10 1.5H13L8.5 7.5 13 12.5H9.5L7 8.5 4 12.5H1L5.5 7.5 1 1.5Z" fill="currentColor"/>
-    </svg>
-    Share on X
-  </button>
-  <button class="share-btn btn-masto" id="btn-masto">
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-      <path d="M7 1C3.69 1 1 3.58 1 6.75c0 1.95.77 3.5 2.1 4.55v1.7l1.8-1c.53.15 1.1.23 1.7.23 2.87 0 5.4-1.9 5.4-5.48 0-3.17-2.69-5.75-5-5.75Z" stroke="currentColor" stroke-width="1.25" fill="none"/>
-    </svg>
-    Copy for Mastodon
-  </button>
-  <button class="share-btn btn-copy" id="btn-copy">
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-      <rect x="4" y="4" width="8" height="9" rx="1.5" stroke="currentColor" stroke-width="1.25"/>
-      <path d="M3 9.5H2.5A1.5 1.5 0 0 1 1 8V2.5A1.5 1.5 0 0 1 2.5 1H8A1.5 1.5 0 0 1 9.5 2.5V4" stroke="currentColor" stroke-width="1.25"/>
-    </svg>
-    Copy Link
-  </button>
+<!-- Off-screen export card (sized & shown only during html2canvas capture) -->
+<div id="export-card">
+  <div class="ec-bar"></div>
+  <div class="ec-body">
+    <div class="ec-head">
+      <div class="ec-brand">Tava<strong>One</strong><span class="sl">//</span><span class="sw">Solar</span></div>
+      <div class="ec-date" id="ec-date"></div>
+    </div>
+    <div class="ec-tiles">
+      <div class="ec-tile">
+        <div class="ec-t-lbl">Solar Flux</div>
+        <div class="ec-t-val" id="ec-sfi" style="color:#10b981">—</div>
+        <div class="ec-t-sub">SFI (10.7 cm)</div>
+      </div>
+      <div class="ec-tile">
+        <div class="ec-t-lbl">K-Index</div>
+        <div class="ec-t-val" id="ec-kp" style="color:#10b981">—</div>
+        <div class="ec-t-sub">Planetary Kp</div>
+      </div>
+      <div class="ec-tile">
+        <div class="ec-t-lbl">A-Index</div>
+        <div class="ec-t-val" id="ec-ai" style="color:#10b981">—</div>
+        <div class="ec-t-sub">Ap (3-hour)</div>
+      </div>
+      <div class="ec-tile">
+        <div class="ec-t-lbl">X-Ray Class</div>
+        <div class="ec-t-val" id="ec-xray" style="color:#10b981">—</div>
+        <div class="ec-t-sub">GOES satellite</div>
+      </div>
+    </div>
+    <div class="ec-cond">
+      <div class="ec-c-lbl" id="ec-cond-label" style="color:#10b981">—</div>
+      <div class="ec-c-bnd" id="ec-cond-bands"></div>
+    </div>
+    <div class="ec-foot">
+      <div class="ec-f-site">solar.tavaoneeducation.org</div>
+      <div class="ec-f-hndl" id="ec-credit">TavaOne Education<br>NOAA SWPC</div>
+    </div>
+  </div>
 </div>
 
-<p class="share-hint">Screenshot the card and share it, or use the buttons above to post directly.</p>
-
 <script>
-  const SITE = 'https://solar.tavaoneeducation.org';
+  import html2canvas from 'html2canvas';
 
-  function conditionFrom(sfi: number | null, kp: number | null) {
-    if (kp !== null && kp > 5)  return { label: 'Disturbed',  color: '#ef4444', bands: 'Geomagnetic storm in progress — HF unreliable, polar routes degraded' };
-    if (kp !== null && kp > 3)  return { label: 'Unsettled',  color: '#f59e0b', bands: '40m/80m degraded · high bands possibly fair · auroral noise possible' };
-    if (sfi !== null && sfi > 150) return { label: 'Excellent', color: '#10b981', bands: '10m–17m wide open · 40m/80m reliable · long-path DX favorable' };
-    if (sfi !== null && sfi > 120) return { label: 'Good',      color: '#10b981', bands: '15m–20m good · 40m reliable · higher bands possible' };
-    if (sfi !== null && sfi > 90)  return { label: 'Fair',      color: '#f59e0b', bands: '20m–40m fair · skip distance may vary · 80m reliable at night' };
-    return                                { label: 'Poor',      color: '#ef4444', bands: '40m/80m best bet · higher bands unreliable · low solar flux' };
+  // ── Hashtag sets (max 5, no #POTA, always #parksOnTheAir) ──
+  const HTAG: Record<string, string> = {
+    edu:  '#hamradio #amateurradio #hamtok #learnontiktok #parksOnTheAir',
+    pota: '#hamradio #hamtok #amateurradio #FT8 #parksOnTheAir',
+    gear: '#hamradio #hamtok #amateurradio #QRP #parksOnTheAir',
+    fl:   '#hamradio #hamtok #Florida #amateurradio #parksOnTheAir',
+  };
+
+  let selFmt  = 'tiktok';
+  let selHtag = 'edu';
+  let liveData: any = null;
+
+  // ── Condition helpers ──
+  function condFrom(sfi: number | null, kp: number | null) {
+    if (kp !== null && kp > 5)     return { label: 'Disturbed',  color: '#ef4444', bands: 'Geomagnetic storm in progress — HF unreliable, polar routes degraded' };
+    if (kp !== null && kp > 3)     return { label: 'Unsettled',  color: '#f59e0b', bands: '40m/80m degraded · high bands fair at best · auroral noise possible' };
+    if (sfi !== null && sfi > 150) return { label: 'Excellent',  color: '#10b981', bands: '10m–17m wide open · 40m/80m reliable · long-path DX favorable' };
+    if (sfi !== null && sfi > 120) return { label: 'Good',       color: '#10b981', bands: '15m–20m good · 40m reliable · upper bands possible' };
+    if (sfi !== null && sfi > 90)  return { label: 'Fair',       color: '#f59e0b', bands: '20m–40m fair · skip varies · 80m reliable at night' };
+    return                                { label: 'Poor',        color: '#ef4444', bands: '40m/80m best bet · higher bands unreliable · low solar flux' };
   }
 
-  function sfiColor(v: number) {
-    if (v > 150) return '#10b981';
-    if (v > 100) return '#f59e0b';
-    return '#ef4444';
+  function sfiColor(v: number) { return v > 150 ? '#10b981' : v > 100 ? '#f59e0b' : '#ef4444'; }
+  function kpColor(v: number)  { return v <= 3  ? '#10b981' : v <= 5  ? '#f59e0b' : '#ef4444'; }
+
+  // ── Text generators ──
+  function overlayText(sfi: number | null, kp: number | null, cond: ReturnType<typeof condFrom>): string {
+    const lines: string[] = [];
+    if (sfi !== null) lines.push(`SOLAR FLUX ${Math.round(sfi)}`);
+    if (kp  !== null) lines.push(`K-INDEX ${kp} — ${kp >= 5 ? 'STORM' : kp >= 3 ? 'UNSETTLED' : 'QUIET'}`);
+    const band = cond.bands.match(/(\d+m)/i);
+    if (band) lines.push(`${band[1].toUpperCase()} OPEN`);
+    return lines.join('\n');
   }
 
-  function kpColor(v: number) {
-    if (v <= 3) return '#10b981';
-    if (v <= 5) return '#f59e0b';
-    return '#ef4444';
+  function captionText(cond: ReturnType<typeof condFrom>, sfi: number | null, kp: number | null): string {
+    let t = `${cond.label} conditions for ham radio today.`;
+    if (sfi !== null) t += ` Solar flux at ${Math.round(sfi)}.`;
+    if (kp  !== null) t += ` Kp ${kp} — ${kp <= 2 ? 'quiet' : kp <= 4 ? 'unsettled' : 'stormy'}.`;
+    const firstBand = cond.bands.split('·')[0].trim();
+    t += ` ${firstBand}.`;
+    if (kp === null || kp <= 3) t += ' Good window for a POTA run.';
+    t += ' solar.tavaoneeducation.org';
+    return t;
   }
 
+  function titleText(cond: ReturnType<typeof condFrom>, sfi: number | null): string {
+    const d = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return `Ham Radio Solar Conditions — ${cond.label} (SFI ${sfi !== null ? Math.round(sfi) : '—'}) · ${d} | TavaOne Solar`;
+  }
+
+  // ── DOM helpers ──
+  function setText(id: string, t: string) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = t;
+  }
+
+  function refreshCopyBlocks(data: any) {
+    const sfi  = data?.sfi     ?? null;
+    const kp   = data?.k_index ?? null;
+    const cond = condFrom(sfi, kp);
+    setText('overlay-text', overlayText(sfi, kp, cond));
+    setText('caption-text', captionText(cond, sfi, kp));
+    setText('htag-text',    HTAG[selHtag]);
+    setText('title-text',   titleText(cond, sfi));
+  }
+
+  // ── Load live data ──
   async function loadCard() {
-    let sfi: number | null = null;
-    let kp: number | null = null;
-    let ai: number | null = null;
-    let xray: string | null = null;
-    let alerts: any[] = [];
-
     try {
       const res = await fetch('/api/solar');
       if (!res.ok) throw new Error('api');
       const d = await res.json();
-      sfi = d.sfi; kp = d.k_index; ai = d.a_index; xray = d.xray_class;
-      alerts = d.alerts ?? [];
+      liveData = d;
 
+      const sfi  = d.sfi;
+      const kp   = d.k_index;
+      const ai   = d.a_index;
+      const xray = d.xray_class;
+      const cond = condFrom(sfi, kp);
+
+      // Timestamp
       const updEl = document.getElementById('card-updated')!;
       updEl.classList.remove('skeleton');
       updEl.textContent = d.updated
         ? new Date(d.updated).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })
         : 'no data';
 
+      // Preview tiles
+      for (const id of ['c-sfi','c-kp','c-ai','c-xray']) document.getElementById(id)!.classList.remove('skeleton');
+
+      const eS = document.getElementById('c-sfi')!,  eK = document.getElementById('c-kp')!;
+      const eA = document.getElementById('c-ai')!,   eX = document.getElementById('c-xray')!;
+      eS.textContent = sfi  !== null ? String(Math.round(sfi)) : '—';
+      eK.textContent = kp   !== null ? String(kp)              : '—';
+      eA.textContent = ai   !== null ? String(Math.round(ai))  : '—';
+      eX.textContent = xray ?? '—';
+      if (sfi !== null) eS.style.color = sfiColor(sfi);
+      if (kp  !== null) { eK.style.color = kpColor(kp); eA.style.color = kpColor(kp); }
+
+      // Condition banner
+      const condLbl = document.getElementById('cond-label')!;
+      condLbl.classList.remove('skeleton');
+      condLbl.textContent = cond.label;
+      condLbl.style.color = cond.color;
+      document.getElementById('cond-bands')!.textContent = cond.bands;
+
+      // Alerts
+      const alerts = d.alerts ?? [];
+      if (alerts.length > 0) {
+        const alertEl = document.getElementById('card-alerts')!;
+        alertEl.classList.add('visible');
+        alertEl.textContent = `⚠ ${alerts[alerts.length - 1].headline}`;
+      }
+
+      // Export card values
+      const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+      setText('ec-date', dateStr);
+      for (const [id, val, colorFn] of [
+        ['ec-sfi',  sfi  !== null ? String(Math.round(sfi)) : '—', sfi  !== null ? () => sfiColor(sfi)  : null],
+        ['ec-kp',   kp   !== null ? String(kp)              : '—', kp   !== null ? () => kpColor(kp)    : null],
+        ['ec-ai',   ai   !== null ? String(Math.round(ai))  : '—', kp   !== null ? () => kpColor(kp)    : null],
+        ['ec-xray', xray ?? '—',                                   null],
+      ] as [string, string, (() => string) | null][]) {
+        const el = document.getElementById(id)!;
+        el.textContent = val;
+        if (colorFn) el.style.color = colorFn();
+      }
+      const ecCL = document.getElementById('ec-cond-label')!;
+      ecCL.textContent = cond.label;
+      ecCL.style.color = cond.color;
+      setText('ec-cond-bands', cond.bands);
+
+      // Enable download
+      (document.getElementById('dl-btn') as HTMLButtonElement).disabled = false;
+
+      // Populate post copy
+      refreshCopyBlocks(d);
+
     } catch {
       document.getElementById('card-updated')!.textContent = 'data unavailable';
     }
-
-    // Populate tiles
-    const sfiEl  = document.getElementById('c-sfi')!;
-    const kpEl   = document.getElementById('c-kp')!;
-    const aiEl   = document.getElementById('c-ai')!;
-    const xrayEl = document.getElementById('c-xray')!;
-
-    [sfiEl, kpEl, aiEl, xrayEl].forEach(el => el.classList.remove('skeleton'));
-
-    sfiEl.textContent  = sfi  !== null ? String(Math.round(sfi))  : '—';
-    kpEl.textContent   = kp   !== null ? String(kp)               : '—';
-    aiEl.textContent   = ai   !== null ? String(Math.round(ai))   : '—';
-    xrayEl.textContent = xray ?? '—';
-
-    if (sfi !== null) sfiEl.style.color  = sfiColor(sfi);
-    if (kp  !== null) kpEl.style.color   = kpColor(kp);
-    if (ai  !== null) aiEl.style.color   = kpColor(kp ?? 0);
-
-    // Condition banner
-    const cond = conditionFrom(sfi, kp);
-    const condLabelEl = document.getElementById('cond-label')!;
-    condLabelEl.classList.remove('skeleton');
-    condLabelEl.textContent  = cond.label;
-    condLabelEl.style.color  = cond.color;
-    document.getElementById('cond-bands')!.textContent = cond.bands;
-
-    // Recent alerts
-    if (alerts.length > 0) {
-      const alertEl = document.getElementById('card-alerts')!;
-      alertEl.classList.add('visible');
-      alertEl.textContent = `⚠ ${alerts[alerts.length - 1].headline}`;
-    }
-
-    // Build share text
-    const parts: string[] = [];
-    if (sfi  !== null) parts.push(`SFI: ${Math.round(sfi)}`);
-    if (kp   !== null) parts.push(`Kp: ${kp}`);
-    if (ai   !== null) parts.push(`Ap: ${Math.round(ai)}`);
-    if (xray)          parts.push(`X-ray: ${xray}`);
-    const shareText = `Solar conditions now — ${parts.join(' · ')} · HF: ${cond.label}\n${SITE} #hamradio #amateurradio #solar`;
-
-    document.getElementById('btn-x')!.addEventListener('click', () => {
-      window.open(
-        `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(SITE)}`,
-        '_blank', 'noopener'
-      );
-    });
-
-    document.getElementById('btn-masto')!.addEventListener('click', () => {
-      navigator.clipboard.writeText(shareText).then(() => {
-        const btn = document.getElementById('btn-masto')!;
-        const orig = btn.textContent!;
-        btn.textContent = '✓ Copied! Paste in Mastodon';
-        setTimeout(() => { btn.textContent = orig; }, 3000);
-      });
-    });
-
-    document.getElementById('btn-copy')!.addEventListener('click', () => {
-      navigator.clipboard.writeText(SITE).then(() => {
-        const btn = document.getElementById('btn-copy')! as HTMLButtonElement;
-        btn.textContent = '✓ Link copied!';
-        btn.classList.add('copied');
-        setTimeout(() => { btn.textContent = 'Copy Link'; btn.classList.remove('copied'); }, 2500);
-      });
-    });
   }
+
+  // ── Copy buttons ──
+  document.querySelectorAll<HTMLButtonElement>('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const el = document.getElementById(btn.dataset.target!);
+      if (!el) return;
+      navigator.clipboard.writeText(el.textContent ?? '').then(() => {
+        const orig = btn.textContent!;
+        btn.textContent = '✓ DONE';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+      });
+    });
+  });
+
+  // ── Format selector ──
+  document.querySelectorAll<HTMLButtonElement>('#fmt-group .seg-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#fmt-group .seg-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selFmt = btn.dataset.fmt!;
+    });
+  });
+
+  // ── Hashtag set selector ──
+  document.querySelectorAll<HTMLButtonElement>('.htag-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.htag-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selHtag = btn.dataset.set!;
+      setText('htag-text', HTAG[selHtag]);
+      if (liveData) {
+        const sfi = liveData.sfi, kp = liveData.k_index;
+        setText('caption-text', captionText(condFrom(sfi, kp), sfi, kp));
+      }
+    });
+  });
+
+  // ── Download PNG ──
+  document.getElementById('dl-btn')!.addEventListener('click', async () => {
+    const btn = document.getElementById('dl-btn') as HTMLButtonElement;
+    const card = document.getElementById('export-card')!;
+
+    const isTikTok = selFmt === 'tiktok';
+    const cssW = 360, cssH = isTikTok ? 640 : 360;
+
+    card.style.width         = `${cssW}px`;
+    card.style.height        = `${cssH}px`;
+    card.style.display       = 'flex';
+    card.style.flexDirection = 'column';
+
+    btn.disabled    = true;
+    btn.textContent = 'Generating…';
+
+    try {
+      const canvas = await html2canvas(card, {
+        scale: 3,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: '#070b14',
+        width: cssW,
+        height: cssH,
+        logging: false,
+      });
+
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const link    = document.createElement('a');
+      link.download = `solar-${isTikTok ? '9x16' : '1x1'}-${dateStr}.png`;
+      link.href     = canvas.toDataURL('image/png');
+      link.click();
+    } catch (e) {
+      console.error('export failed', e);
+      alert('PNG export failed — try a screenshot instead.');
+    } finally {
+      card.style.display = 'none';
+      btn.disabled       = false;
+      btn.innerHTML      = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M7 1v8M4 7l3 3 3-3M1 10v2a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-2" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg> Download PNG`;
+    }
+  });
 
   loadCard();
 </script>
 
-</body>
-</html>
+</div>
+</div>
+
+</Shell>
