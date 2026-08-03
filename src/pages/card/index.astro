@@ -1,0 +1,482 @@
+---
+// Standalone share card — no Shell layout, screenshot-friendly
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solar Conditions — TavaOne Solar</title>
+  <meta name="description" content="Current solar and space weather snapshot for amateur radio." />
+  <meta name="robots" content="noindex, nofollow" />
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #070b14;
+      --surface:  #0f172a;
+      --surface2: #1a2540;
+      --border:   #1e293b;
+      --text:     #f1f5f9;
+      --muted:    #64748b;
+      --em:       #10b981;
+      --mono:     'JetBrains Mono', monospace;
+      --sans:     'Plus Jakarta Sans', system-ui, sans-serif;
+    }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem 1rem 3rem;
+    }
+
+    /* ── top bar ── */
+    .top-bar {
+      width: 100%;
+      max-width: 780px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.75rem;
+    }
+    .back {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      transition: color .2s;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .back:hover { color: var(--em); }
+    .site-name {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .site-name .slash { color: var(--em); }
+
+    /* ── card ── */
+    .card-wrap { width: 100%; max-width: 780px; margin-bottom: 1.25rem; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 2rem 2rem 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--em) 0%, #3b82f6 50%, var(--em) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 4s linear infinite;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 0% 0%; }
+      100% { background-position: 200% 0%; }
+    }
+
+    /* card header */
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.75rem;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--mono);
+      font-size: 1rem;
+      font-weight: 700;
+    }
+    .brand img { border-radius: 4px; }
+    .brand .slash { color: var(--em); }
+    .brand .solar-word { color: var(--em); }
+
+    .card-time {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+    .live-dot {
+      color: var(--em);
+      font-size: 0.55rem;
+      animation: blink 2s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.2; }
+    }
+
+    /* data tiles */
+    .card-tiles {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.875rem;
+      margin-bottom: 1.25rem;
+    }
+    @media (max-width: 520px) {
+      .card-tiles { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .card-tile {
+      background: var(--surface2);
+      border-radius: 12px;
+      padding: 1rem 0.75rem;
+      text-align: center;
+      border: 1px solid transparent;
+      transition: border-color .3s;
+    }
+    .ct-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      margin-bottom: 0.45rem;
+    }
+    .ct-value {
+      font-family: var(--mono);
+      font-size: 2.1rem;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 0.3rem;
+      transition: color .4s;
+    }
+    .ct-sub {
+      font-size: 0.65rem;
+      color: var(--muted);
+    }
+
+    /* condition banner */
+    .card-condition {
+      background: var(--surface2);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .cond-label {
+      font-family: var(--mono);
+      font-weight: 700;
+      font-size: 1.05rem;
+      transition: color .4s;
+      white-space: nowrap;
+    }
+    .cond-bands {
+      font-size: 0.85rem;
+      color: var(--muted);
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* alerts */
+    .card-alerts {
+      font-size: 0.78rem;
+      color: #f59e0b;
+      font-family: var(--mono);
+      padding: 0.6rem 1.25rem;
+      background: rgba(245,158,11,.08);
+      border: 1px solid rgba(245,158,11,.2);
+      border-radius: 8px;
+      margin-bottom: 1.25rem;
+      display: none;
+    }
+    .card-alerts.visible { display: block; }
+
+    /* card footer */
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-family: var(--mono);
+      border-top: 1px solid var(--border);
+      padding-top: 1rem;
+    }
+
+    /* ── share actions ── */
+    .share-actions {
+      width: 100%;
+      max-width: 780px;
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .share-btn {
+      flex: 1;
+      min-width: 150px;
+      padding: 0.7rem 1rem;
+      border-radius: 10px;
+      font-family: var(--sans);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      text-decoration: none;
+    }
+    .btn-x    { border: 1px solid #1d9bf0; color: #1d9bf0; }
+    .btn-x:hover { background: rgba(29,155,240,.12); }
+
+    .btn-masto { border: 1px solid #6364ff; color: #6364ff; }
+    .btn-masto:hover { background: rgba(99,100,255,.12); }
+
+    .btn-copy  { border: 1px solid var(--border); color: var(--text); }
+    .btn-copy:hover { border-color: var(--em); color: var(--em); }
+    .btn-copy.copied { border-color: var(--em); color: var(--em); }
+
+    .share-hint {
+      width: 100%;
+      max-width: 780px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    /* ── loading skeleton ── */
+    .skeleton { animation: sk 1.4s ease-in-out infinite; }
+    @keyframes sk {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.35; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="/" class="back">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path d="M8.5 2.5 4 7l4.5 4.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Dashboard
+  </a>
+  <span class="site-name">TavaOne<span class="slash">//</span>Solar</span>
+</div>
+
+<div class="card-wrap">
+  <div class="card" id="share-card">
+
+    <div class="card-header">
+      <div class="brand">
+        <img src="/tavaone-emblem.png" alt="" width="24" height="24" />
+        <span>Tava<strong>One</strong><span class="slash">//</span><span class="solar-word">Solar</span></span>
+      </div>
+      <div class="card-time">
+        <span class="live-dot">●</span>
+        <span id="card-updated" class="skeleton">loading…</span>
+      </div>
+    </div>
+
+    <div class="card-tiles">
+      <div class="card-tile">
+        <div class="ct-label">Solar Flux</div>
+        <div class="ct-value skeleton" id="c-sfi">—</div>
+        <div class="ct-sub">SFI (10.7 cm)</div>
+      </div>
+      <div class="card-tile">
+        <div class="ct-label">K-Index</div>
+        <div class="ct-value skeleton" id="c-kp">—</div>
+        <div class="ct-sub">Planetary Kp</div>
+      </div>
+      <div class="card-tile">
+        <div class="ct-label">A-Index</div>
+        <div class="ct-value skeleton" id="c-ai">—</div>
+        <div class="ct-sub">Ap (3-hour)</div>
+      </div>
+      <div class="card-tile">
+        <div class="ct-label">X-Ray Class</div>
+        <div class="ct-value skeleton" id="c-xray">—</div>
+        <div class="ct-sub">GOES satellite</div>
+      </div>
+    </div>
+
+    <div class="card-condition">
+      <span class="cond-label skeleton" id="cond-label">—</span>
+      <span class="cond-bands" id="cond-bands">Loading propagation conditions…</span>
+    </div>
+
+    <div class="card-alerts" id="card-alerts"></div>
+
+    <div class="card-footer">
+      <span>solar.tavaoneeducation.org</span>
+      <span>73 de TavaOne · NOAA SWPC</span>
+    </div>
+
+  </div>
+</div>
+
+<div class="share-actions">
+  <button class="share-btn btn-x" id="btn-x">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path d="M1 1.5h3.5L7 5.5 10 1.5H13L8.5 7.5 13 12.5H9.5L7 8.5 4 12.5H1L5.5 7.5 1 1.5Z" fill="currentColor"/>
+    </svg>
+    Share on X
+  </button>
+  <button class="share-btn btn-masto" id="btn-masto">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path d="M7 1C3.69 1 1 3.58 1 6.75c0 1.95.77 3.5 2.1 4.55v1.7l1.8-1c.53.15 1.1.23 1.7.23 2.87 0 5.4-1.9 5.4-5.48 0-3.17-2.69-5.75-5-5.75Z" stroke="currentColor" stroke-width="1.25" fill="none"/>
+    </svg>
+    Copy for Mastodon
+  </button>
+  <button class="share-btn btn-copy" id="btn-copy">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <rect x="4" y="4" width="8" height="9" rx="1.5" stroke="currentColor" stroke-width="1.25"/>
+      <path d="M3 9.5H2.5A1.5 1.5 0 0 1 1 8V2.5A1.5 1.5 0 0 1 2.5 1H8A1.5 1.5 0 0 1 9.5 2.5V4" stroke="currentColor" stroke-width="1.25"/>
+    </svg>
+    Copy Link
+  </button>
+</div>
+
+<p class="share-hint">Screenshot the card and share it, or use the buttons above to post directly.</p>
+
+<script>
+  const SITE = 'https://solar.tavaoneeducation.org';
+
+  function conditionFrom(sfi: number | null, kp: number | null) {
+    if (kp !== null && kp > 5)  return { label: 'Disturbed',  color: '#ef4444', bands: 'Geomagnetic storm in progress — HF unreliable, polar routes degraded' };
+    if (kp !== null && kp > 3)  return { label: 'Unsettled',  color: '#f59e0b', bands: '40m/80m degraded · high bands possibly fair · auroral noise possible' };
+    if (sfi !== null && sfi > 150) return { label: 'Excellent', color: '#10b981', bands: '10m–17m wide open · 40m/80m reliable · long-path DX favorable' };
+    if (sfi !== null && sfi > 120) return { label: 'Good',      color: '#10b981', bands: '15m–20m good · 40m reliable · higher bands possible' };
+    if (sfi !== null && sfi > 90)  return { label: 'Fair',      color: '#f59e0b', bands: '20m–40m fair · skip distance may vary · 80m reliable at night' };
+    return                                { label: 'Poor',      color: '#ef4444', bands: '40m/80m best bet · higher bands unreliable · low solar flux' };
+  }
+
+  function sfiColor(v: number) {
+    if (v > 150) return '#10b981';
+    if (v > 100) return '#f59e0b';
+    return '#ef4444';
+  }
+
+  function kpColor(v: number) {
+    if (v <= 3) return '#10b981';
+    if (v <= 5) return '#f59e0b';
+    return '#ef4444';
+  }
+
+  async function loadCard() {
+    let sfi: number | null = null;
+    let kp: number | null = null;
+    let ai: number | null = null;
+    let xray: string | null = null;
+    let alerts: any[] = [];
+
+    try {
+      const res = await fetch('/api/solar');
+      if (!res.ok) throw new Error('api');
+      const d = await res.json();
+      sfi = d.sfi; kp = d.k_index; ai = d.a_index; xray = d.xray_class;
+      alerts = d.alerts ?? [];
+
+      const updEl = document.getElementById('card-updated')!;
+      updEl.classList.remove('skeleton');
+      updEl.textContent = d.updated
+        ? new Date(d.updated).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })
+        : 'no data';
+
+    } catch {
+      document.getElementById('card-updated')!.textContent = 'data unavailable';
+    }
+
+    // Populate tiles
+    const sfiEl  = document.getElementById('c-sfi')!;
+    const kpEl   = document.getElementById('c-kp')!;
+    const aiEl   = document.getElementById('c-ai')!;
+    const xrayEl = document.getElementById('c-xray')!;
+
+    [sfiEl, kpEl, aiEl, xrayEl].forEach(el => el.classList.remove('skeleton'));
+
+    sfiEl.textContent  = sfi  !== null ? String(Math.round(sfi))  : '—';
+    kpEl.textContent   = kp   !== null ? String(kp)               : '—';
+    aiEl.textContent   = ai   !== null ? String(Math.round(ai))   : '—';
+    xrayEl.textContent = xray ?? '—';
+
+    if (sfi !== null) sfiEl.style.color  = sfiColor(sfi);
+    if (kp  !== null) kpEl.style.color   = kpColor(kp);
+    if (ai  !== null) aiEl.style.color   = kpColor(kp ?? 0);
+
+    // Condition banner
+    const cond = conditionFrom(sfi, kp);
+    const condLabelEl = document.getElementById('cond-label')!;
+    condLabelEl.classList.remove('skeleton');
+    condLabelEl.textContent  = cond.label;
+    condLabelEl.style.color  = cond.color;
+    document.getElementById('cond-bands')!.textContent = cond.bands;
+
+    // Recent alerts
+    if (alerts.length > 0) {
+      const alertEl = document.getElementById('card-alerts')!;
+      alertEl.classList.add('visible');
+      alertEl.textContent = `⚠ ${alerts[alerts.length - 1].headline}`;
+    }
+
+    // Build share text
+    const parts: string[] = [];
+    if (sfi  !== null) parts.push(`SFI: ${Math.round(sfi)}`);
+    if (kp   !== null) parts.push(`Kp: ${kp}`);
+    if (ai   !== null) parts.push(`Ap: ${Math.round(ai)}`);
+    if (xray)          parts.push(`X-ray: ${xray}`);
+    const shareText = `Solar conditions now — ${parts.join(' · ')} · HF: ${cond.label}\n${SITE} #hamradio #amateurradio #solar`;
+
+    document.getElementById('btn-x')!.addEventListener('click', () => {
+      window.open(
+        `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(SITE)}`,
+        '_blank', 'noopener'
+      );
+    });
+
+    document.getElementById('btn-masto')!.addEventListener('click', () => {
+      navigator.clipboard.writeText(shareText).then(() => {
+        const btn = document.getElementById('btn-masto')!;
+        const orig = btn.textContent!;
+        btn.textContent = '✓ Copied! Paste in Mastodon';
+        setTimeout(() => { btn.textContent = orig; }, 3000);
+      });
+    });
+
+    document.getElementById('btn-copy')!.addEventListener('click', () => {
+      navigator.clipboard.writeText(SITE).then(() => {
+        const btn = document.getElementById('btn-copy')! as HTMLButtonElement;
+        btn.textContent = '✓ Link copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy Link'; btn.classList.remove('copied'); }, 2500);
+      });
+    });
+  }
+
+  loadCard();
+</script>
+
+</body>
+</html>
