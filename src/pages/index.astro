@@ -112,6 +112,52 @@ import Shell from '../layouts/Shell.astro';
     </div>
   </section>
 
+  <section id="trends" aria-label="Solar trend charts">
+    <div class="wrap">
+      <p class="seclabel">Trend Analysis</p>
+      <h2>Historical solar data</h2>
+      <p class="sec-intro">Long-term trends in solar flux, geomagnetic activity, and sunspot cycle — updated every 15 minutes from NOAA SWPC.</p>
+
+      <div class="trends-grid">
+
+        <!-- SFI trend -->
+        <div class="trend-card" id="tc-sfi">
+          <div class="tc-head">
+            <span class="tc-lbl">Solar Flux Index (SFI)</span>
+            <div class="tc-tabs" role="group" aria-label="SFI range">
+              <button class="tc-tab active" data-chart="sfi" data-days="30">30 d</button>
+              <button class="tc-tab" data-chart="sfi" data-days="60">60 d</button>
+              <button class="tc-tab" data-chart="sfi" data-days="90">90 d</button>
+            </div>
+          </div>
+          <div class="tc-body"><canvas id="canvas-sfi"></canvas></div>
+        </div>
+
+        <!-- K-index 7-day bars + forecast -->
+        <div class="trend-card" id="tc-kp">
+          <div class="tc-head">
+            <span class="tc-lbl">Planetary K-Index — 7 days + forecast</span>
+          </div>
+          <div class="tc-body"><canvas id="canvas-kp"></canvas></div>
+        </div>
+
+        <!-- Sunspot trend -->
+        <div class="trend-card trend-card--wide" id="tc-ssn">
+          <div class="tc-head">
+            <span class="tc-lbl">Sunspot Number (SSN)</span>
+            <div class="tc-tabs" role="group" aria-label="SSN range">
+              <button class="tc-tab active" data-chart="ssn" data-days="30">30 d</button>
+              <button class="tc-tab" data-chart="ssn" data-days="60">60 d</button>
+              <button class="tc-tab" data-chart="ssn" data-days="90">90 d</button>
+            </div>
+          </div>
+          <div class="tc-body"><canvas id="canvas-ssn"></canvas></div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
   <section id="what-it-means" aria-label="Impact on radio">
     <div class="wrap">
       <p class="seclabel">Ham Radio Impact</p>
@@ -256,6 +302,69 @@ import Shell from '../layouts/Shell.astro';
     font-size: .68rem;
     color: var(--muted);
     opacity: .5;
+  }
+
+  /* ── Trend charts section ── */
+  #trends { padding-top: 0; }
+  .trends-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-top: 32px;
+  }
+  .trend-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px 16px;
+    transition: border-color .18s;
+    min-width: 0;
+  }
+  .trend-card:hover { border-color: var(--green-dk); }
+  .trend-card--wide { grid-column: 1 / -1; }
+  .tc-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .tc-lbl {
+    font-family: var(--mono);
+    font-size: .72rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .tc-tabs {
+    display: flex;
+    gap: 2px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 2px;
+  }
+  .tc-tab {
+    background: none;
+    border: none;
+    padding: 4px 11px;
+    border-radius: 5px;
+    font-family: var(--mono);
+    font-size: .7rem;
+    letter-spacing: .06em;
+    color: var(--muted);
+    cursor: pointer;
+    transition: background .12s, color .12s;
+  }
+  .tc-tab:hover { color: var(--text); }
+  .tc-tab.active { background: var(--green-dk); color: var(--green-lt); }
+  .tc-body { position: relative; }
+  .tc-body canvas { display: block; width: 100% !important; height: 140px !important; }
+
+  @media (max-width: 820px) {
+    .trends-grid { grid-template-columns: 1fr; }
+    .trend-card--wide { grid-column: auto; }
   }
 </style>
 
@@ -519,4 +628,233 @@ import Shell from '../layouts/Shell.astro';
 
   loadSolar();
   loadHistory(24);
+</script>
+
+<script>
+  import {
+    Chart,
+    LineController, BarController,
+    CategoryScale, LinearScale,
+    PointElement, LineElement, BarElement,
+    Tooltip, Filler,
+  } from 'chart.js';
+
+  Chart.register(
+    LineController, BarController,
+    CategoryScale, LinearScale,
+    PointElement, LineElement, BarElement,
+    Tooltip, Filler,
+  );
+
+  // Dark-theme defaults
+  Chart.defaults.color = '#94a3b8';
+  Chart.defaults.borderColor = '#334155';
+  Chart.defaults.font.family = "'JetBrains Mono', ui-monospace, monospace";
+  Chart.defaults.font.size = 10;
+
+  type ChartSeries = { labels: string[]; values: number[] };
+
+  const charts: Record<string, Chart> = {};
+
+  function shortLabel(bucket: string): string {
+    if (bucket.includes('T')) {
+      // 3-hour bucket: "2024-01-15T12:00:00Z" → "Jan 15 12:00"
+      const d = new Date(bucket);
+      return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' +
+             d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    // Daily: "2024-01-15" → "Jan 15"
+    const [, m, day] = bucket.split('-');
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${months[parseInt(m) - 1]} ${parseInt(day)}`;
+  }
+
+  function makeLineChart(id: string, data: ChartSeries, color: string, refY?: number): Chart {
+    const canvas = document.getElementById(id) as HTMLCanvasElement;
+    const ctx = canvas.getContext('2d')!;
+    const labels = data.labels.map(shortLabel);
+
+    // Gradient fill
+    const grad = ctx.createLinearGradient(0, 0, 0, 140);
+    grad.addColorStop(0, color + '33');
+    grad.addColorStop(1, color + '00');
+
+    const datasets: any[] = [
+      {
+        data: data.values,
+        borderColor: color,
+        backgroundColor: grad,
+        borderWidth: 2,
+        pointRadius: data.labels.length < 20 ? 3 : 0,
+        pointHoverRadius: 4,
+        fill: true,
+        tension: 0.3,
+      },
+    ];
+
+    if (refY !== undefined) {
+      datasets.push({
+        data: Array(data.labels.length).fill(refY),
+        borderColor: '#f8717155',
+        borderWidth: 1,
+        borderDash: [4, 3],
+        pointRadius: 0,
+        fill: false,
+      });
+    }
+
+    return new Chart(ctx, {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive: false,
+        animation: false,
+        plugins: { tooltip: { mode: 'index', intersect: false }, legend: { display: false } },
+        scales: {
+          x: { grid: { color: '#1e293b' }, ticks: { maxTicksLimit: 8, maxRotation: 0 } },
+          y: { grid: { color: '#1e293b' }, ticks: { maxTicksLimit: 5 } },
+        },
+      },
+    });
+  }
+
+  function makeKpChart(id: string, obs: ChartSeries, fcst: Array<{ t: string; v: number }>): Chart {
+    const canvas = document.getElementById(id) as HTMLCanvasElement;
+    const ctx = canvas.getContext('2d')!;
+
+    const obsLabels = obs.labels.map(shortLabel);
+    const obsNow = obs.labels.length > 0 ? obs.labels[obs.labels.length - 1] : '';
+    const fcstFuture = fcst.filter(f => f.t > obsNow);
+    const fcstLabels = fcstFuture.map(f => shortLabel(f.t));
+    const fcstVals = fcstFuture.map(f => f.v);
+
+    const allLabels = [...obsLabels, ...fcstLabels];
+    const obsData = [...obs.values, ...Array(fcstLabels.length).fill(null)];
+    const fcstData = [...Array(obsLabels.length).fill(null), ...fcstVals];
+
+    function kpColor(v: number | null): string {
+      if (v === null) return '#334155';
+      if (v <= 2) return '#10b981';
+      if (v <= 4) return '#fbbf24';
+      return '#f87171';
+    }
+
+    return new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: allLabels,
+        datasets: [
+          {
+            label: 'Kp observed',
+            type: 'bar',
+            data: obsData,
+            backgroundColor: obs.values.map(kpColor),
+            borderWidth: 0,
+            barPercentage: 0.9,
+          },
+          {
+            label: 'Kp forecast',
+            type: 'line',
+            data: fcstData,
+            borderColor: '#6ee7b7',
+            borderWidth: 2,
+            borderDash: [5, 3],
+            pointRadius: fcstLabels.length < 20 ? 3 : 0,
+            pointBackgroundColor: '#6ee7b7',
+            fill: false,
+            tension: 0.3,
+          },
+          {
+            label: 'Storm threshold',
+            type: 'line',
+            data: Array(allLabels.length).fill(5),
+            borderColor: '#f8717155',
+            borderWidth: 1,
+            borderDash: [4, 3],
+            pointRadius: 0,
+            fill: false,
+          },
+        ] as any[],
+      },
+      options: {
+        responsive: false,
+        animation: false,
+        plugins: { tooltip: { mode: 'index', intersect: false }, legend: { display: false } },
+        scales: {
+          x: { grid: { color: '#1e293b' }, ticks: { maxTicksLimit: 8, maxRotation: 0 } },
+          y: { min: 0, max: 9, grid: { color: '#1e293b' }, ticks: { maxTicksLimit: 5 } },
+        },
+      },
+    });
+  }
+
+  function parseForecast(raw: any): Array<{ t: string; v: number }> {
+    if (!Array.isArray(raw) || !raw.length) return [];
+    // New object format: [{time_tag, kp, ...}, ...]
+    if (typeof raw[0] === 'object' && !Array.isArray(raw[0])) {
+      return raw
+        .map((r: any) => ({ t: r.time_tag ?? '', v: parseFloat(r.kp ?? r.kp_predicted ?? '0') }))
+        .filter((r: any) => r.t && !isNaN(r.v));
+    }
+    // Legacy 2D format: [["time_tag","kp",...], ["2024-...", "3.00", ...], ...]
+    const [header, ...rows] = raw as string[][];
+    const ti = header.indexOf('time_tag');
+    const ki = header.findIndex((h: string) => /kp/i.test(h));
+    if (ti < 0 || ki < 0) return [];
+    return rows
+      .map(r => ({ t: r[ti] ?? '', v: parseFloat(r[ki] ?? '0') }))
+      .filter(r => r.t && !isNaN(r.v));
+  }
+
+  async function loadTrends() {
+    // SFI
+    const sfiData = await fetchSeries('sfi', 30);
+    if (sfiData) charts['sfi'] = makeLineChart('canvas-sfi', sfiData, '#10b981');
+
+    // K-index + forecast
+    const [kpData, fcstRaw] = await Promise.all([
+      fetchSeries('kindex', 7),
+      fetch('/api/history?metric=kforecast').then(r => r.ok ? r.json() : null).catch(() => null),
+    ]);
+    const fcst = parseForecast(fcstRaw ?? []);
+    if (kpData) charts['kp'] = makeKpChart('canvas-kp', kpData, fcst);
+
+    // Sunspots
+    const ssnData = await fetchSeries('sunspots', 30);
+    if (ssnData) charts['ssn'] = makeLineChart('canvas-ssn', ssnData, '#6ee7b7');
+  }
+
+  async function fetchSeries(metric: string, days: number): Promise<ChartSeries | null> {
+    try {
+      const res = await fetch(`/api/history?metric=${metric}&days=${days}`);
+      if (!res.ok) return null;
+      const d: ChartSeries = await res.json();
+      return d.labels?.length ? d : null;
+    } catch {
+      return null;
+    }
+  }
+
+  async function reloadChart(chartKey: string, metric: string, days: number) {
+    const data = await fetchSeries(metric, days);
+    if (!data) return;
+    const old = charts[chartKey];
+    if (old) old.destroy();
+    const color = chartKey === 'ssn' ? '#6ee7b7' : '#10b981';
+    charts[chartKey] = makeLineChart(`canvas-${chartKey}`, data, color);
+  }
+
+  // Tab wiring
+  document.querySelectorAll<HTMLButtonElement>('.tc-tab').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const chartKey = btn.dataset.chart!;
+      const days = Number(btn.dataset.days);
+      // Update tab active state within the same card
+      btn.closest('.tc-tabs')!.querySelectorAll('.tc-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      await reloadChart(chartKey, chartKey === 'ssn' ? 'sunspots' : 'sfi', days);
+    });
+  });
+
+  loadTrends();
 </script>
