@@ -6,6 +6,18 @@ import Shell from '../layouts/Shell.astro';
   title="Solar Dashboard — TavaOne Solar"
   description="Real-time solar flux, geomagnetic indices, and HF propagation data for amateur radio operators."
 >
+  <div id="storm-banner" class="storm-banner" hidden role="alert" aria-live="assertive">
+    <div class="wrap sb-inner">
+      <span class="sb-icon" aria-hidden="true">⚡</span>
+      <span id="sb-text" class="sb-text"></span>
+      <button id="sb-close" class="sb-close" type="button" aria-label="Dismiss alert">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
   <section class="page-hero" aria-label="Solar conditions">
     <div class="wrap">
       <p class="eyebrow">Live <span class="dim">· Updated every 15 min</span></p>
@@ -207,6 +219,44 @@ import Shell from '../layouts/Shell.astro';
 </Shell>
 
 <style>
+  /* ── Storm alert banner ── */
+  .storm-banner {
+    background: rgba(245,158,11,.10);
+    border-bottom: 1px solid rgba(245,158,11,.30);
+    padding: 9px 0;
+  }
+  .storm-banner.sb-severe {
+    background: rgba(239,68,68,.10);
+    border-bottom-color: rgba(239,68,68,.30);
+  }
+  .sb-inner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .sb-icon { font-size: .95rem; flex-shrink: 0; }
+  .sb-text {
+    flex: 1;
+    font-size: .8rem;
+    font-family: var(--mono);
+    color: #fbbf24;
+    letter-spacing: .04em;
+    line-height: 1.45;
+  }
+  .storm-banner.sb-severe .sb-text { color: #f87171; }
+  .sb-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    color: var(--muted);
+    opacity: .65;
+    flex-shrink: 0;
+    line-height: 0;
+    border-radius: 4px;
+  }
+  .sb-close:hover { opacity: 1; background: rgba(255,255,255,.05); }
+
   .data-updated {
     margin-top: 12px;
     font-family: var(--mono);
@@ -469,6 +519,11 @@ import Shell from '../layouts/Shell.astro';
     xray_class: string | null;
   }
 
+  /* ── Module state ── */
+  let lastData: SolarData | null = null;
+  let currentHours = 24;
+  let nextRefreshAt = Date.now() + 10 * 60_000;
+
   /* ── Live tile helpers ── */
   function setTile(tileId: string, valueId: string, text: string, cls: string | null) {
     const tile = document.getElementById(tileId);
@@ -490,6 +545,58 @@ import Shell from '../layouts/Shell.astro';
     if (diff < 60) return 'just now';
     if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
     return `${Math.floor(diff / 3600)} hr ago`;
+  }
+
+  function updateTimestamp(): void {
+    const upEl = document.getElementById('data-updated');
+    if (!upEl || !lastData?.updated) return;
+    const minsLeft = Math.max(0, Math.round((nextRefreshAt - Date.now()) / 60_000));
+    const next = minsLeft > 1 ? ` · next refresh in ${minsLeft} min` : minsLeft === 1 ? ' · next refresh in 1 min' : ' · refreshing…';
+    upEl.textContent = `Data from NOAA SWPC · ${relTime(lastData.updated)}${next}`;
+  }
+
+  /* ── Storm alert banner ── */
+  const G_SCALE: Record<number, [string, string]> = {
+    5: ['G1', 'Minor'], 6: ['G2', 'Moderate'], 7: ['G3', 'Strong'], 8: ['G4', 'Severe'], 9: ['G5', 'Extreme'],
+  };
+
+  function updateStormBanner(d: SolarData): void {
+    const banner  = document.getElementById('storm-banner') as HTMLElement | null;
+    const textEl  = document.getElementById('sb-text');
+    if (!banner || !textEl) return;
+
+    const kp       = d.k_index ?? 0;
+    const hasAlert = d.alerts.length > 0;
+
+    if (kp < 5 && !hasAlert) {
+      banner.hidden = true;
+      sessionStorage.removeItem('sb-dismissed-kp');
+      return;
+    }
+
+    // Respect dismiss unless Kp has risen to the next integer threshold
+    const dismissedKp = Number(sessionStorage.getItem('sb-dismissed-kp') ?? '0');
+    if (dismissedKp > 0 && Math.floor(kp) <= dismissedKp) return;
+
+    const gKey  = Math.min(9, Math.max(5, Math.floor(kp)));
+    const [gLabel, sevLabel] = G_SCALE[gKey] ?? ['G1', 'Minor'];
+    const severe = kp >= 7;
+    banner.classList.toggle('sb-severe', severe);
+
+    let msg = '';
+    if (kp >= 5) {
+      msg = `Geomagnetic storm · Kp ${kp} · ${gLabel} (${sevLabel}) — HF polar paths disrupted`;
+      if (kp >= 7) msg += '; aurora visible at mid-latitudes';
+      msg += '.';
+    }
+    if (hasAlert) {
+      const n    = d.alerts.length;
+      const tail = `${n} active NOAA alert${n > 1 ? 's' : ''}: ${d.alerts[0].headline}`;
+      msg = msg ? `${msg} ${tail}` : tail;
+    }
+
+    textEl.textContent = msg;
+    banner.hidden = false;
   }
 
   /* ── Propagation summaries ── */
@@ -659,8 +766,10 @@ import Shell from '../layouts/Shell.astro';
       const geoEl = document.getElementById('card-geo');   if (geoEl) geoEl.textContent  = geoText(d.k_index, d.a_index);
       const solEl = document.getElementById('card-solar'); if (solEl) solEl.textContent  = solarText(d.xray_class, d.alerts);
 
-      const upEl = document.getElementById('data-updated');
-      if (upEl && d.updated) upEl.textContent = `Data from NOAA SWPC · ${relTime(d.updated)}`;
+      lastData = d;
+      nextRefreshAt = Date.now() + 10 * 60_000;
+      updateTimestamp();
+      updateStormBanner(d);
     } catch (e) {
       console.error('solar fetch failed', e);
       const s = document.getElementById('conditions-summary');
@@ -792,12 +901,30 @@ import Shell from '../layouts/Shell.astro';
   }
 
   /* ── Init ── */
+  document.getElementById('sb-close')?.addEventListener('click', () => {
+    const banner = document.getElementById('storm-banner') as HTMLElement | null;
+    if (banner) {
+      banner.hidden = true;
+      sessionStorage.setItem('sb-dismissed-kp', String(Math.floor(lastData?.k_index ?? 0)));
+    }
+  });
+
   document.querySelectorAll('.range-tab').forEach(btn => {
     btn.addEventListener('click', () => {
       const h = Number((btn as HTMLElement).dataset.hours);
-      if (h) loadHistory(h);
+      if (h) { currentHours = h; loadHistory(h); }
     });
   });
+
+  // Update "X min ago" label every minute
+  setInterval(updateTimestamp, 60_000);
+
+  // Auto-reload data every 10 minutes
+  setInterval(() => {
+    nextRefreshAt = Date.now() + 10 * 60_000;
+    loadSolar();
+    loadHistory(currentHours);
+  }, 10 * 60_000);
 
   loadSolar();
   loadHistory(24);
