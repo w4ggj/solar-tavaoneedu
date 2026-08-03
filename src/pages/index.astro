@@ -1,0 +1,488 @@
+---
+import Shell from '../layouts/Shell.astro';
+---
+
+<Shell
+  title="Solar Dashboard — TavaOne Solar"
+  description="Real-time solar flux, geomagnetic indices, and HF propagation data for amateur radio operators."
+>
+  <section class="page-hero" aria-label="Solar conditions">
+    <div class="wrap">
+      <p class="eyebrow">Live <span class="dim">· Updated every 15 min</span></p>
+      <h1>Solar <span class="em">Conditions</span></h1>
+      <p class="lede">Real-time solar flux, geomagnetic indices, and band propagation — built for amateur radio operators.</p>
+    </div>
+    <div class="signal" aria-hidden="true">
+      <svg viewBox="0 0 1200 80" preserveAspectRatio="none">
+        <g class="wave-grp" fill="none" stroke="#10b981" stroke-width="2" opacity="0.65">
+          <path d="M -200,40 C -167,12 -133,12 -100,40 C -67,68 -33,68 0,40 C 33,12 67,12 100,40 C 133,68 167,68 200,40 C 233,12 267,12 300,40 C 333,68 367,68 400,40 C 433,12 467,12 500,40 C 533,68 567,68 600,40 C 633,12 667,12 700,40 C 733,68 767,68 800,40 C 833,12 867,12 900,40 C 933,68 967,68 1000,40 C 1033,12 1067,12 1100,40 C 1133,68 1167,68 1200,40 C 1233,12 1267,12 1300,40 C 1333,68 1367,68 1400,40 C 1433,12 1467,12 1500,40 C 1533,68 1567,68 1600,40 C 1633,12 1667,12 1700,40 C 1733,68 1767,68 1800,40 C 1833,12 1867,12 1900,40 C 1933,68 1967,68 2000,40 C 2033,12 2067,12 2100,40 C 2133,68 2167,68 2200,40"/>
+        </g>
+      </svg>
+      <span class="tag">SOLAR</span>
+    </div>
+  </section>
+
+  <section id="dashboard" aria-label="Live data">
+    <div class="wrap">
+      <p class="seclabel">Live Conditions</p>
+      <h2>Current solar data</h2>
+      <p class="sec-intro">Solar flux index, geomagnetic conditions, and X-ray flux — refreshed every 15 minutes from NOAA SWPC.</p>
+
+      <div class="data-grid">
+        <div class="data-tile" id="tile-sfi">
+          <div class="dt-label">Solar Flux (SFI)</div>
+          <div class="dt-value" id="val-sfi">—</div>
+          <div class="dt-meta">10.7 cm radio flux</div>
+        </div>
+        <div class="data-tile" id="tile-aindex">
+          <div class="dt-label">A-Index</div>
+          <div class="dt-value" id="val-aindex">—</div>
+          <div class="dt-meta">Geomagnetic Ap (3-hr)</div>
+        </div>
+        <div class="data-tile" id="tile-kindex">
+          <div class="dt-label">K-Index</div>
+          <div class="dt-value" id="val-kindex">—</div>
+          <div class="dt-meta">Planetary Kp (real-time)</div>
+        </div>
+        <div class="data-tile" id="tile-xray">
+          <div class="dt-label">X-Ray Class</div>
+          <div class="dt-value" id="val-xray">—</div>
+          <div class="dt-meta">GOES satellite</div>
+        </div>
+      </div>
+      <p class="data-updated" id="data-updated"></p>
+    </div>
+  </section>
+
+  <section id="history" aria-label="Solar history">
+    <div class="wrap">
+      <div class="history-top">
+        <div>
+          <p class="seclabel" id="history-label">24-Hour History</p>
+          <h2>Solar trend</h2>
+        </div>
+        <div class="range-tabs" role="group" aria-label="Time range">
+          <button class="range-tab" data-hours="6">6 h</button>
+          <button class="range-tab active" data-hours="24">24 h</button>
+          <button class="range-tab" data-hours="168">7 d</button>
+        </div>
+      </div>
+
+      <div class="grid cols2" style="margin-top:24px">
+        <div class="chart-card">
+          <div class="chart-head">
+            <span class="chart-lbl">Solar Flux Index (SFI)</span>
+            <span class="chart-cur" id="chart-sfi-cur"></span>
+          </div>
+          <svg id="chart-sfi" class="chart-svg" viewBox="0 0 560 80" preserveAspectRatio="none">
+            <text x="280" y="44" text-anchor="middle" fill="#475569" font-size="11" font-family="monospace">loading…</text>
+          </svg>
+          <div class="chart-foot">
+            <span id="chart-sfi-start"></span>
+            <span>now</span>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-head">
+            <span class="chart-lbl">K-Index (Kp)</span>
+            <span class="chart-cur" id="chart-kp-cur"></span>
+          </div>
+          <svg id="chart-kp" class="chart-svg" viewBox="0 0 560 80" preserveAspectRatio="none">
+            <text x="280" y="44" text-anchor="middle" fill="#475569" font-size="11" font-family="monospace">loading…</text>
+          </svg>
+          <div class="chart-foot">
+            <span id="chart-kp-start"></span>
+            <span>now</span>
+          </div>
+        </div>
+      </div>
+      <p class="data-updated" id="history-updated"></p>
+    </div>
+  </section>
+
+  <section id="what-it-means" aria-label="Impact on radio">
+    <div class="wrap">
+      <p class="seclabel">Ham Radio Impact</p>
+      <h2>What the numbers mean for your radio</h2>
+      <p class="sec-intro" id="conditions-summary">Loading current conditions…</p>
+      <div class="grid cols3" style="margin-top:32px">
+        <div class="card">
+          <div class="ico">📻</div>
+          <h3>HF Propagation</h3>
+          <p id="card-hf">Loading…</p>
+        </div>
+        <div class="card">
+          <div class="ico">🌍</div>
+          <h3>Geomagnetic Activity</h3>
+          <p id="card-geo">Loading…</p>
+        </div>
+        <div class="card">
+          <div class="ico">☀️</div>
+          <h3>Solar Events</h3>
+          <p id="card-solar">Loading…</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="learn-teaser" aria-label="Learn more">
+    <div class="wrap">
+      <p class="seclabel">Education</p>
+      <h2>Why does any of this matter?</h2>
+      <p class="sec-intro">Solar activity directly shapes the ionosphere — and the ionosphere controls which amateur radio bands are open and how far your contacts can reach. Once you understand the connection, you'll know exactly when to call CQ.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="/learn/">Learn about propagation →</a>
+        <a class="btn btn-ghost" href="https://tavaoneeducation.org/" target="_blank" rel="noopener">TavaOne Education ↗</a>
+      </div>
+    </div>
+  </section>
+</Shell>
+
+<style>
+  .data-updated {
+    margin-top: 12px;
+    font-family: var(--mono);
+    font-size: .74rem;
+    color: var(--muted);
+    opacity: .6;
+    letter-spacing: .06em;
+  }
+
+  /* History section */
+  .history-top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .range-tabs {
+    display: flex;
+    gap: 3px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 3px;
+    flex-shrink: 0;
+  }
+  .range-tab {
+    background: none;
+    border: none;
+    padding: 5px 13px;
+    border-radius: 5px;
+    font-family: var(--mono);
+    font-size: .75rem;
+    letter-spacing: .06em;
+    color: var(--muted);
+    cursor: pointer;
+    transition: background .12s, color .12s;
+  }
+  .range-tab:hover { color: var(--text); }
+  .range-tab.active { background: var(--green-dk); color: var(--green-lt); }
+
+  /* Chart cards */
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px 14px;
+    transition: border-color .18s;
+  }
+  .chart-card:hover { border-color: var(--green-dk); }
+  .chart-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .chart-lbl {
+    font-family: var(--mono);
+    font-size: .72rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .chart-cur {
+    font-family: var(--mono);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--green-lt);
+  }
+  .chart-svg {
+    display: block;
+    width: 100%;
+    height: 88px;
+  }
+  .chart-foot {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 7px;
+    font-family: var(--mono);
+    font-size: .68rem;
+    color: var(--muted);
+    opacity: .5;
+  }
+</style>
+
+<script>
+  /* ── Types ── */
+  interface SolarData {
+    updated: string;
+    sfi: number | null;
+    k_index: number | null;
+    k_index_time: string | null;
+    a_index: number | null;
+    xray_class: string | null;
+    xray_flux: number | null;
+    xray_time: string | null;
+    alerts: Array<{ issue_datetime: string; product_id: string; headline: string }>;
+  }
+
+  interface HistoryRow {
+    recorded_at: string;
+    sfi: number | null;
+    k_index: number | null;
+    a_index: number | null;
+    xray_class: string | null;
+  }
+
+  /* ── Live tile helpers ── */
+  function setTile(tileId: string, valueId: string, text: string, cls: string | null) {
+    const tile = document.getElementById(tileId);
+    const val  = document.getElementById(valueId);
+    if (val)  val.textContent = text;
+    if (tile) {
+      tile.classList.remove('good', 'warn', 'bad');
+      if (cls) tile.classList.add(cls);
+    }
+  }
+
+  function sfiCls(v: number | null)  { if (v === null) return null; return v >= 150 ? 'good' : v >= 100 ? 'warn' : null; }
+  function kpCls(v: number | null)   { if (v === null) return null; return v <= 2 ? 'good' : v <= 4 ? 'warn' : 'bad'; }
+  function apCls(v: number | null)   { if (v === null) return null; return v <= 7 ? 'good' : v <= 24 ? 'warn' : 'bad'; }
+  function xrayCls(s: string | null) { if (!s) return null; const l = s[0].toUpperCase(); return (l === 'A' || l === 'B') ? 'good' : l === 'C' ? 'warn' : 'bad'; }
+
+  function relTime(iso: string): string {
+    const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+    return `${Math.floor(diff / 3600)} hr ago`;
+  }
+
+  /* ── Propagation summaries ── */
+  function hfText(sfi: number | null, kp: number | null): string {
+    if (sfi === null) return 'Solar flux data unavailable — check back shortly.';
+    let t: string;
+    if      (sfi >= 150) t = `SFI ${sfi} — outstanding. 10 m and 15 m wide open worldwide. Great time for DX.`;
+    else if (sfi >= 120) t = `SFI ${sfi} — good. 15 m and 17 m open regionally; 10 m spotty but worth a listen.`;
+    else if (sfi >=  90) t = `SFI ${sfi} — moderate. 20 m and 17 m most reliable. 10 m unlikely outside sporadic-E.`;
+    else                 t = `SFI ${sfi} — low. Stick to 40 m and 80 m for reliable DX. 20 m marginal.`;
+    if (kp !== null && kp >= 5) t += ' Geomagnetic storm active — polar paths disrupted.';
+    else if (kp !== null && kp >= 3) t += ' Minor disturbance — watch high-latitude paths.';
+    return t;
+  }
+
+  function geoText(kp: number | null, ap: number | null): string {
+    if (kp === null) return 'Geomagnetic data unavailable — check back shortly.';
+    let t: string;
+    if      (kp <= 2) t = `Kp ${kp} — quiet. Excellent conditions, stable polar paths.`;
+    else if (kp <= 4) t = `Kp ${kp} — unsettled. Minor disturbance; high-latitude paths may be affected.`;
+    else if (kp <= 6) t = `Kp ${kp} — storm. Significant HF degradation; aurora possible at mid-latitudes.`;
+    else              t = `Kp ${kp} — severe storm. HF largely unreliable; aurora visible far south.`;
+    if (ap !== null) t += ` Ap: ${ap}.`;
+    return t;
+  }
+
+  function solarText(xclass: string | null, alerts: SolarData['alerts']): string {
+    let t = '';
+    if (xclass) {
+      const l = xclass[0].toUpperCase();
+      if      (l === 'X') t = `Active X-class flare — ${xclass}. Possible HF blackout on the sunlit side; watch for CME.`;
+      else if (l === 'M') t = `M-class flare — ${xclass}. Minor HF radio fade possible on the sunlit side.`;
+      else if (l === 'C') t = `C-class flare — ${xclass}. Minor event, no significant HF impact expected.`;
+      else                t = `Background X-ray: ${xclass}. No significant flare activity.`;
+    } else {
+      t = 'X-ray data unavailable.';
+    }
+    if (alerts.length > 0) t += ` ${alerts.length} active NOAA alert${alerts.length > 1 ? 's' : ''}: ${alerts[0].headline}`;
+    return t;
+  }
+
+  function overallSummary(d: SolarData): string {
+    const sw = d.sfi === null ? '' : d.sfi >= 150 ? 'excellent solar flux' : d.sfi >= 120 ? 'good solar flux' : d.sfi >= 90 ? 'moderate solar flux' : 'low solar flux';
+    const kw = d.k_index === null ? '' : d.k_index <= 2 ? 'quiet geomagnetic conditions' : d.k_index <= 4 ? 'unsettled geomagnetic conditions' : 'active geomagnetic storm';
+    if (sw && kw) return `Current conditions: ${sw} and ${kw}.`;
+    return sw ? `Current conditions: ${sw}.` : kw ? `Current conditions: ${kw}.` : 'Solar data not yet available — populates on the first cron cycle.';
+  }
+
+  /* ── Load live data ── */
+  async function loadSolar() {
+    try {
+      const res = await fetch('/api/solar');
+      if (!res.ok) {
+        const s = document.getElementById('conditions-summary');
+        if (s) s.textContent = 'Solar data not yet available — the cron worker will populate this on its first 15-minute cycle.';
+        ['card-hf', 'card-geo', 'card-solar'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = 'No data yet.';
+        });
+        return;
+      }
+      const d: SolarData = await res.json();
+
+      setTile('tile-sfi',    'val-sfi',    d.sfi     !== null ? String(d.sfi)     : '—', sfiCls(d.sfi));
+      setTile('tile-aindex', 'val-aindex', d.a_index !== null ? String(d.a_index) : '—', apCls(d.a_index));
+      setTile('tile-kindex', 'val-kindex', d.k_index !== null ? String(d.k_index) : '—', kpCls(d.k_index));
+      setTile('tile-xray',   'val-xray',   d.xray_class ?? '—',                          xrayCls(d.xray_class));
+
+      const sumEl = document.getElementById('conditions-summary');
+      if (sumEl) sumEl.textContent = overallSummary(d);
+
+      const hfEl  = document.getElementById('card-hf');    if (hfEl)  hfEl.textContent  = hfText(d.sfi, d.k_index);
+      const geoEl = document.getElementById('card-geo');   if (geoEl) geoEl.textContent  = geoText(d.k_index, d.a_index);
+      const solEl = document.getElementById('card-solar'); if (solEl) solEl.textContent  = solarText(d.xray_class, d.alerts);
+
+      const upEl = document.getElementById('data-updated');
+      if (upEl && d.updated) upEl.textContent = `Data from NOAA SWPC · ${relTime(d.updated)}`;
+    } catch (e) {
+      console.error('solar fetch failed', e);
+      const s = document.getElementById('conditions-summary');
+      if (s) s.textContent = 'Unable to load solar data. Please try again later.';
+    }
+  }
+
+  /* ── Sparkline renderer ── */
+  function sparkline(
+    svgId: string,
+    rows: HistoryRow[],
+    key: 'sfi' | 'k_index',
+    yMin: number,
+    yMax: number,
+    color: string,
+    refLine?: number
+  ) {
+    const el = document.getElementById(svgId) as SVGSVGElement | null;
+    if (!el) return;
+    const W = 560, H = 80;
+    const valid = rows.filter(r => r[key] !== null && r[key] !== undefined);
+
+    if (valid.length < 2) {
+      el.innerHTML = `<text x="${W / 2}" y="${H / 2 + 4}" text-anchor="middle" fill="#475569" font-size="11" font-family="monospace">no data yet</text>`;
+      return;
+    }
+
+    const xOf = (i: number) => ((i / (valid.length - 1)) * W).toFixed(1);
+    const yOf = (v: number)  => Math.max(0, Math.min(H, H - ((v - yMin) / (yMax - yMin)) * H)).toFixed(1);
+
+    let html = '';
+
+    // Subtle grid lines
+    for (let i = 0; i <= 4; i++) {
+      const y = ((i / 4) * H).toFixed(1);
+      html += `<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="#1e293b" stroke-width="1"/>`;
+    }
+
+    // Storm reference line (K-index: K=5)
+    if (refLine !== undefined) {
+      const ry = parseFloat(yOf(refLine));
+      if (ry >= 0 && ry <= H) {
+        html += `<line x1="0" y1="${ry}" x2="${W}" y2="${ry}" stroke="#f87171" stroke-width="1" stroke-dasharray="4 3" opacity="0.55"/>`;
+      }
+    }
+
+    // Area fill
+    const pts = valid.map((r, i) => `${xOf(i)},${yOf(Number(r[key]))}`).join(' ');
+    html += `<polygon points="0,${H} ${pts} ${xOf(valid.length - 1)},${H}" fill="${color}" opacity="0.1"/>`;
+
+    // Line
+    html += `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+
+    // Dot at latest reading
+    const lv = Number(valid[valid.length - 1][key]);
+    html += `<circle cx="${xOf(valid.length - 1)}" cy="${yOf(lv)}" r="3.5" fill="${color}" stroke="#0f172a" stroke-width="2"/>`;
+
+    el.innerHTML = html;
+  }
+
+  function trendArrow(rows: HistoryRow[], key: 'sfi' | 'k_index'): string {
+    const vals = rows.filter(r => r[key] !== null).map(r => Number(r[key]));
+    if (vals.length < 4) return '';
+    const delta = vals[vals.length - 1] - vals[0];
+    const threshold = key === 'sfi' ? 5 : 0.5;
+    return Math.abs(delta) < threshold ? '' : delta > 0 ? ' ↑' : ' ↓';
+  }
+
+  function fmtStartTime(iso: string, hours: number): string {
+    const d = new Date(iso);
+    if (hours <= 24) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  }
+
+  /* ── Load history ── */
+  async function loadHistory(hours: number) {
+    // Update tab state
+    document.querySelectorAll('.range-tab').forEach(btn => {
+      (btn as HTMLElement).classList.toggle('active', Number((btn as HTMLElement).dataset.hours) === hours);
+    });
+
+    const labelEl = document.getElementById('history-label');
+    if (labelEl) labelEl.textContent = hours === 168 ? '7-Day History' : hours === 6 ? '6-Hour History' : '24-Hour History';
+
+    try {
+      const res = await fetch(`/api/history?hours=${hours}`);
+      if (!res.ok) throw new Error(String(res.status));
+      const rows: HistoryRow[] = await res.json();
+
+      if (!rows.length) {
+        ['chart-sfi', 'chart-kp'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.innerHTML = '<text x="280" y="44" text-anchor="middle" fill="#475569" font-size="11" font-family="monospace">no data yet — first reading within 15 min</text>';
+        });
+        return;
+      }
+
+      // SFI — auto-scaled y-axis
+      const sfis = rows.filter(r => r.sfi !== null).map(r => Number(r.sfi));
+      const sfiMin = sfis.length ? Math.max(0, Math.floor(Math.min(...sfis) - 10)) : 60;
+      const sfiMax = sfis.length ? Math.ceil(Math.max(...sfis) + 10) : 250;
+      sparkline('chart-sfi', rows, 'sfi', sfiMin, sfiMax, '#10b981');
+
+      // K-index — fixed 0–9
+      sparkline('chart-kp', rows, 'k_index', 0, 9, '#10b981', 5);
+
+      // Current value + trend in chart headers
+      const latestSfi = sfis[sfis.length - 1];
+      const sfiCurEl = document.getElementById('chart-sfi-cur');
+      if (sfiCurEl && latestSfi !== undefined) sfiCurEl.textContent = String(latestSfi) + trendArrow(rows, 'sfi');
+
+      const kps = rows.filter(r => r.k_index !== null).map(r => Number(r.k_index));
+      const kpCurEl = document.getElementById('chart-kp-cur');
+      if (kpCurEl && kps.length) kpCurEl.textContent = String(kps[kps.length - 1]) + trendArrow(rows, 'k_index');
+
+      // Footer start-time labels
+      const startIso = rows[0].recorded_at;
+      const startFmt = fmtStartTime(startIso, hours);
+      (['chart-sfi-start', 'chart-kp-start'] as const).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = startFmt;
+      });
+
+      const histEl = document.getElementById('history-updated');
+      if (histEl) histEl.textContent = `${rows.length} readings`;
+    } catch (e) {
+      console.error('history fetch failed', e);
+    }
+  }
+
+  /* ── Init ── */
+  document.querySelectorAll('.range-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const h = Number((btn as HTMLElement).dataset.hours);
+      if (h) loadHistory(h);
+    });
+  });
+
+  loadSolar();
+  loadHistory(24);
+</script>
