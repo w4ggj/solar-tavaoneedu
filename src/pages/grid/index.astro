@@ -50,30 +50,38 @@ import Shell from '../../layouts/Shell.astro';
         <div class="map-row-labels" aria-hidden="true" id="row-labels"></div>
 
         <div class="map-container" id="map-container">
-          <svg id="grid-map" viewBox="0 0 360 180" xmlns="http://www.w3.org/2000/svg"
+          <svg id="grid-map" viewBox="-20 -12 400 202" xmlns="http://www.w3.org/2000/svg"
                preserveAspectRatio="xMidYMid meet"
                role="img" aria-label="Maidenhead grid propagation map">
             <!-- Ocean -->
             <rect width="360" height="180" fill="#07111e"/>
 
-            <!-- Simplified continent shapes for orientation -->
-            <g id="continents" fill="#142238" stroke="rgba(100,140,170,0.35)" stroke-width="0.4">
+            <!-- Continents — equirectangular (x = lon+180, y = 90−lat) -->
+            <g id="continents" fill="#1a2e45" stroke="rgba(100,160,200,0.4)" stroke-width="0.4">
               <!-- Greenland -->
-              <polygon points="128,8 162,8 165,20 155,28 138,30 126,22"/>
-              <!-- North America -->
-              <polygon points="15,15 75,12 95,18 118,40 130,52 126,60 118,72 105,82 95,78 88,70 80,68 72,68 68,72 58,78 50,88 40,90 32,85 25,78 20,68 15,50 12,30"/>
+              <polygon points="128,10 148,6 162,8 166,18 160,24 148,28 132,28 124,22"/>
+              <!-- North America (Alaska → Central America) -->
+              <polygon points="14,22 24,19 40,20 80,17 102,22 125,34 116,46 110,48 106,50 104,55 99,65 90,62 83,64 90,72 100,82 96,84 76,72 70,67 62,58 56,46 52,40 40,32 18,34 12,26"/>
               <!-- South America -->
-              <polygon points="98,78 115,75 128,78 138,88 148,100 148,138 132,148 112,148 100,135 95,112 92,95"/>
-              <!-- Europe -->
-              <polygon points="168,22 192,18 212,20 218,28 218,38 214,45 208,50 200,55 188,55 182,50 175,45 170,40 165,32"/>
+              <polygon points="105,78 118,79 128,84 145,95 145,102 140,110 136,114 128,124 122,125 115,132 112,145 106,140 108,128 109,122 110,108 103,100 100,90 102,88"/>
+              <!-- Europe mainland (Iberia → Balkans → Ukraine → Denmark → Bay of Biscay) -->
+              <polygon points="170,54 175,54 184,48 192,52 202,50 204,53 208,49 214,44 212,38 200,36 192,35 190,35 184,37 182,40 175,36 170,44"/>
+              <!-- Scandinavia -->
+              <polygon points="185,33 192,34 207,20 196,20 185,28"/>
+              <!-- UK -->
+              <polygon points="172,36 178,33 178,40 174,43 170,42"/>
               <!-- Africa -->
-              <polygon points="168,52 218,52 228,62 232,78 232,102 225,125 205,132 188,130 175,118 162,98 160,75 162,60"/>
-              <!-- Asia (main) -->
-              <polygon points="208,22 248,12 285,10 322,15 345,25 348,42 340,55 325,65 315,78 298,88 278,90 258,80 235,68 222,55 215,42 210,32"/>
+              <polygon points="174,55 190,53 200,57 212,60 230,79 225,90 220,108 198,125 192,110 189,96 184,85 175,85 163,76 166,62"/>
+              <!-- Arabian Peninsula -->
+              <polygon points="212,60 222,60 238,68 233,82 224,79 217,68"/>
+              <!-- Asia main body -->
+              <polygon points="208,50 214,44 228,38 240,20 280,18 320,18 342,38 322,46 302,58 290,72 284,88 278,74 272,68 260,82 252,70 242,64 216,64"/>
               <!-- Indian subcontinent -->
-              <polygon points="238,68 258,65 262,78 255,92 240,95 232,85"/>
+              <polygon points="252,64 272,66 260,82 252,72"/>
+              <!-- Japan -->
+              <polygon points="310,58 320,54 323,46 327,44 321,46 316,56"/>
               <!-- Australia -->
-              <polygon points="292,100 335,100 340,108 338,130 325,138 308,140 292,132 285,118 285,108"/>
+              <polygon points="294,110 312,102 330,108 334,122 328,128 316,124 298,124 294,118"/>
               <!-- Antarctica -->
               <rect x="0" y="157" width="360" height="23"/>
             </g>
@@ -97,6 +105,9 @@ import Shell from '../../layouts/Shell.astro';
 
             <!-- Grid field lines (rendered by JS) -->
             <g id="grid-lines"></g>
+
+            <!-- Axis labels (rendered by JS inside SVG for perfect alignment) -->
+            <g id="axis-labels"></g>
 
             <!-- User location -->
             <g id="user-marker" style="display:none">
@@ -199,19 +210,9 @@ import Shell from '../../layouts/Shell.astro';
 
   /* ── Map outer (full bleed within wrap) ── */
   .map-outer { position: relative; margin: 0 -24px; }
-  .map-col-labels {
-    display: flex; justify-content: space-around;
-    padding: 0 32px 0 46px;
-    font-family: var(--mono); font-size: .62rem; color: var(--muted);
-    opacity: .55; letter-spacing: .04em;
-  }
+  .map-col-labels { display: none; }
   .map-row-wrap { display: flex; }
-  .map-row-labels {
-    display: flex; flex-direction: column; justify-content: space-around;
-    width: 28px; flex-shrink: 0; padding: 0;
-    font-family: var(--mono); font-size: .62rem; color: var(--muted);
-    opacity: .55; text-align: right; padding-right: 4px;
-  }
+  .map-row-labels { display: none; }
   .map-container {
     flex: 1; position: relative; border: 1px solid var(--border);
     border-radius: 10px; overflow: hidden; background: #07111e;
@@ -262,7 +263,6 @@ import Shell from '../../layouts/Shell.astro';
   .swatch { display: inline-block; width: 14px; height: 10px; border-radius: 3px; flex-shrink: 0; }
 
   @media (max-width: 600px) {
-    .map-col-labels, .map-row-labels { display: none; }
     .map-outer { margin: 0 -16px; }
   }
 </style>
@@ -361,17 +361,15 @@ import Shell from '../../layouts/Shell.astro';
   }
 
   function renderAxisLabels() {
-    // Column labels A–R (left to right)
-    const colEl = document.getElementById('col-labels')!;
-    colEl.innerHTML = Array.from({ length: 18 }, (_, i) =>
-      `<span>${String.fromCharCode(65 + i)}</span>`
-    ).join('');
-
-    // Row labels R–A (top to bottom = north to south)
-    const rowEl = document.getElementById('row-labels')!;
-    rowEl.innerHTML = Array.from({ length: 18 }, (_, i) =>
-      `<span>${String.fromCharCode(65 + (ROWS - 1 - i))}</span>`
-    ).join('');
+    const el = document.getElementById('axis-labels')!;
+    let html = '';
+    for (let c = 0; c < 18; c++) {
+      html += `<text x="${c * 20 + 10}" y="-3" text-anchor="middle" font-size="6" font-family="JetBrains Mono,monospace" fill="#94a3b8">${String.fromCharCode(65 + c)}</text>`;
+    }
+    for (let r = 0; r < 18; r++) {
+      html += `<text x="-4" y="${r * 10 + 6}" text-anchor="end" font-size="6" font-family="JetBrains Mono,monospace" fill="#94a3b8">${String.fromCharCode(65 + (17 - r))}</text>`;
+    }
+    el.innerHTML = html;
   }
 
   /* ── Interaction ── */
