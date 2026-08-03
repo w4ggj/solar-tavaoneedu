@@ -4,13 +4,14 @@ import Shell from '../../layouts/Shell.astro';
 
 <Shell
   title="Learn Propagation — TavaOne Solar"
-  description="Understanding solar weather and HF radio propagation for amateur radio operators."
+  description="Everything on the TavaOne Solar dashboard explained — SFI, K-index, X-ray class, band conditions, greyline, solar imagery, and more for amateur radio operators."
 >
+  <!-- ═══════════════════════════════════════════════════════════ HERO -->
   <section class="page-hero" aria-label="Learn propagation">
     <div class="wrap">
       <p class="eyebrow">Education <span class="dim">· Propagation</span></p>
       <h1>How the sun shapes <span class="em">the bands</span></h1>
-      <p class="lede">The ionosphere is alive — rebuilt every day by the sun. Understanding it is the difference between knowing conditions are poor and knowing <em>why</em>, and what to expect tomorrow.</p>
+      <p class="lede">The ionosphere is alive — rebuilt every day by the sun. Every number on the dashboard tells a piece of that story. This page explains all of them, so you can read conditions like an elmer.</p>
     </div>
     <div class="signal" aria-hidden="true">
       <svg viewBox="0 0 1200 80" preserveAspectRatio="none">
@@ -22,53 +23,546 @@ import Shell from '../../layouts/Shell.astro';
     </div>
   </section>
 
-  <!-- Explainer cards — Phase 2 will expand each into a full article -->
-  <section id="concepts" aria-label="Core concepts">
+  <!-- ═══════════════════════════════════════════════ TABLE OF CONTENTS -->
+  <section class="toc-section" aria-label="Page contents">
     <div class="wrap">
-      <p class="seclabel">Core Concepts</p>
-      <h2>The ionosphere and you</h2>
-      <p class="sec-intro">Every HF contact you make bounces off an invisible mirror 100–400 km above Earth, shaped entirely by the sun. Here's how it works.</p>
+      <p class="seclabel">On This Page</p>
+      <nav class="toc-grid" aria-label="Contents">
+        <a href="#ionosphere" class="toc-item">
+          <span class="toc-num">01</span>
+          <span class="toc-label">The Ionosphere</span>
+        </a>
+        <a href="#live-tiles" class="toc-item">
+          <span class="toc-num">02</span>
+          <span class="toc-label">Live Data Tiles</span>
+        </a>
+        <a href="#band-conditions" class="toc-item">
+          <span class="toc-num">03</span>
+          <span class="toc-label">Band Conditions</span>
+        </a>
+        <a href="#time-slider" class="toc-item">
+          <span class="toc-num">04</span>
+          <span class="toc-label">Time Slider</span>
+        </a>
+        <a href="#greyline" class="toc-item">
+          <span class="toc-num">05</span>
+          <span class="toc-label">Greyline Map</span>
+        </a>
+        <a href="#solar-imagery" class="toc-item">
+          <span class="toc-num">06</span>
+          <span class="toc-label">Solar Imagery</span>
+        </a>
+        <a href="#history-charts" class="toc-item">
+          <span class="toc-num">07</span>
+          <span class="toc-label">History &amp; Charts</span>
+        </a>
+        <a href="#storm-banner" class="toc-item">
+          <span class="toc-num">08</span>
+          <span class="toc-label">Storm Alerts</span>
+        </a>
+        <a href="#grid-map" class="toc-item">
+          <span class="toc-num">09</span>
+          <span class="toc-label">Grid Map</span>
+        </a>
+        <a href="#solar-cycle" class="toc-item">
+          <span class="toc-num">10</span>
+          <span class="toc-label">The Solar Cycle</span>
+        </a>
+      </nav>
+    </div>
+  </section>
 
-      <div class="grid cols3">
-        <div class="card">
-          <div class="kicker">Concept 01</div>
-          <h3>The Ionosphere</h3>
-          <p>The sun's UV and X-ray radiation ionizes the upper atmosphere into layers — D, E, and F — each refracting radio waves at different frequencies and times of day.</p>
+  <!-- ═══════════════════════════════════════════════ 01 — IONOSPHERE -->
+  <section id="ionosphere" class="learn-section" aria-label="The Ionosphere">
+    <div class="wrap">
+      <p class="seclabel">Concept 01</p>
+      <h2>The Ionosphere — your invisible antenna</h2>
+      <p class="sec-intro">Every HF contact you make travels not through space but through a mirror — an ionized layer of atmosphere 60–1000 km above Earth. The sun builds that mirror fresh every day.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <p>The sun constantly fires ultraviolet light and X-rays into Earth's upper atmosphere. When those photons slam into air molecules, they knock electrons loose, creating a plasma — charged particles that can bend and reflect radio waves the way glass bends light.</p>
+          <p>This ionized region is called the <strong>ionosphere</strong>, and it has distinct layers:</p>
+          <ul class="learn-list">
+            <li><strong>D-layer (60–90 km)</strong> — exists only in daylight. It absorbs signals on 160 m and 80 m during the day, which is why those bands are noisy at noon and open at night. When the sun sets, the D-layer disappears and the absorber is gone.</li>
+            <li><strong>E-layer (90–150 km)</strong> — present by day, much weaker at night. Responsible for sporadic-E (Es) propagation — those sudden, brief openings on 6 m and 10 m that can make contacts across thousands of miles without warning.</li>
+            <li><strong>F-layer (150–1000 km)</strong> — the workhorse for DX. At night the F-layer merges into one layer; by day it splits into F1 and F2. The F2 layer, pushed higher by solar heating, provides the long-distance skip that makes 20 m and 15 m DX bands work.</li>
+          </ul>
+          <p>The key insight: <strong>more sunlight → more ionization → higher bands open; less sunlight → D-layer drops → lower bands open at night.</strong> The greyline, the K-index, the SFI — all of them describe different aspects of what the sun is doing to this mirror right now.</p>
         </div>
-        <div class="card">
-          <div class="kicker">Concept 02</div>
-          <h3>Solar Flux Index (SFI)</h3>
-          <p>The 10.7 cm radio flux is the best single-number measure of solar activity. Higher SFI → more ionization → higher bands open. Above 150 is excellent for 10 m and 12 m.</p>
-        </div>
-        <div class="card">
-          <div class="kicker">Concept 03</div>
-          <h3>Geomagnetic Indices</h3>
-          <p>K-index (0–9) and A-index (0–400) measure disturbance in Earth's magnetic field. High K means polar paths are degraded and auroral noise rises.</p>
-        </div>
-        <div class="card">
-          <div class="kicker">Concept 04</div>
-          <h3>Solar Flares &amp; X-Ray Bursts</h3>
-          <p>X-class flares flood the dayside ionosphere with X-rays, causing sudden ionospheric disturbances (SIDs) — brief HF blackouts on sunlit paths, sometimes lasting hours.</p>
-        </div>
-        <div class="card">
-          <div class="kicker">Concept 05</div>
-          <h3>Coronal Mass Ejections</h3>
-          <p>CMEs are plasma clouds that take 1–3 days to reach Earth. When they arrive they can compress the magnetosphere, driving K-indices to 7–9 and producing stunning auroras — and poor HF conditions.</p>
-        </div>
-        <div class="card">
-          <div class="kicker">Concept 06</div>
-          <h3>The Solar Cycle</h3>
-          <p>The sun follows an 11-year cycle of activity. Near solar maximum (more sunspots, high SFI), 10 m and 15 m open worldwide. Near minimum, work 40 m and 80 m for reliable DX.</p>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">Why HF and not VHF?</p>
+            <p>The ionosphere bends radio waves depending on frequency. Below roughly 30 MHz (HF), the plasma can refract signals back to Earth. Above 30 MHz, signals punch straight through into space — which is why VHF and UHF require line-of-sight or satellites.</p>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">License exam relevance</p>
+            <p>Ionospheric layers and HF propagation appear in <strong>Element 3, Group G3</strong> of the General class question pool — skip distance, MUF, critical frequency, and greyline are all testable topics.</p>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <section id="reading-the-numbers" aria-label="Reading the numbers">
+  <!-- ═══════════════════════════════════════════════ 02 — LIVE TILES -->
+  <section id="live-tiles" class="learn-section alt-bg" aria-label="Live data tiles">
+    <div class="wrap">
+      <p class="seclabel">Concept 02</p>
+      <h2>Live Data Tiles — four numbers to check first</h2>
+      <p class="sec-intro">The top of the dashboard shows four real-time measurements pulled from NOAA's Space Weather Prediction Center every 15 minutes. Here's what each one means and what you should do when you see it.</p>
+
+      <div class="tiles-explainer">
+
+        <!-- SFI -->
+        <div class="tile-explain-card">
+          <div class="tile-mock sfi">
+            <div class="tm-label">SOLAR FLUX (SFI)</div>
+            <div class="tm-value">126</div>
+            <div class="tm-sub">10.7 cm radio flux</div>
+          </div>
+          <div class="tile-explain-body">
+            <h3>Solar Flux Index (SFI)</h3>
+            <p>The SFI — also called the F10.7 index — is a daily measurement of the sun's radio emissions at a wavelength of 10.7 cm (2800 MHz), taken at the Dominion Radio Astrophysical Observatory in British Columbia. It has been measured continuously since 1947, making it the longest unbroken record of solar activity.</p>
+            <p>SFI tracks ionization of the F-layer almost perfectly without requiring direct UV/X-ray measurements in space. Higher SFI means the sun is pushing more energy into the ionosphere, lifting the maximum usable frequency (MUF) upward. When MUF rises above a band's frequencies, that band opens.</p>
+            <div class="scale-table">
+              <div class="st-row"><span class="st-val low">&lt; 80</span><span class="st-desc">Solar minimum territory. 10 m / 12 m / 15 m are mostly closed. Reliable DX on 40 m and 80 m.</span></div>
+              <div class="st-row"><span class="st-val mod">80–110</span><span class="st-desc">Moderate. 17 m and 15 m open regionally by day. 10 m sporadic at best.</span></div>
+              <div class="st-row"><span class="st-val good">110–150</span><span class="st-desc">Good. 10 m / 12 m / 15 m open to DX on most days. Hunt for openings.</span></div>
+              <div class="st-row"><span class="st-val excel">&gt; 150</span><span class="st-desc">Excellent. All HF bands active. 10 m wide open worldwide — classic solar maximum.</span></div>
+            </div>
+            <p class="tip-line"><strong>Operating tip:</strong> SFI above 150 is when 10 m and 12 m come alive and you can work stations with a wire antenna that would normally require a beam. Check the SFI before deciding which bands to call CQ on.</p>
+          </div>
+        </div>
+
+        <!-- A-index -->
+        <div class="tile-explain-card">
+          <div class="tile-mock aindex">
+            <div class="tm-label">A-INDEX</div>
+            <div class="tm-value">15</div>
+            <div class="tm-sub">Geomagnetic Ap (3-hr)</div>
+          </div>
+          <div class="tile-explain-body">
+            <h3>A-Index (Ap)</h3>
+            <p>The A-index is a daily planetary index (Ap) of geomagnetic activity, derived by averaging eight 3-hour K-index measurements and converting them to a linear scale from 0 to 400. It's the "daily report card" for geomagnetic conditions — easier to compare day-to-day than the real-time K-index.</p>
+            <p>The dashboard shows the Ap value derived from the current real-time Kp reading, so it gives you an idea of how the day has been trending — not just the last 3 hours.</p>
+            <div class="scale-table">
+              <div class="st-row"><span class="st-val excel">0–7</span><span class="st-desc">Quiet. Normal propagation, stable auroral zone. Great conditions for polar paths.</span></div>
+              <div class="st-row"><span class="st-val good">8–15</span><span class="st-desc">Unsettled. Watch for polar path degradation. Mid-latitude HF usually fine.</span></div>
+              <div class="st-row"><span class="st-val mod">16–29</span><span class="st-desc">Active. High-latitude paths unreliable. Minor absorption on some HF bands.</span></div>
+              <div class="st-row"><span class="st-val low">30–49</span><span class="st-desc">Minor storm (G1). Polar paths affected. Expect flutter and absorption.</span></div>
+              <div class="st-row"><span class="st-val bad">&ge; 50</span><span class="st-desc">Moderate to severe storm (G2+). Significant HF degradation. Aurora likely.</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- K-index -->
+        <div class="tile-explain-card">
+          <div class="tile-mock kindex">
+            <div class="tm-label">K-INDEX</div>
+            <div class="tm-value">3</div>
+            <div class="tm-sub">Planetary Kp (real-time)</div>
+          </div>
+          <div class="tile-explain-body">
+            <h3>K-Index (Kp)</h3>
+            <p>The K-index is a quasi-logarithmic scale from 0 to 9 that measures disturbance of Earth's magnetic field over a 3-hour window. It's collected by a worldwide network of magnetometers and averaged into the planetary Kp index. The dashboard shows the real-time 1-minute estimate from NOAA's GOES satellite network — it updates more frequently than the official 3-hour value.</p>
+            <p>Geomagnetic storms are caused by coronal mass ejections (CMEs) or high-speed solar wind streams hitting Earth's magnetosphere. As the disturbance compresses and distorts the magnetic field, induced currents in the ionosphere scatter and absorb HF signals — especially on paths that cross the polar regions.</p>
+            <div class="scale-table">
+              <div class="st-row"><span class="st-val excel kp-color-0">0–2</span><span class="st-desc">Quiet. Polar paths open. Best conditions for north-south DX.</span></div>
+              <div class="st-row"><span class="st-val good kp-color-3">3–4</span><span class="st-desc">Unsettled. Minor degradation on high-latitude paths. Watch for aurora.</span></div>
+              <div class="st-row"><span class="st-val mod kp-color-5">5–6</span><span class="st-desc">Storm (G1–G2). HF signals on polar paths are unreliable. Aurora to mid-latitudes.</span></div>
+              <div class="st-row"><span class="st-val low kp-color-7">7–8</span><span class="st-desc">Severe storm (G3–G4). HF largely disrupted. Aurora visible across much of North America.</span></div>
+              <div class="st-row"><span class="st-val bad kp-color-9">9</span><span class="st-desc">Extreme storm (G5). HF blackout possible globally. Rare — happens a few times per cycle.</span></div>
+            </div>
+            <p class="tip-line"><strong>Operating tip:</strong> A Kp of 3 or lower with a high SFI is the sweet spot for DX — good ionization with a calm magnetosphere. When Kp spikes to 5+, shift to local and regional contacts and work north-south paths carefully.</p>
+          </div>
+        </div>
+
+        <!-- X-ray class -->
+        <div class="tile-explain-card">
+          <div class="tile-mock xray">
+            <div class="tm-label">X-RAY CLASS</div>
+            <div class="tm-value" style="font-size:2rem">B4.2</div>
+            <div class="tm-sub">GOES satellite</div>
+          </div>
+          <div class="tile-explain-body">
+            <h3>X-Ray Class</h3>
+            <p>NOAA's GOES satellites continuously measure the sun's X-ray output in the 0.1–0.8 nm band. The X-ray class tells you the current solar flare intensity — or, when there are no active flares, the background radiation level. It's updated every minute from the primary GOES satellite.</p>
+            <p>The class system uses letters followed by a number. Each letter is 10× more intense than the previous:</p>
+            <div class="scale-table">
+              <div class="st-row"><span class="st-val excel">A</span><span class="st-desc">Background. Quiet sun — below 10⁻⁷ W/m². No propagation impact.</span></div>
+              <div class="st-row"><span class="st-val good">B</span><span class="st-desc">Very minor. Rarely noticed on HF. Daily background during low solar activity.</span></div>
+              <div class="st-row"><span class="st-val mod">C</span><span class="st-desc">Minor flare. Slight short-wave fadeout on sunlit paths in some cases.</span></div>
+              <div class="st-row"><span class="st-val low">M</span><span class="st-desc">Moderate flare. May cause brief short-wave fadeout (SWF) lasting minutes to an hour.</span></div>
+              <div class="st-row"><span class="st-val bad">X</span><span class="st-desc">Major flare. Likely HF blackout on sunlit side of Earth. The bigger the number, the longer the outage.</span></div>
+            </div>
+            <p>Within each class, a decimal number multiplies the intensity (e.g., M5.0 is five times an M1.0). X-class flares go above X10 in the most extreme events (the 2003 "Halloween storms" produced an X28).</p>
+            <p class="tip-line"><strong>What to watch for:</strong> During an X or strong M flare, the sunlit hemisphere of Earth gets flooded with X-rays simultaneously — skip on east-west paths may vanish in minutes. The blackout usually recovers within an hour. Night-side paths are unaffected.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════ 03 — BAND CONDITIONS -->
+  <section id="band-conditions" class="learn-section" aria-label="Band conditions widget">
+    <div class="wrap">
+      <p class="seclabel">Concept 03</p>
+      <h2>HF Band Conditions — the S-meter grid</h2>
+      <p class="sec-intro">Below the live tiles, the dashboard shows an S-meter–style grid for each major HF band. Here's how to read it and how the model works.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <h3>What the ratings mean</h3>
+          <p>Each band tile shows a label — <strong class="cond-ex excellent">Excellent</strong>, <strong class="cond-ex good">Good</strong>, <strong class="cond-ex fair">Fair</strong>, <strong class="cond-ex poor">Poor</strong>, or <strong class="cond-ex closed">Closed</strong> — along with filled bars like an S-meter. This is a modeled estimate of current conditions based on three inputs:</p>
+          <ul class="learn-list">
+            <li><strong>SFI (Solar Flux Index)</strong> — determines whether the ionosphere has enough ionization to support the band at all. Each band has a minimum SFI threshold: 10 m needs SFI ≥ 90 to have a chance at all; 80 m works even when SFI is 65.</li>
+            <li><strong>Time of day (UTC)</strong> — the dashboard uses your browser's UTC clock. D-layer absorption is highest midday and absent at night, so 80 m and 40 m are poor by day and excellent at night. 10 m and 15 m need daytime F2 ionization, so they fade after sunset.</li>
+            <li><strong>Kp (geomagnetic index)</strong> — storm penalties are applied when Kp ≥ 4. Higher bands that depend on the F-layer take the biggest hit. Each step above Kp 4 drops conditions one level across all bands, with higher bands hit harder.</li>
+          </ul>
+          <h3>What it is — and isn't</h3>
+          <p>This is a <em>propagation model</em>, not a measurement. Real HF conditions vary enormously with your location, the path you're working (short vs. long path, polar vs. equatorial), antenna, and local noise floor. The model gives you a starting expectation — think of it as the forecast, not the observation. Always trust a live cluster spot or a wsjt-x waterfall over a modeled estimate.</p>
+          <p>The model intentionally errs on the side of caution: a band rated "Fair" may actually be working beautifully if you're on the right path at the right time. "Closed" means conditions are against you, not that the band is silent — Es and transequatorial propagation (TEP) can open bands regardless of SFI.</p>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">Bands covered</p>
+            <ul class="aside-list">
+              <li><strong>10 m</strong> (28 MHz) — king of solar maximum</li>
+              <li><strong>12 m</strong> (24 MHz) — often overlooked but rich at high SFI</li>
+              <li><strong>15 m</strong> (21 MHz) — the daily workhorse near solar max</li>
+              <li><strong>17 m</strong> (18 MHz) — reliable mid-cycle band</li>
+              <li><strong>20 m</strong> (14 MHz) — the all-time DX standard</li>
+              <li><strong>30 m</strong> (10 MHz) — CW/data only, usually open day and night</li>
+              <li><strong>40 m</strong> (7 MHz) — night DX, day regional</li>
+              <li><strong>80 m</strong> (3.5 MHz) — regional/continental; noisy by day</li>
+            </ul>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">Maximum Usable Frequency (MUF)</p>
+            <p>The MUF is the highest frequency the ionosphere can refract back to Earth on a given path. When SFI rises, MUF rises. The band conditions model essentially asks: "Is this band's frequency below the current MUF for typical paths?" If yes, it can propagate; if no, the signal punches through and is lost in space.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════ 04 — TIME SLIDER -->
+  <section id="time-slider" class="learn-section alt-bg" aria-label="Band conditions time slider">
+    <div class="wrap">
+      <p class="seclabel">Concept 04</p>
+      <h2>Time Slider — plan ahead, look back</h2>
+      <p class="sec-intro">The slider below the band conditions grid lets you shift the simulated time ±12 hours from now, updating both the band conditions and the greyline map simultaneously.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <p>Move the slider left and the model rewinds — showing you what conditions looked like (or how the model would have rated them) up to 12 hours ago. Move it right and the model fast-forwards — letting you see what to expect tonight, or plan tomorrow morning's contest operating.</p>
+          <p>What changes with the slider:</p>
+          <ul class="learn-list">
+            <li><strong>Band condition ratings</strong> — day/night D-layer absorption shifts based on the simulated UTC time. A band that's "Poor" now might be "Excellent" in 6 hours once darkness spreads across your target continent.</li>
+            <li><strong>Greyline map</strong> — the terminator line and day/night shading update to match the simulated time, so you can see where the greyline will be during your planned operating window.</li>
+          </ul>
+          <p>The SFI and Kp used in the model are still today's live values — the slider only changes the time-of-day component. Real geomagnetic conditions 12 hours from now may differ. Use this as a planning tool, not a precise forecast.</p>
+          <p>To return to real time, click the <strong>Reset</strong> button that appears whenever you move the slider away from zero.</p>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">When to use the slider</p>
+            <ul class="aside-list">
+              <li>Planning a contest operating schedule</li>
+              <li>Figuring out when Europe comes alive on 20 m from the US East Coast</li>
+              <li>Checking when your target continent enters daylight (for high bands)</li>
+              <li>Seeing when 80 m opens up for a midnight DX session</li>
+              <li>Understanding why conditions were worse this morning than you expected</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════ 05 — GREYLINE -->
+  <section id="greyline" class="learn-section" aria-label="Greyline map">
+    <div class="wrap">
+      <p class="seclabel">Concept 05</p>
+      <h2>Greyline Map — the DXer's secret weapon</h2>
+      <p class="sec-intro">The greyline (also called the terminator or grey line) is the moving boundary between day and night. It's one of the most valuable tools in amateur radio propagation — and one of the most misunderstood.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <h3>Why the greyline matters</h3>
+          <p>At the greyline, two things happen simultaneously:</p>
+          <ol class="learn-list">
+            <li>The D-layer is collapsing (on the dusk side) or hasn't reformed yet (on the dawn side). Without D-layer absorption, lower-frequency HF signals travel much farther.</li>
+            <li>The F-layer remains strongly ionized — it doesn't disappear instantly at sunset. This creates a brief window where the ionosphere is both <em>maximally reflective</em> (strong F-layer) and <em>minimally absorptive</em> (no D-layer).</li>
+          </ol>
+          <p>The result: stations near the greyline can work the entire world on 40 m, 30 m, and 80 m for 15–30 minutes each morning and evening. The closer your path runs along the terminator, the longer that window lasts.</p>
+
+          <h3>Reading the map</h3>
+          <p>The map on the dashboard renders in real-time (or simulated time if you've moved the slider) using pixel-by-pixel math. The <strong>bright area</strong> is dayside — F-layer ionized, D-layer absorbing low bands. The <strong>dark area</strong> is nightside — D-layer gone, F-layer present but cooling. The gradient band between them is the greyline itself.</p>
+          <p>The <strong>subsolar point</strong> is the dot where the sun is directly overhead right now — the point of maximum solar intensity. In summer it's in the Northern Hemisphere; in winter, Southern. The sun's position drives everything else on the page.</p>
+
+          <h3>Using it for DX</h3>
+          <ul class="learn-list">
+            <li>Find the greyline passing over or near your target country — that's your window.</li>
+            <li>Both stations benefit most when the greyline is at or near <em>both</em> ends of the path simultaneously (long path).</li>
+            <li>On 40 m, greyline contacts of 10,000+ miles are routine during the 15–30 minute window.</li>
+            <li>Use the time slider to find exactly when the greyline reaches your target region and plan your operating time around it.</li>
+          </ul>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">Long path vs. short path</p>
+            <p>Every path between two points on Earth has two routes: the short path (direct) and the long path (going the other way around, always 180° from short path). The long path often runs through different propagation conditions and can be surprisingly productive, especially around the greyline.</p>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">Greyline and the exam</p>
+            <p>The General class exam asks about the greyline in Group G3C. Key facts: the greyline moves at roughly 1,000 mph (the speed of Earth's rotation); DX is enhanced at the greyline because D-layer absorption is minimized; the effect is most pronounced on 40 m and 80 m.</p>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">The subsolar point</p>
+            <p>The subsolar point is where the sun is directly overhead. Its latitude is the sun's <em>declination</em> — it ranges from 23.5°N (summer solstice) to 23.5°S (winter solstice) and crosses the equator at the equinoxes. Its longitude moves westward at 15° per hour as Earth rotates.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════ 06 — SOLAR IMAGERY -->
+  <section id="solar-imagery" class="learn-section alt-bg" aria-label="Solar imagery">
+    <div class="wrap">
+      <p class="seclabel">Concept 06</p>
+      <h2>Solar Imagery — seeing the sun live</h2>
+      <p class="sec-intro">Three live images from NASA and ESA spacecraft let you see what the sun is actually doing right now. Each image shows a different layer or region of the sun, revealing different types of solar activity.</p>
+
+      <div class="imagery-explain-grid">
+
+        <div class="img-explain-card">
+          <div class="img-badge">SDO AIA 193 Å</div>
+          <h3>Hot Coronal Plasma</h3>
+          <p>This image comes from NASA's Solar Dynamics Observatory (SDO), using the Atmospheric Imaging Assembly (AIA) camera tuned to 193 Ångströms — extreme ultraviolet light. At this wavelength you're seeing plasma at approximately 1.5 million °C (the corona), plus hotter flare plasma around 20 million °C.</p>
+          <p><strong>What to look for:</strong></p>
+          <ul class="learn-list">
+            <li><strong>Active regions</strong> — bright, complex areas, often in pairs. These are where sunspots are below and where flares and CMEs originate.</li>
+            <li><strong>Coronal holes</strong> — dark patches with relatively little plasma. They're regions of open magnetic field lines where solar wind streams outward at high speed. When a coronal hole faces Earth, geomagnetic activity often rises 1–3 days later.</li>
+            <li><strong>Loops and arcades</strong> — bright arches connecting opposite-polarity regions. When these erupt, they produce CMEs.</li>
+          </ul>
+          <p>The image updates every 15 minutes (matching NASA's public release cadence) with a cache-bust parameter to ensure you see the freshest frame.</p>
+        </div>
+
+        <div class="img-explain-card">
+          <div class="img-badge">SDO HMI Continuum</div>
+          <h3>White-Light Sunspot Map</h3>
+          <p>The HMI (Helioseismic and Magnetic Imager) on SDO captures the photosphere — the visible surface of the sun — in white light. This is the closest thing to what the sun would look like through a properly filtered telescope.</p>
+          <p><strong>What to look for:</strong></p>
+          <ul class="learn-list">
+            <li><strong>Sunspots</strong> — the dark regions. Their dark appearance is because they're cooler (~3,500°C vs. ~5,500°C for surrounding photosphere), caused by intense magnetic fields suppressing convection. More and larger sunspot groups correlate with higher SFI.</li>
+            <li><strong>Sunspot groups (active regions)</strong> — catalogued as NOAA AR numbers. Complex groups with multiple polarities are the flare producers.</li>
+            <li><strong>Limb darkening</strong> — the edge of the visible disk appears darker. This is normal, not activity.</li>
+          </ul>
+          <p>Counting sunspot groups is something amateur astronomers contribute to — the international sunspot number (SSN) tracks solar cycle progress and correlates directly with SFI.</p>
+        </div>
+
+        <div class="img-explain-card">
+          <div class="img-badge">SOHO LASCO C3</div>
+          <h3>Coronagraph — CME Detection</h3>
+          <p>LASCO (Large Angle and Spectrometric Coronagraph) on ESA/NASA's SOHO spacecraft uses a disk (occulter) to block the blinding photosphere, revealing the faint corona and anything flying through it. The C3 field of view covers from about 3.7 to 32 solar radii — wide enough to see CMEs departing the sun.</p>
+          <p><strong>What to look for:</strong></p>
+          <ul class="learn-list">
+            <li><strong>CMEs</strong> — expanding cloud-like bright structures blooming outward from behind the occulter disk. A halo CME (expanding in all directions) means it's heading toward Earth. Arrival typically takes 1–3 days depending on speed.</li>
+            <li><strong>Solar energetic particle (SEP) storms</strong> — during major events, high-energy protons bombard the LASCO CCD, creating a "snow storm" of bright speckles across the image. This happens fast (minutes after a large flare) and is a warning sign.</li>
+            <li><strong>Background streamers</strong> — the stable, radially oriented bright lines visible in quiet periods. These are helmet streamers — the ambient coronal structure that follows magnetic field lines out from the sun.</li>
+          </ul>
+          <p>If you see a halo CME in the LASCO image, expect elevated Kp in 1–3 days and prepare for possible HF degradation.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════ 07 — HISTORY & CHARTS -->
+  <section id="history-charts" class="learn-section" aria-label="History and trend charts">
+    <div class="wrap">
+      <p class="seclabel">Concept 07</p>
+      <h2>History &amp; Charts — reading the trend</h2>
+      <p class="sec-intro">The dashboard includes sparklines on each live tile and a full 24/72-hour trend chart below. Context matters as much as the current reading.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <h3>Sparklines on the tiles</h3>
+          <p>Each live data tile shows a small line chart underneath the current value. This is a 24-hour sparkline drawn from hourly data stored in the database. It shows you at a glance whether conditions are rising, falling, or stable — without needing to read a number.</p>
+          <ul class="learn-list">
+            <li>An <strong>upward SFI trend</strong> means the sun is becoming more active — high bands may be opening.</li>
+            <li>A <strong>rising K-index</strong> that just spiked is more concerning than a K of 4 that has been steady for 12 hours — the storm may still be building.</li>
+            <li>A <strong>falling A-index</strong> after a storm peak is a good sign; conditions often recover quickly once the disturbance passes.</li>
+          </ul>
+
+          <h3>The trend chart</h3>
+          <p>The full chart below the sparklines lets you select a 24-hour or 72-hour window and plots SFI, Kp, and X-ray flux over time. Use it to see:</p>
+          <ul class="learn-list">
+            <li>Whether today's SFI represents a change from yesterday, or if it has been stable</li>
+            <li>When a geomagnetic storm started and how quickly Kp is recovering</li>
+            <li>Whether there have been any significant flares in the last 72 hours</li>
+            <li>Overall trends entering a contest weekend</li>
+          </ul>
+          <p>All historical data is recorded from the live cron feed — one measurement roughly every 15 minutes, stored in a Cloudflare D1 (SQLite) database and served from the API endpoint.</p>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">Sudden Ionospheric Disturbances</p>
+            <p>A SID (Sudden Ionospheric Disturbance) appears in the X-ray chart as a sharp spike. It coincides exactly with a flare — X-rays travel at the speed of light, so the D-layer on the sunlit side is flooded instantaneously. This is different from a CME, which takes days to arrive.</p>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">Post-storm recovery</p>
+            <p>After a geomagnetic storm, conditions don't always snap back immediately. The ionosphere can remain disturbed for 1–2 days. Watching the A-index trend in the 72-hour chart tells you whether you're still in the storm or entering recovery.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════ 08 — STORM BANNER -->
+  <section id="storm-banner" class="learn-section alt-bg" aria-label="Geomagnetic storm alert">
+    <div class="wrap">
+      <p class="seclabel">Concept 08</p>
+      <h2>Storm Alert Banner — when conditions degrade</h2>
+      <p class="sec-intro">When real-time Kp reaches 5 or above, a colored alert banner appears at the top of the dashboard. Here's what it means and what to do.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <h3>Alert levels</h3>
+          <p>The banner uses NOAA's G-scale for geomagnetic storms, which maps directly to Kp:</p>
+          <div class="scale-table">
+            <div class="st-row"><span class="st-val mod">Kp 5 — G1</span><span class="st-desc">Minor storm. Weak power grid fluctuations, aurora at high latitudes (Alaska, Canada). Some HF polar path degradation.</span></div>
+            <div class="st-row"><span class="st-val mod">Kp 6 — G2</span><span class="st-desc">Moderate storm. High-latitude power systems affected. Aurora to 55° latitude. HF radio propagation degraded, especially at higher latitudes.</span></div>
+            <div class="st-row"><span class="st-val low">Kp 7 — G3</span><span class="st-desc">Strong storm. Voltage corrections needed on power grids. Aurora to 50° latitude (Oregon, Indiana, Pennsylvania). HF radio intermittent, GPS errors increase.</span></div>
+            <div class="st-row"><span class="st-val low">Kp 8 — G4</span><span class="st-desc">Severe storm. Widespread voltage control problems. Aurora to 45° latitude. HF radio propagation mostly impossible at all but equatorial latitudes.</span></div>
+            <div class="st-row"><span class="st-val bad">Kp 9 — G5</span><span class="st-desc">Extreme storm (like the Carrington Event class). Complete HF blackout for 1–2 days. Aurora visible to tropical latitudes. Power grid damage possible.</span></div>
+          </div>
+
+          <h3>What to do during a storm</h3>
+          <ul class="learn-list">
+            <li><strong>Abandon polar paths</strong> — Europe-to-North America long path and any trans-Arctic route will be the most degraded. Shift to equatorial paths if possible.</li>
+            <li><strong>Drop to lower bands</strong> — 40 m and 80 m are less severely affected by geomagnetic activity than 15 m and 10 m. 160 m can sometimes provide regional contacts even during G4.</li>
+            <li><strong>Listen for aurora</strong> — during G3+ events, aurora-mode propagation on 6 m, 2 m, and 70 cm becomes possible. Aurora produces a distinctive "raspy" signal due to rapid ionospheric motion.</li>
+            <li><strong>Monitor for recovery</strong> — storms typically last 12–48 hours. Watch the Kp trend; conditions often improve faster than expected.</li>
+          </ul>
+
+          <p>The banner dismisses when you click the X button and doesn't reappear until Kp rises to the next integer threshold. If you dismiss it during a Kp 5 storm and Kp later rises to 6, the banner will return.</p>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">Why storms are hard to predict</p>
+            <p>CME arrival time predictions from NOAA have error bars of ±7 hours or more. The storm intensity depends on the <em>orientation</em> of the CME's magnetic field (Bz) — a southward Bz drives strong storms; northward barely affects the magnetosphere. We don't know Bz until the CME reaches the ACE/DSCOVR spacecraft at L1, just 15–45 minutes before Earth impact.</p>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">After the storm: enhanced conditions</p>
+            <p>Some DXers specifically target the recovery phase of geomagnetic storms on 160 m and 80 m. The ionosphere, still somewhat disturbed, sometimes produces unusual propagation paths that aren't available in quiet conditions.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════ 09 — GRID MAP -->
+  <section id="grid-map" class="learn-section" aria-label="Grid map page">
+    <div class="wrap">
+      <p class="seclabel">Concept 09</p>
+      <h2>Grid Map — Maidenhead locators and propagation</h2>
+      <p class="sec-intro">The <a href="/grid/">Grid page</a> overlays HF propagation conditions on a world map divided into the Maidenhead locator grid system. It's the same grid used in contest exchanges and DX spotting.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <h3>The Maidenhead grid</h3>
+          <p>The Maidenhead Locator System divides Earth into a hierarchy of grid squares, each identified by a short code. For amateur radio purposes, a 4-character locator (e.g., <code>FN42</code>) identifies a 1°×2° area, which is accurate enough for most purposes. A 6-character locator (e.g., <code>FN42aa</code>) pinpoints a specific 2.5'×5' square.</p>
+          <p>Grid squares are used for:</p>
+          <ul class="learn-list">
+            <li><strong>Contest exchanges</strong> — VHF/UHF contests, POTA activations, and satellite contests all use grid squares as the scoring unit.</li>
+            <li><strong>Antenna pointing</strong> — once you know a station's grid, you can compute beam heading and distance exactly.</li>
+            <li><strong>Awards</strong> — many awards (VHF Century Club, etc.) require contacts with a certain number of unique grid squares.</li>
+          </ul>
+
+          <h3>Propagation overlay</h3>
+          <p>The grid map colors each cell based on the same HF propagation model used by the band conditions widget, combined with the current SFI, Kp, and time of day. The coloring reflects expected conditions <em>from your location to that grid square</em> on the selected band — not a global average.</p>
+          <p>The locator lookup tool lets you enter a Maidenhead grid to center the map and compute the short-path bearing and distance from a reference location. This is useful for:</p>
+          <ul class="learn-list">
+            <li>Finding a DX station's heading before turning your beam</li>
+            <li>Checking which part of the world is currently sunlit and likely to have good F2</li>
+            <li>Planning a POTA activation to maximize contacts from a given grid</li>
+          </ul>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">Finding your grid square</p>
+            <p>Your 4-character grid square starts with two letters (field) and two digits (square). Enter your grid in the locator box on the Grid page. If you don't know your grid, websites like qrz.com show it in your profile, or your GPS coordinates can be converted instantly online.</p>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">Short path vs. long path</p>
+            <p>The Grid page shows short-path bearings by default. Long path is always 180° from short path. Long-path contacts are most productive when the short path runs through an absorbing region (polar path during a storm, over the sunlit hemisphere at midday for low bands) and the long path avoids it.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="cta-row" style="margin-top:2rem">
+        <a class="btn btn-ghost" href="/grid/">Open the Grid Map →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════ 10 — SOLAR CYCLE -->
+  <section id="solar-cycle" class="learn-section alt-bg" aria-label="The solar cycle">
+    <div class="wrap">
+      <p class="seclabel">Concept 10</p>
+      <h2>The Solar Cycle — where are we now?</h2>
+      <p class="sec-intro">Everything on this dashboard waxes and wanes over an 11-year cycle. Understanding where we are in the cycle tells you what to expect for the next several years.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <h3>The cycle basics</h3>
+          <p>The sun's magnetic field reverses polarity roughly every 11 years, driving a cycle of activity from <strong>solar minimum</strong> (few sunspots, low SFI, quiet magnetosphere) to <strong>solar maximum</strong> (many sunspots, high SFI, frequent flares and CMEs) and back.</p>
+          <p>We're currently in <strong>Solar Cycle 25</strong>, which began in December 2019. Cycle 25 has been significantly more active than predicted — the official forecast expected a weak cycle like Cycle 24, but sunspot numbers and SFI have repeatedly exceeded predictions. Solar maximum is estimated around 2025–2026.</p>
+
+          <h3>What the cycle means for HF</h3>
+          <ul class="learn-list">
+            <li><strong>Near maximum (now)</strong>: SFI regularly above 150, sometimes above 200. 10 m and 12 m wide open globally for months at a time. Frequent moderate flares. Some geomagnetic storms from CMEs and coronal holes.</li>
+            <li><strong>Declining phase (2026–2028)</strong>: SFI drops toward 120–130. 10 m still opens but less reliably. 15 m and 17 m remain productive. Flare frequency decreases.</li>
+            <li><strong>Near minimum (2029–2031)</strong>: SFI drops to 70–80. 10 m rarely opens. Shift energy to 40 m, 80 m, and 160 m for reliable DX. The ionosphere is still there — you just need lower frequencies.</li>
+          </ul>
+
+          <h3>The key numbers to track over time</h3>
+          <p>The <strong>Smoothed International Sunspot Number (SSN)</strong> is the official metric for cycle progress, published monthly by the World Data Center for the Sunspot Index (SILSO). The <strong>SFI</strong> on this dashboard tracks it daily — an SFI above 200 means we're in truly exceptional solar activity; below 70 is deep minimum.</p>
+          <p>Amateur radio operators who've been licensed across a full solar cycle develop an intuition for this rhythm — knowing that the great 10 m opening you're enjoying now won't last forever is part of the art. Working new countries on 10 m during the peak is valuable; when the cycle descends, those propagation paths close for a decade.</p>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">Solar Cycle 25 highlights</p>
+            <ul class="aside-list">
+              <li>Start: December 2019</li>
+              <li>Predicted max SSN: ~115 (weak cycle)</li>
+              <li>Actual max SSN: 230+ (strong cycle)</li>
+              <li>Notable events: X9.0 flare (2024), multiple G4 storms</li>
+              <li>Expected minimum: ~2030–2031</li>
+            </ul>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">Best bands by phase</p>
+            <ul class="aside-list">
+              <li><strong>Solar max</strong>: 10 m, 12 m, 15 m</li>
+              <li><strong>Rising/falling</strong>: 15 m, 17 m, 20 m</li>
+              <li><strong>Solar min</strong>: 20 m, 30 m, 40 m, 80 m, 160 m</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════════════════════════════════════════════ QUICK REFERENCE -->
+  <section id="quick-ref" class="learn-section" aria-label="Quick reference tables">
     <div class="wrap">
       <p class="seclabel">Quick Reference</p>
-      <h2>Reading today's numbers</h2>
-      <p class="sec-intro">A cheat sheet for translating solar indices into band expectations.</p>
+      <h2>At-a-glance tables</h2>
+      <p class="sec-intro">Print these or bookmark this page. These numbers appear on every solar dashboard and in the General class exam.</p>
 
       <div class="grid cols2">
         <div class="card">
@@ -81,23 +575,42 @@ import Shell from '../../layouts/Shell.astro';
           </ul>
         </div>
         <div class="card">
-          <h3>K-Index</h3>
+          <h3>K-Index (Kp)</h3>
           <ul style="list-style:none;display:grid;gap:10px;margin-top:14px">
             <li style="display:flex;gap:12px;align-items:baseline"><span style="font-family:var(--mono);color:var(--green-lt);min-width:60px">0–2</span><span style="color:var(--muted);font-size:.92rem">Quiet. Excellent conditions, stable polar paths.</span></li>
             <li style="display:flex;gap:12px;align-items:baseline"><span style="font-family:var(--mono);color:#fbbf24;min-width:60px">3–4</span><span style="color:var(--muted);font-size:.92rem">Unsettled. Minor polar degradation, watch high-latitude paths.</span></li>
-            <li style="display:flex;gap:12px;align-items:baseline"><span style="font-family:var(--mono);color:#fb923c;min-width:60px">5–6</span><span style="color:var(--muted);font-size:.92rem">Storm. Significant HF degradation, aurora possible at mid-latitudes.</span></li>
-            <li style="display:flex;gap:12px;align-items:baseline"><span style="font-family:var(--mono);color:#f87171;min-width:60px">7–9</span><span style="color:var(--muted);font-size:.92rem">Severe storm. HF largely unreliable, aurora visible far south.</span></li>
+            <li style="display:flex;gap:12px;align-items:baseline"><span style="font-family:var(--mono);color:#fb923c;min-width:60px">5–6</span><span style="color:var(--muted);font-size:.92rem">Storm (G1–G2). HF degradation, aurora at mid-latitudes.</span></li>
+            <li style="display:flex;gap:12px;align-items:baseline"><span style="font-family:var(--mono);color:#f87171;min-width:60px">7–9</span><span style="color:var(--muted);font-size:.92rem">Severe storm (G3–G5). HF largely unreliable.</span></li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>X-Ray Flare Classes</h3>
+          <ul style="list-style:none;display:grid;gap:10px;margin-top:14px">
+            <li style="display:flex;gap:12px;align-items:baseline"><span style="font-family:var(--mono);color:var(--green-lt);min-width:60px">A, B</span><span style="color:var(--muted);font-size:.92rem">Background / very minor. No HF impact.</span></li>
+            <li style="display:flex;gap:12px;align-items:baseline"><span style="font-family:var(--mono);color:#fbbf24;min-width:60px">C</span><span style="color:var(--muted);font-size:.92rem">Minor flare. Rare HF impact on very long sunlit paths.</span></li>
+            <li style="display:flex;gap:12px;align-items:baseline"><span style="font-family:var(--mono);color:#fb923c;min-width:60px">M</span><span style="color:var(--muted);font-size:.92rem">Moderate. Brief short-wave fadeout possible. Monitor.</span></li>
+            <li style="display:flex;gap:12px;align-items:baseline"><span style="font-family:var(--mono);color:#f87171;min-width:60px">X</span><span style="color:var(--muted);font-size:.92rem">Major. HF blackout on sunlit side. May last 1+ hour.</span></li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Geomagnetic Storm Scale (G-scale)</h3>
+          <ul style="list-style:none;display:grid;gap:10px;margin-top:14px">
+            <li style="display:flex;gap:12px;align-items:baseline"><span style="font-family:var(--mono);color:var(--green-lt);min-width:60px">G0</span><span style="color:var(--muted);font-size:.92rem">Kp &lt; 5. Quiet to unsettled. No storm.</span></li>
+            <li style="display:flex;gap:12px;align-items:baseline"><span style="font-family:var(--mono);color:#fbbf24;min-width:60px">G1–G2</span><span style="color:var(--muted);font-size:.92rem">Kp 5–6. Minor to moderate. Watch polar paths.</span></li>
+            <li style="display:flex;gap:12px;align-items:baseline"><span style="font-family:var(--mono);color:#fb923c;min-width:60px">G3</span><span style="color:var(--muted);font-size:.92rem">Kp 7. Strong. HF degraded broadly. Aurora to 50°N.</span></li>
+            <li style="display:flex;gap:12px;align-items:baseline"><span style="font-family:var(--mono);color:#f87171;min-width:60px">G4–G5</span><span style="color:var(--muted);font-size:.92rem">Kp 8–9. Severe to extreme. Near-total HF blackout.</span></li>
           </ul>
         </div>
       </div>
     </div>
   </section>
 
+  <!-- ════════════════════════════════════════════════ LICENSE CTA -->
   <section id="get-licensed" aria-label="Get your license">
     <div class="wrap">
       <p class="seclabel">TavaOne Education</p>
       <h2>Studying for your license?</h2>
-      <p class="sec-intro">These propagation concepts — SFI, K/A index, MUF, greyline, and ionospheric layers — appear on the <strong>General class</strong> exam (Element 3, Group G3). TavaOne Education's free online course covers the full question pool, with this tool as a live reference so you can see the numbers in action.</p>
+      <p class="sec-intro">These propagation concepts — SFI, K/A index, MUF, greyline, and ionospheric layers — appear on the <strong>General class</strong> exam (Element 3, Group G3). TavaOne Education's free online course covers the full question pool, with this tool as a live reference so you can see the numbers in action while you study.</p>
       <div class="cta-row">
         <a class="btn btn-primary" href="https://tavaoneeducation.org/courses/" target="_blank" rel="noopener">Take the free license course ↗</a>
         <a class="btn btn-ghost" href="/">View live dashboard</a>
@@ -105,10 +618,10 @@ import Shell from '../../layouts/Shell.astro';
     </div>
   </section>
 
-  <section id="back-to-dashboard" aria-label="Check current conditions">
+  <section aria-label="Check current conditions">
     <div class="wrap">
       <h2>Check today's numbers</h2>
-      <p class="sec-intro">Theory is useful. Current data is better. Head back to the dashboard to see what the sun is actually doing right now.</p>
+      <p class="sec-intro">Theory is useful. Current data is better. Head back to the dashboard to see what the sun is doing right now — and use the time slider to plan your next operating session.</p>
       <div class="cta-row">
         <a class="btn btn-primary" href="/">View live dashboard →</a>
         <a class="btn btn-ghost" href="/grid/">Open grid map</a>
@@ -116,3 +629,174 @@ import Shell from '../../layouts/Shell.astro';
     </div>
   </section>
 </Shell>
+
+<style>
+/* ── Table of Contents ─────────────────────────────────────── */
+.toc-section {
+  padding: 3rem 0 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.toc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+.toc-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.toc-item:hover { border-color: var(--green); background: rgba(16,185,129,0.06); }
+.toc-num { font-family: var(--mono); font-size: 0.75rem; color: var(--green); min-width: 24px; }
+.toc-label { font-size: 0.9rem; font-weight: 500; color: var(--fg); }
+
+/* ── Section layout ────────────────────────────────────────── */
+.learn-section { padding: 4rem 0; border-top: 1px solid var(--border); }
+.learn-section.alt-bg { background: rgba(255,255,255,0.02); }
+
+.explainer-block {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 3rem;
+  margin-top: 2rem;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .explainer-block { grid-template-columns: 1fr; }
+}
+
+.expl-text p { margin-bottom: 1rem; color: var(--muted); line-height: 1.7; }
+.expl-text h3 { font-size: 1.05rem; font-weight: 600; margin: 1.5rem 0 0.5rem; color: var(--fg); }
+
+.expl-aside { display: flex; flex-direction: column; gap: 1rem; }
+.aside-box {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.2rem;
+}
+.aside-head { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--green); margin-bottom: 0.4rem; }
+.aside-box p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; margin: 0; }
+.aside-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+.aside-list li { font-size: 0.88rem; color: var(--muted); padding-left: 0.75rem; position: relative; }
+.aside-list li::before { content: '·'; position: absolute; left: 0; color: var(--green); }
+
+.learn-list { padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 0.6rem; margin: 0.75rem 0 1rem; }
+.learn-list li { padding-left: 1.2rem; position: relative; color: var(--muted); line-height: 1.65; font-size: 0.95rem; }
+.learn-list li::before { content: '→'; position: absolute; left: 0; color: var(--green); font-size: 0.8rem; top: 0.15em; }
+.learn-list strong { color: var(--fg); }
+
+/* ── Scale tables ──────────────────────────────────────────── */
+.scale-table { display: flex; flex-direction: column; gap: 0.5rem; margin: 1rem 0; }
+.st-row { display: flex; gap: 1rem; align-items: baseline; }
+.st-val {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  min-width: 80px;
+  padding: 0.15em 0.5em;
+  border-radius: 4px;
+  text-align: center;
+  font-weight: 600;
+}
+.st-val.excel { background: rgba(16,185,129,.12); color: #10b981; }
+.st-val.good  { background: rgba(251,191,36,.10); color: #fbbf24; }
+.st-val.mod   { background: rgba(251,146,60,.10); color: #fb923c; }
+.st-val.low   { background: rgba(248,113,113,.10); color: #f87171; }
+.st-val.bad   { background: rgba(220,38,38,.12); color: #ef4444; }
+.st-desc { font-size: 0.88rem; color: var(--muted); line-height: 1.5; }
+
+.kp-color-0 { background: rgba(16,185,129,.12); color: #10b981; }
+.kp-color-3 { background: rgba(251,191,36,.10); color: #fbbf24; }
+.kp-color-5 { background: rgba(251,146,60,.10); color: #fb923c; }
+.kp-color-7 { background: rgba(248,113,113,.10); color: #f87171; }
+.kp-color-9 { background: rgba(220,38,38,.12); color: #ef4444; }
+
+.tip-line { font-size: 0.88rem; color: var(--muted); border-left: 2px solid var(--green); padding-left: 0.75rem; margin-top: 0.75rem; }
+.tip-line strong { color: var(--green); }
+
+/* ── Tile mock-ups ─────────────────────────────────────────── */
+.tiles-explainer { display: flex; flex-direction: column; gap: 3rem; margin-top: 2rem; }
+.tile-explain-card {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 2.5rem;
+  align-items: start;
+}
+@media (max-width: 700px) {
+  .tile-explain-card { grid-template-columns: 1fr; }
+}
+.tile-mock {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.2rem 1.4rem;
+  min-height: 110px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.tm-label { font-family: var(--mono); font-size: 0.65rem; letter-spacing: .1em; color: var(--muted); text-transform: uppercase; }
+.tm-value { font-family: var(--mono); font-size: 2.4rem; font-weight: 700; line-height: 1; }
+.tm-sub { font-size: 0.78rem; color: var(--muted); margin-top: 0.25rem; }
+.tile-mock.sfi .tm-value { color: #fbbf24; }
+.tile-mock.aindex .tm-value { color: #fbbf24; }
+.tile-mock.kindex .tm-value { color: #fbbf24; }
+.tile-mock.xray .tm-value { color: #10b981; }
+
+.tile-explain-body h3 { font-size: 1.1rem; font-weight: 600; color: var(--fg); margin-bottom: 0.6rem; }
+.tile-explain-body p { color: var(--muted); line-height: 1.7; margin-bottom: 0.8rem; font-size: 0.95rem; }
+
+/* ── Band condition examples ───────────────────────────────── */
+.cond-ex { padding: 0.1em 0.4em; border-radius: 3px; font-size: 0.85em; }
+.cond-ex.excellent { background: rgba(16,185,129,.15); color: #10b981; }
+.cond-ex.good { background: rgba(132,204,22,.12); color: #84cc16; }
+.cond-ex.fair { background: rgba(251,191,36,.10); color: #fbbf24; }
+.cond-ex.poor { background: rgba(251,146,60,.10); color: #fb923c; }
+.cond-ex.closed { background: rgba(248,113,113,.10); color: #f87171; }
+
+/* ── Solar imagery explainer ──────────────────────────────── */
+.imagery-explain-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+.img-explain-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+.img-badge {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: .08em;
+  color: var(--green);
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+.img-explain-card h3 { font-size: 1rem; font-weight: 600; color: var(--fg); margin-bottom: 0.6rem; }
+.img-explain-card p { font-size: 0.88rem; color: var(--muted); line-height: 1.65; margin-bottom: 0.75rem; }
+.img-explain-card .learn-list { margin-top: 0.25rem; }
+.img-explain-card .learn-list li { font-size: 0.85rem; }
+
+code {
+  font-family: var(--mono);
+  background: rgba(16,185,129,.08);
+  color: var(--green);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+ol.learn-list { counter-reset: ol-counter; }
+ol.learn-list li { counter-increment: ol-counter; }
+ol.learn-list li::before { content: counter(ol-counter) '.'; color: var(--green); font-family: var(--mono); font-size: 0.8rem; }
+</style>
