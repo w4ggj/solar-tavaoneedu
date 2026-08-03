@@ -51,6 +51,17 @@ import Shell from '../layouts/Shell.astro';
         </div>
       </div>
       <p class="data-updated" id="data-updated"></p>
+      <div class="share-row">
+        <a href="/card/" class="share-link">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <circle cx="11" cy="2.5" r="1.5" stroke="currentColor" stroke-width="1.4"/>
+            <circle cx="11" cy="11.5" r="1.5" stroke="currentColor" stroke-width="1.4"/>
+            <circle cx="3"  cy="7"   r="1.5" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M4.5 6.2 9.5 3.3M4.5 7.8 9.5 10.7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          Share conditions
+        </a>
+      </div>
     </div>
   </section>
 
@@ -147,6 +158,29 @@ import Shell from '../layouts/Shell.astro';
     color: var(--muted);
     opacity: .6;
     letter-spacing: .06em;
+  }
+
+  .share-row {
+    margin-top: 16px;
+    display: flex;
+  }
+  .share-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--mono);
+    font-size: .75rem;
+    letter-spacing: .06em;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    transition: color .18s, border-color .18s;
+  }
+  .share-link:hover {
+    color: var(--green-lt);
+    border-color: var(--green-dk);
   }
 
   /* History section */
