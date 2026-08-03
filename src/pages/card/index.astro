@@ -1,73 +1,28 @@
 ---
-// Phase 6: Share card + social post builder
+import Shell from '../../layouts/Shell.astro';
 ---
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Share Solar Conditions — TavaOne Solar</title>
-  <meta name="description" content="Download a branded solar conditions card for social media, or copy auto-generated post text." />
-  <meta name="robots" content="noindex, nofollow" />
+<Shell
+  title="Share Solar Conditions — TavaOne Solar"
+  description="Download a branded solar conditions card for social media, or copy auto-generated post text."
+>
 
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
-
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
+<style>
     :root {
-      --bg:     #070b14;
       --surf:   #0f172a;
       --surf2:  #1a2540;
-      --border: #1e293b;
-      --bord2:  #334155;
-      --text:   #f1f5f9;
-      --muted:  #64748b;
       --em:     #10b981;
       --em-lt:  #34d399;
       --em-dk:  #065f46;
       --warn:   #f59e0b;
       --danger: #ef4444;
-      --mono:   'JetBrains Mono', ui-monospace, monospace;
-      --sans:   'Plus Jakarta Sans', system-ui, sans-serif;
     }
 
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: var(--sans);
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
+    .card-page-wrap {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 1.5rem 1rem 4rem;
+      padding: 2rem 1rem 4rem;
     }
-
-    /* ── Top bar ── */
-    .top-bar {
-      width: 100%;
-      max-width: 860px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.75rem;
-    }
-    .back {
-      color: var(--muted);
-      text-decoration: none;
-      font-size: .875rem;
-      display: flex;
-      align-items: center;
-      gap: .35rem;
-      transition: color .2s;
-    }
-    .back:hover { color: var(--em); }
-    .site-name { font-family: var(--mono); font-size: .85rem; color: var(--muted); }
-    .site-name .sl { color: var(--em); }
 
     /* ── Two-column layout ── */
     .main-wrap {
@@ -333,19 +288,8 @@
     .ec-f-site { font-size: 9px; color: #10b981; }
     .ec-f-hndl { font-size: 9px; color: #64748b; text-align: right; }
   </style>
-</head>
-<body>
 
-<div class="top-bar">
-  <a href="/" class="back">
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-      <path d="M8.5 2.5 4 7l4.5 4.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    Dashboard
-  </a>
-  <span class="site-name">TavaOne<span class="sl">//</span>Solar</span>
-</div>
-
+<div class="card-page-wrap">
 <div class="main-wrap">
 
   <!-- LEFT: card preview -->
@@ -405,14 +349,6 @@
       <div class="seg-group" id="fmt-group" role="group" aria-label="Card format">
         <button class="seg-btn active" data-fmt="tiktok">TikTok 9:16</button>
         <button class="seg-btn" data-fmt="square">Square 1:1</button>
-      </div>
-    </div>
-
-    <div class="sp-card">
-      <div class="sp-title">Persona</div>
-      <div class="seg-group" id="persona-group" role="group" aria-label="Persona">
-        <button class="seg-btn active" data-persona="tavaone">TavaOne Education</button>
-        <button class="seg-btn" data-persona="w4ggj">W4GGJ / @grumpagrinch</button>
       </div>
     </div>
 
@@ -516,9 +452,8 @@
     fl:   '#hamradio #hamtok #Florida #amateurradio #parksOnTheAir',
   };
 
-  let selFmt     = 'tiktok';
-  let selPersona = 'tavaone';
-  let selHtag    = 'edu';
+  let selFmt  = 'tiktok';
+  let selHtag = 'edu';
   let liveData: any = null;
 
   // ── Condition helpers ──
@@ -676,23 +611,6 @@
     });
   });
 
-  // ── Persona selector ──
-  document.querySelectorAll<HTMLButtonElement>('#persona-group .seg-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('#persona-group .seg-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      selPersona = btn.dataset.persona!;
-      const credit = selPersona === 'w4ggj'
-        ? 'W4GGJ · @grumpagrinch · NOAA SWPC'
-        : 'TavaOne Education · NOAA SWPC';
-      setText('card-footer-credit', credit);
-      const ecCredit = selPersona === 'w4ggj'
-        ? 'W4GGJ · @grumpagrinch\nNOAA SWPC'
-        : 'TavaOne Education\nNOAA SWPC';
-      setText('ec-credit', ecCredit);
-    });
-  });
-
   // ── Hashtag set selector ──
   document.querySelectorAll<HTMLButtonElement>('.htag-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -752,5 +670,7 @@
   loadCard();
 </script>
 
-</body>
-</html>
+</div>
+</div>
+
+</Shell>
