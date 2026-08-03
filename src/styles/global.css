@@ -65,7 +65,7 @@ nav.links a[aria-current="page"] { color: var(--green-lt) }
 .btn:hover { transform: translateY(-2px) }
 .btn-primary { background: var(--green); color: #04221a }
 .btn-primary:hover { background: var(--green-lt) }
-.btn-ghost { border: 1px solid var(--border); color: var(--text) }
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text) }
 .btn-ghost:hover { border-color: var(--green) }
 
 /* ─── Signal wave bar ─── */
