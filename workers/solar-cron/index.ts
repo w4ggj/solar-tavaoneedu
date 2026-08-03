@@ -7,9 +7,10 @@ const SWPC = {
   flux10cm:    'https://services.swpc.noaa.gov/products/10cm-flux-30-day.json',
   solarCycle:  'https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json',
   kpCurrent:   'https://services.swpc.noaa.gov/json/planetary_k_index_1m.json',
-  xrayFlux7d:  'https://services.swpc.noaa.gov/json/goes/primary/xray-fluxes-7-day.json',
+  xrayFlux7d:  'https://services.swpc.noaa.gov/json/goes/primary/xrays-7-day.json',
+  xrayFlux3d:  'https://services.swpc.noaa.gov/json/goes/primary/xrays-3-day.json',
   xrayFlux1d:  'https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json',
-  geoAlerts:   'https://services.swpc.noaa.gov/json/alerts.json',
+  geoAlerts:   'https://services.swpc.noaa.gov/products/alerts.json',
 } as const;
 
 interface LiveData {
@@ -168,11 +169,12 @@ export default {
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
     console.log('solar-cron: fetch start');
 
-    const [flux10Raw, cycleRaw, kpRaw, xray7dRaw, xray1dRaw, alertsRaw] = await Promise.all([
+    const [flux10Raw, cycleRaw, kpRaw, xray7dRaw, xray3dRaw, xray1dRaw, alertsRaw] = await Promise.all([
       fetchJson<any[]>(SWPC.flux10cm),
       fetchJson<any[]>(SWPC.solarCycle),
       fetchJson<any[]>(SWPC.kpCurrent),
       fetchJson<any[]>(SWPC.xrayFlux7d),
+      fetchJson<any[]>(SWPC.xrayFlux3d),
       fetchJson<any[]>(SWPC.xrayFlux1d),
       fetchJson<any[]>(SWPC.geoAlerts),
     ]);
@@ -181,10 +183,11 @@ export default {
     const ssn = parseSsn(cycleRaw);
     const { kp, time: kpTime } = parseKp(kpRaw);
     const a_index = kp !== null ? kpToAp(kp) : null;
-    // Try 7-day first; fall back to 1-day if 7-day returns nothing
+    // Try 7-day → 3-day → 1-day fallback chain
     let { xclass, flux: xflux, time: xtime } = parseXray(xray7dRaw, '7d');
+    if (xclass === null) ({ xclass, flux: xflux, time: xtime } = parseXray(xray3dRaw, '3d'));
     if (xclass === null) ({ xclass, flux: xflux, time: xtime } = parseXray(xray1dRaw, '1d'));
-    console.log(`solar-cron: xray7d=${xray7dRaw?.length ?? 'null'} xray1d=${xray1dRaw?.length ?? 'null'} → class=${xclass}`);
+    console.log(`solar-cron: xray7d=${xray7dRaw?.length ?? 'null'} xray3d=${xray3dRaw?.length ?? 'null'} xray1d=${xray1dRaw?.length ?? 'null'} → class=${xclass}`);
     const alerts = parseAlerts(alertsRaw);
 
     const live: LiveData = {
