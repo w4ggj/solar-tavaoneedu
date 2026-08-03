@@ -22,65 +22,63 @@ import Shell from '../layouts/Shell.astro';
     </div>
   </section>
 
-  <!-- Data tiles — Phase 1 will populate these from /api/solar -->
   <section id="dashboard" aria-label="Live data">
     <div class="wrap">
       <p class="seclabel">Live Conditions</p>
       <h2>Current solar data</h2>
       <p class="sec-intro">Solar flux index, geomagnetic conditions, and X-ray flux — refreshed every 15 minutes from NOAA SWPC.</p>
 
-      <div class="data-grid" id="data-grid">
-        <div class="data-tile">
+      <div class="data-grid">
+        <div class="data-tile" id="tile-sfi">
           <div class="dt-label">Solar Flux (SFI)</div>
-          <div class="dt-value" id="sfi">—</div>
+          <div class="dt-value" id="val-sfi">—</div>
           <div class="dt-meta">10.7 cm radio flux</div>
         </div>
-        <div class="data-tile">
+        <div class="data-tile" id="tile-aindex">
           <div class="dt-label">A-Index</div>
-          <div class="dt-value" id="a-index">—</div>
-          <div class="dt-meta">Geomagnetic daily index</div>
+          <div class="dt-value" id="val-aindex">—</div>
+          <div class="dt-meta">Geomagnetic Ap (3-hr)</div>
         </div>
-        <div class="data-tile">
+        <div class="data-tile" id="tile-kindex">
           <div class="dt-label">K-Index</div>
-          <div class="dt-value" id="k-index">—</div>
-          <div class="dt-meta">3-hour planetary index</div>
+          <div class="dt-value" id="val-kindex">—</div>
+          <div class="dt-meta">Planetary Kp (real-time)</div>
         </div>
-        <div class="data-tile">
-          <div class="dt-label">X-Ray Flux</div>
-          <div class="dt-value" id="xray">—</div>
+        <div class="data-tile" id="tile-xray">
+          <div class="dt-label">X-Ray Class</div>
+          <div class="dt-value" id="val-xray">—</div>
           <div class="dt-meta">GOES satellite</div>
         </div>
       </div>
+      <p class="data-updated" id="data-updated"></p>
     </div>
   </section>
 
-  <!-- What it means — Phase 1 -->
   <section id="what-it-means" aria-label="Impact on radio">
     <div class="wrap">
       <p class="seclabel">Ham Radio Impact</p>
       <h2>What the numbers mean for your radio</h2>
-      <p class="sec-intro">Solar activity shapes which HF bands are open, how far your signal travels, and whether polar paths are degraded. Phase 1 will fill in a plain-language summary here.</p>
-      <div class="grid cols3">
+      <p class="sec-intro" id="conditions-summary">Loading current conditions…</p>
+      <div class="grid cols3" style="margin-top:32px">
         <div class="card">
           <div class="ico">📻</div>
           <h3>HF Propagation</h3>
-          <p>Coming in Phase 1 — band-by-band propagation summary based on current SFI and K-index.</p>
+          <p id="card-hf">Loading…</p>
         </div>
         <div class="card">
           <div class="ico">🌍</div>
           <h3>Geomagnetic Activity</h3>
-          <p>Coming in Phase 1 — aurora and polar-path impact based on current A and K indices.</p>
+          <p id="card-geo">Loading…</p>
         </div>
         <div class="card">
           <div class="ico">☀️</div>
           <h3>Solar Events</h3>
-          <p>Coming in Phase 1 — active flare alerts and CME watches from NOAA SWPC.</p>
+          <p id="card-solar">Loading…</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Learn teaser -->
   <section id="learn-teaser" aria-label="Learn more">
     <div class="wrap">
       <p class="seclabel">Education</p>
@@ -93,3 +91,165 @@ import Shell from '../layouts/Shell.astro';
     </div>
   </section>
 </Shell>
+
+<style>
+  .data-updated {
+    margin-top: 12px;
+    font-family: var(--mono);
+    font-size: .74rem;
+    color: var(--muted);
+    opacity: .7;
+    letter-spacing: .06em;
+  }
+</style>
+
+<script>
+  interface SolarData {
+    updated: string;
+    sfi: number | null;
+    k_index: number | null;
+    k_index_time: string | null;
+    a_index: number | null;
+    xray_class: string | null;
+    xray_flux: number | null;
+    xray_time: string | null;
+    alerts: Array<{ issue_datetime: string; product_id: string; headline: string }>;
+  }
+
+  function setTile(tileId: string, valueId: string, text: string, cls: string | null) {
+    const tile = document.getElementById(tileId);
+    const val = document.getElementById(valueId);
+    if (val) val.textContent = text;
+    if (tile) {
+      tile.classList.remove('good', 'warn', 'bad');
+      if (cls) tile.classList.add(cls);
+    }
+  }
+
+  function sfiClass(v: number | null): string | null {
+    if (v === null) return null;
+    if (v >= 150) return 'good';
+    if (v >= 100) return 'warn';
+    return null;
+  }
+
+  function kpClass(v: number | null): string | null {
+    if (v === null) return null;
+    if (v <= 2) return 'good';
+    if (v <= 4) return 'warn';
+    return 'bad';
+  }
+
+  function apClass(v: number | null): string | null {
+    if (v === null) return null;
+    if (v <= 7) return 'good';
+    if (v <= 24) return 'warn';
+    return 'bad';
+  }
+
+  function xrayClassCss(s: string | null): string | null {
+    if (!s) return null;
+    const letter = s[0].toUpperCase();
+    if (letter === 'A' || letter === 'B') return 'good';
+    if (letter === 'C') return 'warn';
+    return 'bad';
+  }
+
+  function hfText(sfi: number | null, kp: number | null): string {
+    if (sfi === null) return 'Solar flux data unavailable — check back shortly.';
+    let text: string;
+    if (sfi >= 150) text = `SFI ${sfi} — outstanding. 10 m and 15 m wide open worldwide. Great time for DX.`;
+    else if (sfi >= 120) text = `SFI ${sfi} — good. 15 m and 17 m open regionally; 10 m spotty but worth checking.`;
+    else if (sfi >= 90) text = `SFI ${sfi} — moderate. 20 m and 17 m most reliable. 10 m unlikely outside sporadic-E.`;
+    else text = `SFI ${sfi} — low. Stick to 40 m and 80 m for reliable DX. 20 m marginal.`;
+    if (kp !== null && kp >= 5) text += ' Geomagnetic storm active — polar paths disrupted.';
+    else if (kp !== null && kp >= 3) text += ' Minor geomagnetic disturbance — watch high-latitude paths.';
+    return text;
+  }
+
+  function geoText(kp: number | null, ap: number | null): string {
+    if (kp === null) return 'Geomagnetic data unavailable — check back shortly.';
+    let text: string;
+    if (kp <= 2) text = `Kp ${kp} — quiet. Excellent conditions, stable polar paths.`;
+    else if (kp <= 4) text = `Kp ${kp} — unsettled. Minor geomagnetic disturbance; high-latitude paths may be affected.`;
+    else if (kp <= 6) text = `Kp ${kp} — storm. Significant HF degradation possible; aurora visible at mid-latitudes.`;
+    else text = `Kp ${kp} — severe storm. HF largely unreliable on polar paths; aurora visible far south.`;
+    if (ap !== null) text += ` Ap index: ${ap}.`;
+    return text;
+  }
+
+  function solarEventText(xclass: string | null, alerts: SolarData['alerts']): string {
+    let text = '';
+    if (xclass) {
+      const letter = xclass[0].toUpperCase();
+      if (letter === 'X') text = `Active X-class flare — ${xclass}. Possible HF blackout on the sunlit side; watch for CME.`;
+      else if (letter === 'M') text = `M-class flare — ${xclass}. Minor HF radio fade possible on the sunlit side.`;
+      else if (letter === 'C') text = `C-class flare — ${xclass}. Minor event, no significant HF impact expected.`;
+      else text = `X-ray background ${xclass}. No significant flare activity.`;
+    } else {
+      text = 'X-ray data unavailable.';
+    }
+    if (alerts.length > 0) {
+      text += ` ${alerts.length} active NOAA alert${alerts.length > 1 ? 's' : ''}: ${alerts[0].headline}`;
+    }
+    return text;
+  }
+
+  function overallSummary(d: SolarData): string {
+    const sfi = d.sfi;
+    const kp = d.k_index;
+    if (sfi === null && kp === null) return 'Solar data is not yet available. The cron worker populates this on its first 15-minute cycle.';
+    const sfiWord = sfi === null ? '' : sfi >= 150 ? 'excellent solar flux' : sfi >= 120 ? 'good solar flux' : sfi >= 90 ? 'moderate solar flux' : 'low solar flux';
+    const kpWord = kp === null ? '' : kp <= 2 ? 'quiet geomagnetic conditions' : kp <= 4 ? 'unsettled geomagnetic conditions' : 'active geomagnetic storm';
+    if (sfiWord && kpWord) return `Current conditions: ${sfiWord} and ${kpWord}.`;
+    return sfiWord ? `Current conditions: ${sfiWord}.` : `Current conditions: ${kpWord}.`;
+  }
+
+  function relativeTime(iso: string): string {
+    const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+    return `${Math.floor(diff / 3600)} hr ago`;
+  }
+
+  async function loadSolar() {
+    try {
+      const res = await fetch('/api/solar');
+      if (!res.ok) {
+        document.getElementById('conditions-summary')!.textContent = 'Solar data not yet available — the cron worker will populate this on its first 15-minute cycle.';
+        ['card-hf', 'card-geo', 'card-solar'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = 'No data yet.';
+        });
+        return;
+      }
+      const d: SolarData = await res.json();
+
+      setTile('tile-sfi',    'val-sfi',    d.sfi    !== null ? String(d.sfi)              : '—', sfiClass(d.sfi));
+      setTile('tile-aindex', 'val-aindex', d.a_index !== null ? String(d.a_index)         : '—', apClass(d.a_index));
+      setTile('tile-kindex', 'val-kindex', d.k_index !== null ? String(d.k_index)         : '—', kpClass(d.k_index));
+      setTile('tile-xray',   'val-xray',   d.xray_class ?? '—',                                  xrayClassCss(d.xray_class));
+
+      const summary = document.getElementById('conditions-summary');
+      if (summary) summary.textContent = overallSummary(d);
+
+      const hfEl = document.getElementById('card-hf');
+      if (hfEl) hfEl.textContent = hfText(d.sfi, d.k_index);
+
+      const geoEl = document.getElementById('card-geo');
+      if (geoEl) geoEl.textContent = geoText(d.k_index, d.a_index);
+
+      const solarEl = document.getElementById('card-solar');
+      if (solarEl) solarEl.textContent = solarEventText(d.xray_class, d.alerts);
+
+      const updatedEl = document.getElementById('data-updated');
+      if (updatedEl && d.updated) updatedEl.textContent = `Data from NOAA SWPC · ${relativeTime(d.updated)}`;
+    } catch (e) {
+      console.error('solar fetch failed', e);
+      const summary = document.getElementById('conditions-summary');
+      if (summary) summary.textContent = 'Unable to load solar data. Please try again later.';
+    }
+  }
+
+  loadSolar();
+</script>
