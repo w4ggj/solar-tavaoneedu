@@ -34,12 +34,16 @@ async function fetchJson<T>(url: string): Promise<T | null> {
   }
 }
 
-/** Monthly solar cycle indices — last entry is most recent month */
+/** Monthly solar cycle indices — walk backwards to find most recent non-null value
+ *  (current month's entry is often null until month-end) */
 function parseSfi(rows: any[] | null): number | null {
   if (!Array.isArray(rows) || !rows.length) return null;
-  const last = rows[rows.length - 1];
-  const v = parseFloat(last['observed_swpc_solar_flux'] ?? last.solar_flux ?? '-1');
-  return isNaN(v) || v < 0 ? null : v;
+  for (let i = rows.length - 1; i >= 0; i--) {
+    const entry = rows[i];
+    const v = parseFloat(entry['observed_swpc_solar_flux'] ?? entry['solar_flux'] ?? '-1');
+    if (!isNaN(v) && v > 0) return v;
+  }
+  return null;
 }
 
 /** 1-minute Kp stream — last entry is most recent */
@@ -79,14 +83,16 @@ function fluxToClass(flux: number): string {
   return 'A' + (flux / 1e-8).toFixed(1);
 }
 
-/** GOES X-ray 7-day — walk backwards, use current_class or derive from flux */
+/** GOES X-ray 7-day — walk backwards, 0.1-0.8 nm band only (flare classification band) */
 function parseXray(rows: any[] | null): { xclass: string | null; flux: number | null; time: string | null } {
   if (!rows?.length) return { xclass: null, flux: null, time: null };
-  // Check only the last 120 entries (~2 hours of 1-min data)
-  const start = Math.max(0, rows.length - 120);
+  // Check only the last 240 entries (~4 hours of 1-min data per band)
+  const start = Math.max(0, rows.length - 240);
   for (let i = rows.length - 1; i >= start; i--) {
     const r = rows[i];
-    const flux = parseFloat(r.flux ?? r.observed_flux ?? '-1');
+    // Skip short-wave band; only the 0.1-0.8 nm band maps to A/B/C/M/X classes
+    if (r.energy && r.energy !== '0.1-0.8nm') continue;
+    const flux = parseFloat(r.flux ?? r.observed_flux ?? r.flux_observed ?? '-1');
     if (isNaN(flux) || flux <= 0) continue;
     const xclass = r.current_class || fluxToClass(flux);
     return { xclass, flux, time: r.time_tag ?? null };
