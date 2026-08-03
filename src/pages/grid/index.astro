@@ -10,7 +10,7 @@ import Shell from '../../layouts/Shell.astro';
     <div class="wrap">
       <p class="eyebrow">Propagation <span class="dim">· Grid Map</span></p>
       <h1>Maidenhead <span class="em">Grid Map</span></h1>
-      <p class="lede">Interactive grid square map with real-time propagation overlay — see where signals are reaching right now.</p>
+      <p class="lede">Propagation quality overlaid on the Maidenhead grid — click any square to get its locator, or find yours automatically.</p>
     </div>
     <div class="signal" aria-hidden="true">
       <svg viewBox="0 0 1200 80" preserveAspectRatio="none">
@@ -22,34 +22,521 @@ import Shell from '../../layouts/Shell.astro';
     </div>
   </section>
 
-  <section id="map-placeholder" aria-label="Map coming soon">
+  <section id="map-section" aria-label="Propagation grid map">
     <div class="wrap">
-      <p class="seclabel">Phase 3</p>
-      <h2>Grid map coming soon</h2>
-      <p class="sec-intro">The interactive Maidenhead grid square map with propagation overlay is planned for Phase 3. It will show real-time spot data from PSKReporter and RBN overlaid on the grid, colored by signal strength and band.</p>
+      <div class="map-top">
+        <div>
+          <p class="seclabel">Maidenhead Grid</p>
+          <h2>Propagation map</h2>
+        </div>
+        <button id="locate-btn" class="btn btn-ghost">📍 Locate me</button>
+      </div>
 
-      <div class="grid cols3" style="margin-top:40px">
-        <div class="card">
-          <div class="ico">🗺️</div>
-          <h3>Maidenhead Grid</h3>
-          <p>Find your grid square, look up DX grid squares, and calculate beam headings and distance from your location.</p>
+      <div class="cond-strip">
+        <span class="cond-item" id="cond-kp">Kp: —</span>
+        <span class="cond-sep">·</span>
+        <span class="cond-item" id="cond-sfi">SFI: —</span>
+        <span class="cond-sep">·</span>
+        <span class="cond-note">Cell colors show estimated HF propagation quality</span>
+      </div>
+    </div>
+
+    <div class="map-outer" id="map-outer">
+      <!-- Column labels A–R -->
+      <div class="map-col-labels" aria-hidden="true" id="col-labels"></div>
+
+      <div class="map-row-wrap">
+        <!-- Row labels R–A (north to south) -->
+        <div class="map-row-labels" aria-hidden="true" id="row-labels"></div>
+
+        <div class="map-container" id="map-container">
+          <svg id="grid-map" viewBox="0 0 360 180" xmlns="http://www.w3.org/2000/svg"
+               preserveAspectRatio="xMidYMid meet"
+               role="img" aria-label="Maidenhead grid propagation map">
+            <!-- Ocean -->
+            <rect width="360" height="180" fill="#07111e"/>
+
+            <!-- Simplified continent shapes for orientation -->
+            <g id="continents" fill="#142238" stroke="rgba(100,140,170,0.35)" stroke-width="0.4">
+              <!-- Greenland -->
+              <polygon points="128,8 162,8 165,20 155,28 138,30 126,22"/>
+              <!-- North America -->
+              <polygon points="15,15 75,12 95,18 118,40 130,52 126,60 118,72 105,82 95,78 88,70 80,68 72,68 68,72 58,78 50,88 40,90 32,85 25,78 20,68 15,50 12,30"/>
+              <!-- South America -->
+              <polygon points="98,78 115,75 128,78 138,88 148,100 148,138 132,148 112,148 100,135 95,112 92,95"/>
+              <!-- Europe -->
+              <polygon points="168,22 192,18 212,20 218,28 218,38 214,45 208,50 200,55 188,55 182,50 175,45 170,40 165,32"/>
+              <!-- Africa -->
+              <polygon points="168,52 218,52 228,62 232,78 232,102 225,125 205,132 188,130 175,118 162,98 160,75 162,60"/>
+              <!-- Asia (main) -->
+              <polygon points="208,22 248,12 285,10 322,15 345,25 348,42 340,55 325,65 315,78 298,88 278,90 258,80 235,68 222,55 215,42 210,32"/>
+              <!-- Indian subcontinent -->
+              <polygon points="238,68 258,65 262,78 255,92 240,95 232,85"/>
+              <!-- Australia -->
+              <polygon points="292,100 335,100 340,108 338,130 325,138 308,140 292,132 285,118 285,108"/>
+              <!-- Antarctica -->
+              <rect x="0" y="157" width="360" height="23"/>
+            </g>
+
+            <!-- Propagation cell colors (rendered by JS) -->
+            <g id="cells"></g>
+
+            <!-- Reference lines -->
+            <g stroke-linecap="round">
+              <!-- Arctic / Antarctic circles -->
+              <line x1="0" y1="23.5" x2="360" y2="23.5" stroke="rgba(248,113,113,0.3)" stroke-width="0.5" stroke-dasharray="3 3"/>
+              <line x1="0" y1="156.5" x2="360" y2="156.5" stroke="rgba(248,113,113,0.3)" stroke-width="0.5" stroke-dasharray="3 3"/>
+              <!-- Tropics -->
+              <line x1="0" y1="66.5" x2="360" y2="66.5" stroke="rgba(255,255,255,0.12)" stroke-width="0.4" stroke-dasharray="2 4"/>
+              <line x1="0" y1="113.5" x2="360" y2="113.5" stroke="rgba(255,255,255,0.12)" stroke-width="0.4" stroke-dasharray="2 4"/>
+              <!-- Equator -->
+              <line x1="0" y1="90" x2="360" y2="90" stroke="rgba(255,255,255,0.28)" stroke-width="0.5"/>
+              <!-- Prime meridian -->
+              <line x1="180" y1="0" x2="180" y2="180" stroke="rgba(255,255,255,0.12)" stroke-width="0.4"/>
+            </g>
+
+            <!-- Grid field lines (rendered by JS) -->
+            <g id="grid-lines"></g>
+
+            <!-- User location -->
+            <g id="user-marker" style="display:none">
+              <circle id="user-dot" cx="0" cy="0" r="1.8" fill="#6ee7b7"/>
+              <circle id="user-ring" cx="0" cy="0" r="3.5" fill="none" stroke="#6ee7b7" stroke-width="0.7" opacity="0.55"/>
+            </g>
+
+            <!-- Selected cell highlight -->
+            <rect id="highlight" x="0" y="0" width="20" height="10" fill="none"
+                  stroke="#34d399" stroke-width="0.9" rx="0.4" opacity="0" pointer-events="none"/>
+          </svg>
+
+          <div id="map-tooltip" class="map-tooltip" style="display:none"></div>
         </div>
-        <div class="card">
-          <div class="ico">📡</div>
-          <h3>Live Spot Overlay</h3>
-          <p>PSKReporter and RBN spots displayed on the map — see which grid squares are receiving your signal right now.</p>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <!-- Info bar -->
+      <div class="locator-bar">
+        <div class="loc-item">
+          <span class="loc-label">Your grid square</span>
+          <span class="loc-value" id="my-locator">—</span>
         </div>
-        <div class="card">
-          <div class="ico">📊</div>
-          <h3>Band Filter</h3>
-          <p>Filter spots by band (10–160 m) and mode (FT8, CW, SSB) to focus on what matters for your current operating.</p>
+        <div class="loc-item">
+          <span class="loc-label">Selected</span>
+          <span class="loc-value" id="sel-locator">click the map</span>
+        </div>
+        <div class="loc-item loc-lookup">
+          <span class="loc-label">Find a square</span>
+          <div class="lookup-row">
+            <input id="locator-input" class="lookup-input" type="text"
+                   placeholder="e.g. FN31" maxlength="6" aria-label="Maidenhead grid locator">
+            <button id="lookup-btn" class="btn btn-ghost">Go</button>
+          </div>
         </div>
       </div>
 
+      <!-- Legend -->
+      <div class="map-legend">
+        <span class="legend-title">Propagation:</span>
+        <div class="legend-items">
+          <span class="legend-item"><span class="swatch" style="background:rgba(16,185,129,0.55)"></span>Excellent (SFI&gt;150)</span>
+          <span class="legend-item"><span class="swatch" style="background:rgba(16,185,129,0.38)"></span>Good (SFI&gt;120)</span>
+          <span class="legend-item"><span class="swatch" style="background:rgba(16,185,129,0.20)"></span>Moderate (SFI&gt;90)</span>
+          <span class="legend-item"><span class="swatch" style="background:rgba(251,191,36,0.50)"></span>Polar unsettled</span>
+          <span class="legend-item"><span class="swatch" style="background:rgba(220,38,38,0.55)"></span>Polar storm</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="about-maidenhead" aria-label="About the Maidenhead system">
+    <div class="wrap">
+      <p class="seclabel">Reference</p>
+      <h2>About the Maidenhead system</h2>
+      <p class="sec-intro">Developed in 1980 at a meeting of European VHF managers in Maidenhead, UK, this locator system is the universal language for amateur radio station positions.</p>
+      <div class="grid cols3" style="margin-top:32px">
+        <div class="card">
+          <div class="kicker">Field · 2 letters</div>
+          <h3>AA to RR</h3>
+          <p>18 columns × 18 rows cover the globe. Each field spans 20° longitude × 10° latitude — about the size of a large country. Your field prefix identifies your broad region (FN, IO, JN…).</p>
+        </div>
+        <div class="card">
+          <div class="kicker">Square · + 2 digits</div>
+          <h3>00 to 99</h3>
+          <p>Each field divided into a 10×10 sub-grid. Adding two digits gives a 4-character locator (FN31) covering 2° × 1°. This is the minimum needed for VHF and HF DX exchanges.</p>
+        </div>
+        <div class="card">
+          <div class="kicker">Subsquare · + 2 letters</div>
+          <h3>AA to XX</h3>
+          <p>A further 24×24 subdivision gives a 6-character locator (FN31pr) placing you within about 5 km. Used for weak-signal and microwave contacts where precision matters.</p>
+        </div>
+      </div>
       <div class="cta-row">
-        <a class="btn btn-ghost" href="/">← Back to dashboard</a>
-        <a class="btn btn-ghost" href="/learn/">Learn about propagation</a>
+        <a class="btn btn-ghost" href="/">← Dashboard</a>
+        <a class="btn btn-ghost" href="/learn/">Learn propagation</a>
       </div>
     </div>
   </section>
 </Shell>
+
+<style>
+  /* ── Map section layout ── */
+  #map-section { padding-top: 0; padding-bottom: 64px; }
+
+  .map-top {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    flex-wrap: wrap; gap: 16px; margin-bottom: 16px;
+  }
+
+  .cond-strip {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: .8rem; color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .cond-item { color: var(--green-lt); font-weight: 600; }
+  .cond-sep { opacity: .4; }
+  .cond-note { font-size: .74rem; opacity: .65; }
+
+  /* ── Map outer (full bleed within wrap) ── */
+  .map-outer { position: relative; margin: 0 -24px; }
+  .map-col-labels {
+    display: flex; justify-content: space-around;
+    padding: 0 32px 0 46px;
+    font-family: var(--mono); font-size: .62rem; color: var(--muted);
+    opacity: .55; letter-spacing: .04em;
+  }
+  .map-row-wrap { display: flex; }
+  .map-row-labels {
+    display: flex; flex-direction: column; justify-content: space-around;
+    width: 28px; flex-shrink: 0; padding: 0;
+    font-family: var(--mono); font-size: .62rem; color: var(--muted);
+    opacity: .55; text-align: right; padding-right: 4px;
+  }
+  .map-container {
+    flex: 1; position: relative; border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden; background: #07111e;
+  }
+  #grid-map { display: block; width: 100%; height: auto; }
+
+  /* ── Tooltip ── */
+  .map-tooltip {
+    position: absolute; pointer-events: none; z-index: 10;
+    background: rgba(15,23,42,.95); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 12px;
+    display: flex; flex-direction: column; gap: 3px;
+    font-family: var(--mono); font-size: .78rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,.5);
+    max-width: 220px;
+  }
+  .tt-field { font-size: 1.1rem; font-weight: 700; color: var(--green-lt); }
+  .tt-coords { font-size: .72rem; color: var(--muted); }
+  .tt-cond { font-size: .74rem; color: var(--text); margin-top: 2px; }
+
+  /* ── Locator bar ── */
+  .locator-bar {
+    display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end;
+    margin-top: 18px; padding: 16px 20px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  }
+  .loc-item { display: flex; flex-direction: column; gap: 4px; }
+  .loc-label { font-family: var(--mono); font-size: .7rem; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+  .loc-value { font-family: var(--mono); font-size: 1.1rem; font-weight: 700; color: var(--green-lt); letter-spacing: .04em; }
+  .loc-lookup { flex: 1; min-width: 200px; }
+  .lookup-row { display: flex; gap: 8px; margin-top: 4px; }
+  .lookup-input {
+    flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 12px; color: var(--text); font-family: var(--mono); font-size: .9rem;
+    text-transform: uppercase; letter-spacing: .08em; outline: none;
+    transition: border-color .15s;
+  }
+  .lookup-input:focus { border-color: var(--green); }
+
+  /* ── Legend ── */
+  .map-legend {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 14px;
+    margin-top: 14px; font-size: .82rem; color: var(--muted);
+  }
+  .legend-title { font-family: var(--mono); font-size: .74rem; color: var(--muted); opacity: .7; }
+  .legend-items { display: flex; flex-wrap: wrap; gap: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: .74rem; }
+  .swatch { display: inline-block; width: 14px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+  @media (max-width: 600px) {
+    .map-col-labels, .map-row-labels { display: none; }
+    .map-outer { margin: 0 -16px; }
+  }
+</style>
+
+<script>
+  /* ── Maidenhead helpers ── */
+  const COLS = 18, ROWS = 18, CW = 20, CH = 10;
+
+  function fieldName(col: number, row: number): string {
+    return String.fromCharCode(65 + col) + String.fromCharCode(65 + (ROWS - 1 - row));
+  }
+
+  function cellCoords(col: number, row: number) {
+    const lonStart = col * CW - 180;
+    const latTop   = 90 - row * CH;
+    return { lonStart, lonEnd: lonStart + CW, latBottom: latTop - CH, latTop };
+  }
+
+  function latlonToMaidenhead(lat: number, lon: number): string {
+    const adjLon = lon + 180, adjLat = lat + 90;
+    const col = Math.min(17, Math.floor(adjLon / 20));
+    const row = Math.min(17, Math.floor(adjLat / 10));
+    const sqLon = Math.floor((adjLon % 20) / 2);
+    const sqLat = Math.floor(adjLat % 10);
+    const subLon = Math.floor(((adjLon % 20) % 2) * 12);
+    const subLat = Math.floor((adjLat % 1) * 24);
+    return (
+      String.fromCharCode(65 + col) +
+      String.fromCharCode(65 + row) +
+      sqLon + sqLat +
+      String.fromCharCode(97 + subLon) +
+      String.fromCharCode(97 + subLat)
+    );
+  }
+
+  /* ── Propagation color ── */
+  function cellFill(row: number, kp: number | null, sfi: number | null): string {
+    const latCenter = 90 - (row * CH + CH / 2);
+    const latAbs = Math.abs(latCenter);
+
+    let polarFactor = 0;
+    if (kp !== null && kp > 0) {
+      const latW = latAbs > 65 ? 1.0 : latAbs > 55 ? 0.6 : latAbs > 45 ? 0.3 : 0;
+      polarFactor = latW * (kp / 9);
+    }
+
+    if (polarFactor > 0.55) return 'rgba(220,38,38,0.55)';
+    if (polarFactor > 0.30) return 'rgba(245,158,11,0.50)';
+    if (polarFactor > 0.12) return 'rgba(251,191,36,0.32)';
+
+    if (sfi === null) return 'rgba(16,185,129,0.12)';
+    if (sfi >= 150)   return 'rgba(16,185,129,0.55)';
+    if (sfi >= 120)   return 'rgba(16,185,129,0.38)';
+    if (sfi >= 90)    return 'rgba(16,185,129,0.20)';
+    return                   'rgba(16,185,129,0.08)';
+  }
+
+  function conditionLabel(row: number, kp: number | null, sfi: number | null): string {
+    const latCenter = 90 - (row * CH + CH / 2);
+    const latAbs = Math.abs(latCenter);
+
+    if (kp !== null) {
+      const latW = latAbs > 65 ? 1.0 : latAbs > 55 ? 0.6 : latAbs > 45 ? 0.3 : 0;
+      const pf = latW * (kp / 9);
+      if (pf > 0.55) return 'Polar storm — HF unreliable';
+      if (pf > 0.30) return 'Storm warning — degraded paths';
+      if (pf > 0.12) return 'Unsettled — watch polar paths';
+    }
+    if (sfi === null) return 'No data';
+    if (sfi >= 150) return 'Excellent — all bands active';
+    if (sfi >= 120) return 'Good — 10/15/17 m open';
+    if (sfi >= 90)  return 'Moderate — 20 m reliable';
+    return                  'Low — 40/80 m best';
+  }
+
+  /* ── Render grid ── */
+  function renderCells(kp: number | null, sfi: number | null) {
+    const el = document.getElementById('cells')!;
+    let html = '';
+    for (let row = 0; row < ROWS; row++) {
+      for (let col = 0; col < COLS; col++) {
+        const fill = cellFill(row, kp, sfi);
+        html += `<rect x="${col * CW}" y="${row * CH}" width="${CW}" height="${CH}" fill="${fill}" data-col="${col}" data-row="${row}"/>`;
+      }
+    }
+    el.innerHTML = html;
+  }
+
+  function renderGridLines() {
+    const el = document.getElementById('grid-lines')!;
+    const stroke = 'rgba(30,41,59,0.9)';
+    let html = '';
+    for (let c = 0; c <= COLS; c++) html += `<line x1="${c * CW}" y1="0" x2="${c * CW}" y2="180" stroke="${stroke}" stroke-width="0.35"/>`;
+    for (let r = 0; r <= ROWS; r++) html += `<line x1="0" y1="${r * CH}" x2="360" y2="${r * CH}" stroke="${stroke}" stroke-width="0.35"/>`;
+    el.innerHTML = html;
+  }
+
+  function renderAxisLabels() {
+    // Column labels A–R (left to right)
+    const colEl = document.getElementById('col-labels')!;
+    colEl.innerHTML = Array.from({ length: 18 }, (_, i) =>
+      `<span>${String.fromCharCode(65 + i)}</span>`
+    ).join('');
+
+    // Row labels R–A (top to bottom = north to south)
+    const rowEl = document.getElementById('row-labels')!;
+    rowEl.innerHTML = Array.from({ length: 18 }, (_, i) =>
+      `<span>${String.fromCharCode(65 + (ROWS - 1 - i))}</span>`
+    ).join('');
+  }
+
+  /* ── Interaction ── */
+  function initInteraction(kp: number | null, sfi: number | null) {
+    const svg       = document.getElementById('grid-map') as SVGSVGElement;
+    const tooltip   = document.getElementById('map-tooltip')!;
+    const highlight = document.getElementById('highlight')!;
+    const container = document.getElementById('map-container')!;
+    const selEl     = document.getElementById('sel-locator')!;
+
+    let lastCol = -1, lastRow = -1;
+
+    function svgCoords(e: MouseEvent) {
+      const r = svg.getBoundingClientRect();
+      return {
+        x: ((e.clientX - r.left) / r.width) * 360,
+        y: ((e.clientY - r.top) / r.height) * 180,
+      };
+    }
+
+    svg.addEventListener('mousemove', (e) => {
+      const { x, y } = svgCoords(e);
+      const col = Math.floor(x / CW);
+      const row = Math.floor(y / CH);
+      if (col < 0 || col >= COLS || row < 0 || row >= ROWS) {
+        tooltip.style.display = 'none';
+        highlight.setAttribute('opacity', '0');
+        return;
+      }
+
+      if (col !== lastCol || row !== lastRow) {
+        lastCol = col; lastRow = row;
+        highlight.setAttribute('x', String(col * CW));
+        highlight.setAttribute('y', String(row * CH));
+        highlight.setAttribute('opacity', '1');
+      }
+
+      const name   = fieldName(col, row);
+      const coords = cellCoords(col, row);
+      const cond   = conditionLabel(row, kp, sfi);
+      tooltip.innerHTML =
+        `<span class="tt-field">${name}</span>` +
+        `<span class="tt-coords">${coords.latBottom < 0 ? coords.latBottom * -1 + '°S' : coords.latBottom + '°N'} – ${coords.latTop < 0 ? coords.latTop * -1 + '°S' : coords.latTop + '°N'} · ${coords.lonStart}°E – ${coords.lonEnd}°E</span>` +
+        `<span class="tt-cond">${cond}</span>`;
+      tooltip.style.display = 'flex';
+
+      const cr = container.getBoundingClientRect();
+      let tx = e.clientX - cr.left + 14;
+      let ty = e.clientY - cr.top - tooltip.offsetHeight - 10;
+      if (tx + 220 > cr.width) tx = e.clientX - cr.left - 220 - 14;
+      if (ty < 0) ty = e.clientY - cr.top + 14;
+      tooltip.style.left = tx + 'px';
+      tooltip.style.top  = ty + 'px';
+    });
+
+    svg.addEventListener('mouseleave', () => {
+      tooltip.style.display = 'none';
+    });
+
+    svg.addEventListener('click', (e) => {
+      const { x, y } = svgCoords(e);
+      const col = Math.floor(x / CW);
+      const row = Math.floor(y / CH);
+      if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
+
+      // Compute grid square within field
+      const xInField = x - col * CW;      // 0–20
+      const yInField = y - row * CH;      // 0–10
+      const sqLon = Math.min(9, Math.floor(xInField / 2));
+      const sqLat = Math.min(9, 9 - Math.floor(yInField)); // 0=south, 9=north
+
+      selEl.textContent = fieldName(col, row) + sqLon + sqLat;
+    });
+  }
+
+  /* ── Locator lookup ── */
+  function highlightLocator(raw: string) {
+    const s = raw.toUpperCase().trim();
+    if (s.length < 2) return;
+    const col = s.charCodeAt(0) - 65;
+    const rowLat = s.charCodeAt(1) - 65; // 0=A=south
+    const row = ROWS - 1 - rowLat;       // convert to SVG row (0=north)
+    if (col < 0 || col >= COLS || rowLat < 0 || rowLat >= ROWS) return;
+
+    const highlight = document.getElementById('highlight')!;
+    highlight.setAttribute('x', String(col * CW));
+    highlight.setAttribute('y', String(row * CH));
+    highlight.setAttribute('opacity', '1');
+
+    document.getElementById('grid-map')!.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    const coords = cellCoords(col, row);
+    document.getElementById('sel-locator')!.textContent =
+      fieldName(col, row) + (s.length >= 4 ? s[2] + s[3] : '');
+  }
+
+  /* ── Geolocation ── */
+  function tryGeolocate() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        const locator = latlonToMaidenhead(latitude, longitude);
+        document.getElementById('my-locator')!.textContent = locator;
+
+        // Place marker on SVG
+        const svgX = longitude + 180;
+        const svgY = 90 - latitude;
+        const dot  = document.getElementById('user-dot')!;
+        const ring = document.getElementById('user-ring')!;
+        const mark = document.getElementById('user-marker')!;
+        dot.setAttribute('cx', svgX.toFixed(2));
+        dot.setAttribute('cy', svgY.toFixed(2));
+        ring.setAttribute('cx', svgX.toFixed(2));
+        ring.setAttribute('cy', svgY.toFixed(2));
+        mark.style.display = '';
+
+        // Also highlight the field
+        highlightLocator(locator.slice(0, 2));
+        document.getElementById('sel-locator')!.textContent = locator;
+      },
+      () => {
+        document.getElementById('my-locator')!.textContent = 'denied';
+      }
+    );
+  }
+
+  /* ── Init ── */
+  async function init() {
+    renderAxisLabels();
+
+    let kp: number | null = null;
+    let sfi: number | null = null;
+
+    try {
+      const res = await fetch('/api/solar');
+      if (res.ok) {
+        const d = await res.json();
+        kp  = d.k_index;
+        sfi = d.sfi;
+        const kpEl  = document.getElementById('cond-kp');
+        const sfiEl = document.getElementById('cond-sfi');
+        if (kpEl  && kp  !== null) kpEl.textContent  = `Kp ${kp}`;
+        if (sfiEl && sfi !== null) sfiEl.textContent  = `SFI ${sfi}`;
+      }
+    } catch {}
+
+    renderCells(kp, sfi);
+    renderGridLines();
+    initInteraction(kp, sfi);
+
+    document.getElementById('locate-btn')!.addEventListener('click', tryGeolocate);
+
+    document.getElementById('lookup-btn')!.addEventListener('click', () => {
+      const val = (document.getElementById('locator-input') as HTMLInputElement).value;
+      if (val) highlightLocator(val);
+    });
+
+    document.getElementById('locator-input')!.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const val = (e.target as HTMLInputElement).value;
+        if (val) highlightLocator(val);
+      }
+    });
+  }
+
+  init();
+</script>
