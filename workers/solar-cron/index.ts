@@ -3,8 +3,8 @@ export interface Env {
   SOLAR_CACHE: KVNamespace;
 }
 
-// All under /json/ — the only reliable SWPC JSON tree
 const SWPC = {
+  flux10cm:   'https://services.swpc.noaa.gov/products/10cm-flux-30-day.json',
   solarCycle: 'https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json',
   kpCurrent:  'https://services.swpc.noaa.gov/json/planetary_k_index_1m.json',
   xrayFlux:   'https://services.swpc.noaa.gov/json/goes/primary/xray-fluxes-7-day.json',
@@ -34,13 +34,27 @@ async function fetchJson<T>(url: string): Promise<T | null> {
   }
 }
 
-/** Monthly solar cycle indices — walk backwards to find most recent non-null value
- *  (current month's entry is often null until month-end) */
+/** Daily 10.7 cm flux (30-day series) — most recent non-null entry */
+function parseSfi10cm(rows: any[] | null): number | null {
+  if (!Array.isArray(rows) || !rows.length) return null;
+  for (let i = rows.length - 1; i >= 0; i--) {
+    const entry = rows[i];
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
+    const v = parseFloat(entry['flux'] ?? entry['observed_flux'] ?? entry['f10.7'] ?? '-1');
+    if (!isNaN(v) && v > 0) return v;
+  }
+  return null;
+}
+
+/** Monthly solar cycle indices — fallback SFI source when daily endpoint fails */
 function parseSfi(rows: any[] | null): number | null {
   if (!Array.isArray(rows) || !rows.length) return null;
   for (let i = rows.length - 1; i >= 0; i--) {
     const entry = rows[i];
-    const v = parseFloat(entry['observed_swpc_solar_flux'] ?? entry['solar_flux'] ?? '-1');
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
+    const v = parseFloat(
+      entry['observed_swpc_solar_flux'] ?? entry['solar_flux'] ?? entry['flux'] ?? '-1'
+    );
     if (!isNaN(v) && v > 0) return v;
   }
   return null;
@@ -93,16 +107,18 @@ function fluxToClass(flux: number): string {
   return 'A' + (flux / 1e-8).toFixed(1);
 }
 
-/** GOES X-ray 7-day — walk backwards, 0.1-0.8 nm band only (flare classification band) */
+/** GOES X-ray 7-day — walk backwards, long-band (0.1-0.8 nm) only */
 function parseXray(rows: any[] | null): { xclass: string | null; flux: number | null; time: string | null } {
   if (!rows?.length) return { xclass: null, flux: null, time: null };
-  // Check only the last 240 entries (~4 hours of 1-min data per band)
-  const start = Math.max(0, rows.length - 240);
+  // Check last 480 entries (~8 hours of 1-min data per band)
+  const start = Math.max(0, rows.length - 480);
   for (let i = rows.length - 1; i >= start; i--) {
     const r = rows[i];
-    // Skip short-wave band; only the 0.1-0.8 nm band maps to A/B/C/M/X classes
-    if (r.energy && r.energy !== '0.1-0.8nm') continue;
-    const flux = parseFloat(r.flux ?? r.observed_flux ?? r.flux_observed ?? '-1');
+    // Accept long-band entries; reject short-band (0.05-0.4nm) explicitly
+    const band: string = r.energy ?? r.band ?? r.wavelength ?? '';
+    if (band && band !== '0.1-0.8nm' && !band.startsWith('long')) continue;
+    // observed_flux is the post-SCN-26-21 primary field; fall back to flux
+    const flux = parseFloat(r.observed_flux ?? r.flux ?? r.flux_observed ?? '-1');
     if (isNaN(flux) || flux <= 0) continue;
     const xclass = r.current_class || fluxToClass(flux);
     return { xclass, flux, time: r.time_tag ?? null };
@@ -132,14 +148,15 @@ export default {
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
     console.log('solar-cron: fetch start');
 
-    const [cycleRaw, kpRaw, xrayRaw, alertsRaw] = await Promise.all([
+    const [flux10Raw, cycleRaw, kpRaw, xrayRaw, alertsRaw] = await Promise.all([
+      fetchJson<any[]>(SWPC.flux10cm),
       fetchJson<any[]>(SWPC.solarCycle),
       fetchJson<any[]>(SWPC.kpCurrent),
       fetchJson<any[]>(SWPC.xrayFlux),
       fetchJson<any[]>(SWPC.geoAlerts),
     ]);
 
-    const sfi = parseSfi(cycleRaw);
+    const sfi = parseSfi10cm(flux10Raw) ?? parseSfi(cycleRaw);
     const ssn = parseSsn(cycleRaw);
     const { kp, time: kpTime } = parseKp(kpRaw);
     const a_index = kp !== null ? kpToAp(kp) : null;
