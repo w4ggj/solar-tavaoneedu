@@ -4,11 +4,12 @@ export interface Env {
 }
 
 const SWPC = {
-  flux10cm:   'https://services.swpc.noaa.gov/products/10cm-flux-30-day.json',
-  solarCycle: 'https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json',
-  kpCurrent:  'https://services.swpc.noaa.gov/json/planetary_k_index_1m.json',
-  xrayFlux:   'https://services.swpc.noaa.gov/json/goes/primary/xray-fluxes-7-day.json',
-  geoAlerts:  'https://services.swpc.noaa.gov/json/alerts.json',
+  flux10cm:    'https://services.swpc.noaa.gov/products/10cm-flux-30-day.json',
+  solarCycle:  'https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json',
+  kpCurrent:   'https://services.swpc.noaa.gov/json/planetary_k_index_1m.json',
+  xrayFlux7d:  'https://services.swpc.noaa.gov/json/goes/primary/xray-fluxes-7-day.json',
+  xrayFlux1d:  'https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json',
+  geoAlerts:   'https://services.swpc.noaa.gov/json/alerts.json',
 } as const;
 
 interface LiveData {
@@ -107,20 +108,28 @@ function fluxToClass(flux: number): string {
   return 'A' + (flux / 1e-8).toFixed(1);
 }
 
-/** GOES X-ray 7-day — walk backwards, long-band (0.1-0.8 nm) only */
+/** GOES X-ray — walk backwards, long-band (0.1-0.8 nm) only */
 function parseXray(rows: any[] | null): { xclass: string | null; flux: number | null; time: string | null } {
-  if (!rows?.length) return { xclass: null, flux: null, time: null };
-  // Check last 480 entries (~8 hours of 1-min data per band)
-  const start = Math.max(0, rows.length - 480);
+  if (!Array.isArray(rows) || !rows.length) return { xclass: null, flux: null, time: null };
+  // Search up to 600 entries back (~10 hours of 1-min data across two bands)
+  const start = Math.max(0, rows.length - 600);
   for (let i = rows.length - 1; i >= start; i--) {
     const r = rows[i];
-    // Accept long-band entries; reject short-band (0.05-0.4nm) explicitly
-    const band: string = r.energy ?? r.band ?? r.wavelength ?? '';
-    if (band && band !== '0.1-0.8nm' && !band.startsWith('long')) continue;
-    // observed_flux is the post-SCN-26-21 primary field; fall back to flux
-    const flux = parseFloat(r.observed_flux ?? r.flux ?? r.flux_observed ?? '-1');
-    if (isNaN(flux) || flux <= 0) continue;
-    const xclass = r.current_class || fluxToClass(flux);
+    if (!r || typeof r !== 'object' || Array.isArray(r)) continue;
+
+    // Band filter: skip short-band (0.05-0.4 nm) entries; accept long-band or unlabeled
+    const band: string = String(r.energy ?? r.band ?? r.wavelength ?? '');
+    if (band && (band.includes('0.05') || band.includes('0.4nm') || band.startsWith('short'))) continue;
+
+    // Flux: try every known NOAA field name; handle number or string
+    const rawFlux = r.observed_flux ?? r.flux ?? r.current_int_xrlong ?? r.flux_observed ?? null;
+    if (rawFlux === null || rawFlux === undefined) continue;
+    const flux = typeof rawFlux === 'number' ? rawFlux : parseFloat(String(rawFlux));
+    if (!isFinite(flux) || flux <= 0) continue;
+
+    // X-ray class: validate format (letter + digit), otherwise compute from flux
+    const cls: string = r.current_class ?? '';
+    const xclass = /^[A-Z]\d/.test(cls) ? cls : fluxToClass(flux);
     return { xclass, flux, time: r.time_tag ?? null };
   }
   return { xclass: null, flux: null, time: null };
@@ -148,11 +157,12 @@ export default {
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
     console.log('solar-cron: fetch start');
 
-    const [flux10Raw, cycleRaw, kpRaw, xrayRaw, alertsRaw] = await Promise.all([
+    const [flux10Raw, cycleRaw, kpRaw, xray7dRaw, xray1dRaw, alertsRaw] = await Promise.all([
       fetchJson<any[]>(SWPC.flux10cm),
       fetchJson<any[]>(SWPC.solarCycle),
       fetchJson<any[]>(SWPC.kpCurrent),
-      fetchJson<any[]>(SWPC.xrayFlux),
+      fetchJson<any[]>(SWPC.xrayFlux7d),
+      fetchJson<any[]>(SWPC.xrayFlux1d),
       fetchJson<any[]>(SWPC.geoAlerts),
     ]);
 
@@ -160,7 +170,10 @@ export default {
     const ssn = parseSsn(cycleRaw);
     const { kp, time: kpTime } = parseKp(kpRaw);
     const a_index = kp !== null ? kpToAp(kp) : null;
-    const { xclass, flux: xflux, time: xtime } = parseXray(xrayRaw);
+    // Try 7-day first; fall back to 1-day if 7-day returns nothing
+    let { xclass, flux: xflux, time: xtime } = parseXray(xray7dRaw);
+    if (xclass === null) ({ xclass, flux: xflux, time: xtime } = parseXray(xray1dRaw));
+    console.log(`solar-cron: xray7d=${xray7dRaw?.length ?? 'null'} xray1d=${xray1dRaw?.length ?? 'null'} → class=${xclass}`);
     const alerts = parseAlerts(alertsRaw);
 
     const live: LiveData = {
@@ -176,7 +189,7 @@ export default {
     };
 
     await env.SOLAR_CACHE.put('live', JSON.stringify(live), { expirationTtl: 3600 });
-    console.log(`solar-cron: KV updated — SFI=${sfi} SSN=${ssn} Kp=${kp} Ap=${a_index} Xray=${xclass} alerts=${alerts.length}`);
+    console.log(`solar-cron: KV updated — SFI=${sfi} SSN=${ssn} Kp=${kp} Ap=${a_index} Xray=${xclass ?? 'null'} alerts=${alerts.length}`);
 
     await env.DB.prepare(
       `INSERT INTO solar_history (recorded_at, sfi, a_index, k_index, xray_flux, xray_class, sunspots)
