@@ -56,6 +56,9 @@ import Shell from '../../layouts/Shell.astro';
             <!-- Ocean -->
             <rect width="360" height="180" fill="#07111e"/>
 
+            <!-- Propagation cell colors (rendered by JS, beneath continents) -->
+            <g id="cells"></g>
+
             <!-- Continents — equirectangular (x = lon+180, y = 90−lat) -->
             <g id="continents" fill="#1a2e45" stroke="rgba(100,160,200,0.4)" stroke-width="0.4">
               <!-- Greenland -->
@@ -85,9 +88,6 @@ import Shell from '../../layouts/Shell.astro';
               <!-- Antarctica -->
               <rect x="0" y="157" width="360" height="23"/>
             </g>
-
-            <!-- Propagation cell colors (rendered by JS) -->
-            <g id="cells"></g>
 
             <!-- Reference lines -->
             <g stroke-linecap="round">
