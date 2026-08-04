@@ -3,10 +3,12 @@ export interface Env {
 }
 
 const TESTS = [
+  'https://services.swpc.noaa.gov/products/solar-wind/plasma-7-day.json',
+  'https://services.swpc.noaa.gov/products/solar-wind/mag-7-day.json',
+  'https://services.swpc.noaa.gov/products/solar-wind/plasma-2-hour.json',
+  'https://services.swpc.noaa.gov/products/solar-wind/mag-2-hour.json',
   'https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json',
   'https://services.swpc.noaa.gov/products/summary/solar-wind-mag-field.json',
-  'https://services.swpc.noaa.gov/products/solar-wind/plasma-2-hour.json',
-  'https://services.swpc.noaa.gov/json/planetary_k_index_1m.json',
 ];
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
