@@ -121,6 +121,22 @@ import Shell from '../layouts/Shell.astro';
         <span class="rb-freqs" id="rb-freqs"></span>
       </div>
 
+      <!-- Aurora visibility forecast (derived from live Kp) -->
+      <div class="aurora-row" id="aurora-row" hidden>
+        <span class="wwv-label">Aurora</span>
+        <div class="aurora-badge" id="aurora-badge">
+          <span class="aurora-bound" id="aurora-bound">—°N</span>
+          <span class="aurora-region" id="aurora-region">Calculating…</span>
+        </div>
+      </div>
+
+      <!-- 3-day space weather outlook + 24h flare probabilities -->
+      <div class="swx-row" id="swx-row" hidden>
+        <span class="wwv-label">3-Day Outlook</span>
+        <div class="swx-days" id="swx-days"></div>
+        <div class="swx-probs" id="swx-probs"></div>
+      </div>
+
       <div class="share-row">
         <a href="/card/" class="share-link">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -235,6 +251,18 @@ import Shell from '../layouts/Shell.astro';
         </figure>
       </div>
       <p class="data-updated" style="margin-top:14px">NASA SDO (sdo.gsfc.nasa.gov) · ESA/NASA SOHO (soho.nascom.nasa.gov) · Images delayed ~15–60 min from real-time</p>
+    </div>
+  </section>
+
+  <section id="active-regions" aria-label="Active solar regions">
+    <div class="wrap">
+      <p class="seclabel">NOAA SWPC</p>
+      <h2>Active solar regions</h2>
+      <p class="sec-intro">Currently numbered NOAA Active Regions (AR) on the solar disk, ranked by flare potential. Magnetic classification and C/M/X flare probabilities are updated every 30 minutes.</p>
+      <div id="ar-table-wrap" class="ar-table-wrap">
+        <p class="data-updated" id="ar-status">Loading active regions…</p>
+      </div>
+      <p class="data-updated" style="margin-top:10px">Source: NOAA SWPC solar_regions.json · updated every 30 min</p>
     </div>
   </section>
 
@@ -391,6 +419,15 @@ import Shell from '../layouts/Shell.astro';
           <p id="card-solar">Loading…</p>
         </div>
       </div>
+    </div>
+  </section>
+
+  <section id="contest-calendar" aria-label="Ham radio contest calendar">
+    <div class="wrap">
+      <p class="seclabel">Ham Radio</p>
+      <h2>Upcoming major HF contests</h2>
+      <p class="sec-intro">Major HF operating events — knowing the calendar helps you plan propagation windows and choose the right bands to maximize contacts.</p>
+      <div class="contest-list" id="contest-list"></div>
     </div>
   </section>
 
@@ -912,6 +949,108 @@ import Shell from '../layouts/Shell.astro';
     .fc-strip { gap: 3px; }
     .ab-list { gap: 8px; }
   }
+
+  /* ── Aurora visibility row ── */
+  .aurora-row {
+    margin-top: 10px;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .aurora-badge {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 9px; padding: 5px 14px;
+    transition: border-color .18s, background .18s;
+  }
+  .aurora-badge.aurora-active { border-color: rgba(139,92,246,.4); background: rgba(139,92,246,.05); }
+  .aurora-bound {
+    font-family: var(--mono); font-size: .98rem; font-weight: 700; color: var(--muted); line-height: 1;
+  }
+  .aurora-badge.aurora-active .aurora-bound { color: #a78bfa; }
+  .aurora-region { font-family: var(--mono); font-size: .68rem; color: var(--muted); }
+
+  /* ── 3-Day space weather outlook row ── */
+  .swx-row {
+    margin-top: 10px;
+    display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap;
+  }
+  .swx-days { display: flex; gap: 6px; flex-wrap: wrap; }
+  .swx-day {
+    display: flex; flex-direction: column; align-items: center;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 9px; padding: 7px 12px; min-width: 72px;
+    gap: 3px; transition: border-color .18s;
+  }
+  .swx-day.swx-active { border-color: rgba(245,158,11,.4); }
+  .swx-day.swx-severe { border-color: rgba(239,68,68,.4); }
+  .swx-day-label { font-family: var(--mono); font-size: .6rem; letter-spacing: .08em; color: var(--muted); text-transform: uppercase; }
+  .swx-kp { font-family: var(--mono); font-size: 1rem; font-weight: 700; color: var(--text); line-height: 1; }
+  .swx-day.swx-active .swx-kp { color: #fbbf24; }
+  .swx-day.swx-severe .swx-kp { color: #f87171; }
+  .swx-rprob { font-family: var(--mono); font-size: .6rem; color: var(--muted); }
+  .swx-probs {
+    display: flex; flex-direction: column; gap: 3px; padding: 4px 0;
+    font-family: var(--mono); font-size: .66rem; color: var(--muted);
+  }
+  .swx-prob-row { display: flex; align-items: center; gap: 6px; }
+  .swx-prob-lbl { min-width: 48px; }
+  .swx-prob-bar { flex: 1; height: 5px; background: rgba(255,255,255,.06); border-radius: 3px; min-width: 60px; }
+  .swx-prob-fill { height: 100%; border-radius: 3px; }
+  .swx-prob-val { min-width: 28px; text-align: right; }
+
+  /* ── Active Solar Regions table ── */
+  #active-regions { padding-top: 0; }
+  .ar-table-wrap { margin-top: 20px; overflow-x: auto; }
+  .ar-table {
+    width: 100%; border-collapse: collapse;
+    font-family: var(--mono); font-size: .75rem;
+  }
+  .ar-table th {
+    text-align: left; padding: 7px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted); letter-spacing: .07em; text-transform: uppercase; font-size: .65rem;
+    white-space: nowrap;
+  }
+  .ar-table td {
+    padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,.04);
+    color: var(--text); vertical-align: middle;
+  }
+  .ar-table tr:last-child td { border-bottom: none; }
+  .ar-table tr:hover td { background: rgba(255,255,255,.02); }
+  .ar-num { color: var(--green-lt); font-weight: 700; }
+  .ar-mag { color: var(--muted); }
+  .ar-prob-c { color: #6ee7b7; }
+  .ar-prob-m { color: #fbbf24; }
+  .ar-prob-x { color: #f87171; }
+  .ar-empty { color: var(--muted); opacity: .5; font-family: var(--mono); font-size: .75rem; }
+
+  /* ── Ham Contest Calendar ── */
+  #contest-calendar { padding-top: 0; }
+  .contest-list {
+    display: flex; flex-direction: column; gap: 8px; margin-top: 22px;
+  }
+  .contest-item {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 16px;
+    transition: border-color .18s;
+  }
+  .contest-item:hover { border-color: var(--green-dk); }
+  .contest-item.contest-soon { border-color: rgba(16,185,129,.3); }
+  .contest-date {
+    font-family: var(--mono); font-size: .72rem; color: var(--green-lt);
+    min-width: 100px; flex-shrink: 0;
+  }
+  .contest-name { font-family: var(--mono); font-size: .82rem; font-weight: 600; color: var(--text); flex: 1; min-width: 140px; }
+  .contest-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+  .contest-tag {
+    font-family: var(--mono); font-size: .62rem; letter-spacing: .05em;
+    padding: 2px 7px; border-radius: 4px; color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .contest-tag.mode-cw    { border-color: rgba(16,185,129,.3); color: #6ee7b7; }
+  .contest-tag.mode-ssb   { border-color: rgba(251,191,36,.3); color: #fbbf24; }
+  .contest-tag.mode-mixed { border-color: rgba(167,139,250,.3); color: #a78bfa; }
+  .contest-countdown { font-family: var(--mono); font-size: .68rem; color: var(--muted); flex-shrink: 0; }
 
   /* ── Band conditions — :global() because tiles are injected via innerHTML ── */
   :global(.band-grid) {
@@ -1443,6 +1582,7 @@ import Shell from '../layouts/Shell.astro';
       updateStormBanner(d);
       updateAlerts(d);
       updateRadioBlackout(d.xray_class);
+      updateAurora(d.k_index);
     } catch (e) {
       console.error('solar fetch failed', e);
       const s = document.getElementById('conditions-summary');
@@ -1810,6 +1950,157 @@ import Shell from '../layouts/Shell.astro';
     });
   }
 
+  /* ── Aurora visibility forecast ── */
+  function updateAurora(kp: number | null): void {
+    const row    = document.getElementById('aurora-row') as HTMLElement | null;
+    const badge  = document.getElementById('aurora-badge');
+    const bound  = document.getElementById('aurora-bound');
+    const region = document.getElementById('aurora-region');
+    if (!row || !badge || !bound || !region) return;
+    const kpVal = kp ?? 0;
+    const lat   = Math.round(Math.max(49, Math.min(67, 67 - kpVal * 2)));
+    bound.textContent = `≥${lat}°N`;
+    let desc = '';
+    if (kpVal >= 9) desc = 'France, Poland, northern US';
+    else if (kpVal >= 8) desc = 'England, Germany, northern US';
+    else if (kpVal >= 7) desc = 'UK, Amsterdam, upper Midwest US';
+    else if (kpVal >= 6) desc = 'Scotland, southern Scandinavia, southern Canada';
+    else if (kpVal >= 5) desc = 'Northern Scotland, Oslo, northern Canada';
+    else if (kpVal >= 4) desc = 'Northern Norway, Iceland, Alaska';
+    else if (kpVal >= 2) desc = 'Far northern Scandinavia, Alaska';
+    else desc = 'High Arctic regions only';
+    region.textContent = desc;
+    badge.classList.toggle('aurora-active', kpVal >= 4);
+    row.hidden = false;
+  }
+
+  /* ── 3-day space weather outlook ── */
+  async function loadSpaceWx(): Promise<void> {
+    try {
+      const res = await fetch('/api/spacewx');
+      if (!res.ok) return;
+      const d = await res.json() as {
+        days: Array<{
+          label: string; date: string;
+          rScale: number; rMinor: number; rMajor: number;
+          sScale: number; sProb: number;
+          gScale: number; gProb: number; kpMax: number;
+        }>;
+      };
+      const row     = document.getElementById('swx-row') as HTMLElement | null;
+      const daysEl  = document.getElementById('swx-days');
+      const probsEl = document.getElementById('swx-probs');
+      if (!row || !daysEl || !probsEl || !d.days?.length) return;
+
+      daysEl.innerHTML = d.days.map(day => {
+        const cls = day.gScale >= 3 ? 'swx-severe' : day.gScale >= 1 ? 'swx-active' : '';
+        return `<div class="swx-day ${cls}">
+          <span class="swx-day-label">${day.label}</span>
+          <span class="swx-kp">Kp${day.kpMax >= 5 ? '≥' + day.kpMax : '≤' + day.kpMax}</span>
+          ${day.rMinor > 0 ? `<span class="swx-rprob">R1+ ${day.rMinor}%</span>` : ''}
+          ${day.rMajor > 0 ? `<span class="swx-rprob">R3+ ${day.rMajor}%</span>` : ''}
+        </div>`;
+      }).join('');
+
+      // 24h flare probabilities from today's period
+      const today = d.days[0];
+      if (today) {
+        const probs = [
+          { lbl: 'C-flare', val: today.rMinor, color: '#6ee7b7' },
+          { lbl: 'M-flare', val: today.rMajor, color: '#fbbf24' },
+          { lbl: 'G-storm', val: today.gProb,  color: '#a78bfa' },
+        ];
+        probsEl.innerHTML = probs.map(p => `
+          <div class="swx-prob-row">
+            <span class="swx-prob-lbl">${p.lbl}</span>
+            <div class="swx-prob-bar"><div class="swx-prob-fill" style="width:${Math.min(100,p.val)}%;background:${p.color}"></div></div>
+            <span class="swx-prob-val" style="color:${p.color}">${p.val}%</span>
+          </div>`).join('');
+      }
+      row.hidden = false;
+    } catch { /* non-fatal */ }
+  }
+
+  /* ── Active solar regions ── */
+  async function loadSolarRegions(): Promise<void> {
+    try {
+      const res = await fetch('/api/solarregions');
+      if (!res.ok) return;
+      const d = await res.json() as {
+        regions: Array<{
+          number: number; lat: string; lon: string;
+          magClass: string; spots: number;
+          probC: number; probM: number; probX: number;
+        }>;
+        updated: string;
+      };
+      const wrap = document.getElementById('ar-table-wrap');
+      const stat = document.getElementById('ar-status');
+      if (!wrap) return;
+      if (!d.regions?.length) {
+        if (stat) stat.textContent = 'No active numbered regions currently on the disk.';
+        return;
+      }
+      if (stat) stat.remove();
+      wrap.innerHTML = `<table class="ar-table">
+        <thead><tr>
+          <th>AR#</th><th>Lat/Lon</th><th>Mag</th><th>Spots</th>
+          <th>C%</th><th>M%</th><th>X%</th>
+        </tr></thead>
+        <tbody>${d.regions.map(r => `<tr>
+          <td class="ar-num">${r.number}</td>
+          <td>${r.lat} ${r.lon}</td>
+          <td class="ar-mag">${r.magClass}</td>
+          <td>${r.spots}</td>
+          <td class="ar-prob-c">${r.probC}</td>
+          <td class="ar-prob-m">${r.probM}</td>
+          <td class="ar-prob-x">${r.probX}</td>
+        </tr>`).join('')}
+        </tbody>
+      </table>`;
+    } catch { /* non-fatal */ }
+  }
+
+  /* ── Ham contest calendar ── */
+  function renderContestCalendar(): void {
+    const el = document.getElementById('contest-list');
+    if (!el) return;
+    const CONTESTS = [
+      { name: 'CQ WW DX SSB',       start: '2026-10-24', end: '2026-10-25', mode: 'SSB',   bands: 'All HF' },
+      { name: 'ARRL Sweepstakes CW', start: '2026-11-07', end: '2026-11-08', mode: 'CW',    bands: '160–10m' },
+      { name: 'ARRL Sweepstakes SSB',start: '2026-11-21', end: '2026-11-22', mode: 'SSB',   bands: '160–10m' },
+      { name: 'CQ WW DX CW',        start: '2026-11-28', end: '2026-11-29', mode: 'CW',     bands: 'All HF' },
+      { name: 'ARRL 10m Contest',    start: '2026-12-12', end: '2026-12-13', mode: 'Mixed', bands: '10m only' },
+      { name: 'ARRL DX CW',         start: '2027-02-20', end: '2027-02-21', mode: 'CW',    bands: '160–10m' },
+      { name: 'ARRL DX SSB',        start: '2027-03-06', end: '2027-03-07', mode: 'SSB',   bands: '160–10m' },
+      { name: 'CQ WPX SSB',         start: '2027-03-27', end: '2027-03-28', mode: 'SSB',   bands: 'All HF' },
+      { name: 'CQ WPX CW',          start: '2027-05-29', end: '2027-05-30', mode: 'CW',    bands: 'All HF' },
+      { name: 'ARRL Field Day',      start: '2027-06-26', end: '2027-06-27', mode: 'Mixed', bands: 'HF+VHF' },
+      { name: 'IARU HF Championship',start: '2027-07-10', end: '2027-07-11', mode: 'Mixed', bands: 'All HF' },
+    ];
+    const now = Date.now();
+    const upcoming = CONTESTS.filter(c => new Date(c.end + 'T23:59:00Z').getTime() > now).slice(0, 7);
+    if (!upcoming.length) { el.innerHTML = '<p class="ar-empty">No upcoming contests in calendar.</p>'; return; }
+    el.innerHTML = upcoming.map(c => {
+      const startD = new Date(c.start + 'T00:00:00Z');
+      const daysAway = Math.ceil((startD.getTime() - now) / 86400_000);
+      const soon = daysAway <= 14;
+      const modeCls = c.mode === 'CW' ? 'mode-cw' : c.mode === 'SSB' ? 'mode-ssb' : 'mode-mixed';
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const dateStr = `${months[startD.getUTCMonth()]} ${startD.getUTCDate()}–${new Date(c.end+'T00:00:00Z').getUTCDate()}`;
+      const countdown = daysAway <= 0 ? 'This weekend' : daysAway === 1 ? 'Tomorrow' : `${daysAway}d away`;
+      return `<div class="contest-item${soon ? ' contest-soon' : ''}">
+        <span class="contest-date">${dateStr} ${startD.getUTCFullYear()}</span>
+        <span class="contest-name">${c.name}</span>
+        <div class="contest-tags">
+          <span class="contest-tag ${modeCls}">${c.mode}</span>
+          <span class="contest-tag">${c.bands}</span>
+        </div>
+        <span class="contest-countdown">${countdown}</span>
+      </div>`;
+    }).join('');
+  }
+
   loadSolar();
   loadHistory(24);
   drawGreyline(0);
@@ -1817,6 +2108,10 @@ import Shell from '../layouts/Shell.astro';
   loadWwv();
   loadSolarWind();
   updateRadioBlackout(null);
+  updateAurora(null);
+  loadSpaceWx();
+  loadSolarRegions();
+  renderContestCalendar();
   initPushUI();
 </script>
 
