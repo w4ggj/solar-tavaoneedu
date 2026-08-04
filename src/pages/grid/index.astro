@@ -400,6 +400,41 @@ import Shell from '../../layouts/Shell.astro';
     );
   }
 
+  function maidenheadToLatLon(loc: string): { lat: number; lon: number } | null {
+    const s = loc.toUpperCase().trim();
+    if (s.length < 2) return null;
+    const col    = s.charCodeAt(0) - 65;
+    const rowLat = s.charCodeAt(1) - 65;
+    if (col < 0 || col > 17 || rowLat < 0 || rowLat > 17) return null;
+    let lon = col * 20 - 180;
+    let lat = rowLat * 10 - 90;
+    if (s.length >= 4) {
+      const sqC = parseInt(s[2]), sqR = parseInt(s[3]);
+      if (!isNaN(sqC) && !isNaN(sqR)) { lon += sqC * 2; lat += sqR; }
+    }
+    if (s.length >= 6) {
+      const subC = s.charCodeAt(4) - 97, subR = s.charCodeAt(5) - 97;
+      if (subC >= 0 && subR >= 0) { lon += subC * (2 / 24); lat += subR * (1 / 24); }
+      lon += 1 / 24; lat += 1 / 48;
+    } else if (s.length >= 4) {
+      lon += 1; lat += 0.5;
+    } else {
+      lon += 10; lat += 5;
+    }
+    return { lat, lon };
+  }
+
+  function placeUserMarker(lat: number, lon: number, label: string) {
+    const svgX = (lon + 180).toFixed(2);
+    const svgY = (90 - lat).toFixed(2);
+    const dot  = document.getElementById('user-dot')!;
+    const ring = document.getElementById('user-ring')!;
+    dot.setAttribute('cx', svgX); dot.setAttribute('cy', svgY);
+    ring.setAttribute('cx', svgX); ring.setAttribute('cy', svgY);
+    document.getElementById('user-marker')!.style.display = '';
+    document.getElementById('my-locator')!.textContent = label.toUpperCase();
+  }
+
   /* ── Propagation color ── */
   function cellFill(row: number, kp: number | null, sfi: number | null): string {
     const latCenter = 90 - (row * CH + CH / 2);
@@ -825,7 +860,6 @@ import Shell from '../../layouts/Shell.astro';
       (pos) => {
         const { latitude, longitude, accuracy } = pos.coords;
         const locator = latlonToMaidenhead(latitude, longitude);
-        document.getElementById('my-locator')!.textContent = locator;
 
         // Show accuracy so user knows if it's GPS or IP-based
         const accEl = document.getElementById('loc-acc')!;
@@ -841,17 +875,7 @@ import Shell from '../../layouts/Shell.astro';
           accEl.className = 'loc-acc';
         }
 
-        // Place marker on SVG
-        const svgX = longitude + 180;
-        const svgY = 90 - latitude;
-        const dot  = document.getElementById('user-dot')!;
-        const ring = document.getElementById('user-ring')!;
-        const mark = document.getElementById('user-marker')!;
-        dot.setAttribute('cx', svgX.toFixed(2));
-        dot.setAttribute('cy', svgY.toFixed(2));
-        ring.setAttribute('cx', svgX.toFixed(2));
-        ring.setAttribute('cy', svgY.toFixed(2));
-        mark.style.display = '';
+        placeUserMarker(latitude, longitude, locator);
 
         // Also highlight the field
         highlightLocator(locator.slice(0, 2));
@@ -943,16 +967,22 @@ import Shell from '../../layouts/Shell.astro';
 
     document.getElementById('locate-btn')!.addEventListener('click', tryGeolocate);
 
-    document.getElementById('lookup-btn')!.addEventListener('click', () => {
-      const val = (document.getElementById('locator-input') as HTMLInputElement).value;
-      if (val) highlightLocator(val);
-    });
+    function doLookup() {
+      const val = (document.getElementById('locator-input') as HTMLInputElement).value.trim();
+      if (!val) return;
+      highlightLocator(val);
+      const pos = maidenheadToLatLon(val);
+      if (pos) {
+        placeUserMarker(pos.lat, pos.lon, val);
+        document.getElementById('loc-acc')!.textContent = 'manually entered';
+        document.getElementById('loc-acc')!.className = 'loc-acc';
+      }
+    }
+
+    document.getElementById('lookup-btn')!.addEventListener('click', doLookup);
 
     document.getElementById('locator-input')!.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        const val = (e.target as HTMLInputElement).value;
-        if (val) highlightLocator(val);
-      }
+      if (e.key === 'Enter') doLookup();
     });
   }
 
