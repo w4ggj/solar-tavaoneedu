@@ -84,6 +84,26 @@ import Shell from '../../layouts/Shell.astro';
           <span class="toc-num">14</span>
           <span class="toc-label">Great-Circle Path Tool</span>
         </a>
+        <a href="#solar-wind" class="toc-item">
+          <span class="toc-num">15</span>
+          <span class="toc-label">Solar Wind Monitor</span>
+        </a>
+        <a href="#radio-blackout" class="toc-item">
+          <span class="toc-num">16</span>
+          <span class="toc-label">Radio Blackout Indicator</span>
+        </a>
+        <a href="#solar-cycle-chart" class="toc-item">
+          <span class="toc-num">17</span>
+          <span class="toc-label">Solar Cycle 25 Chart</span>
+        </a>
+        <a href="#muf-estimator" class="toc-item">
+          <span class="toc-num">18</span>
+          <span class="toc-label">MUF Estimator</span>
+        </a>
+        <a href="#push-alerts" class="toc-item">
+          <span class="toc-num">19</span>
+          <span class="toc-label">Push Notifications</span>
+        </a>
       </nav>
     </div>
   </section>
@@ -775,6 +795,197 @@ import Shell from '../../layouts/Shell.astro';
 
       <div class="cta-row" style="margin-top:2rem">
         <a class="btn btn-ghost" href="/grid/">Open the Grid Map →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ 15 — SOLAR WIND -->
+  <section id="solar-wind" class="learn-section alt-bg" aria-label="Solar wind monitor">
+    <div class="wrap">
+      <p class="seclabel">Concept 15</p>
+      <h2>Solar Wind Monitor — live DSCOVR data</h2>
+      <p class="sec-intro">The solar wind row on the dashboard shows real-time data from NOAA's DSCOVR satellite, positioned at the Sun–Earth L1 Lagrange point about 1.5 million km from Earth — roughly 30–60 minutes upstream of any solar wind that will hit our magnetosphere.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <h3>Three numbers to watch</h3>
+          <ul class="learn-list">
+            <li><strong>Bz (nT)</strong> — The north–south component of the interplanetary magnetic field (IMF). This is the single most important value for predicting geomagnetic storms. When Bz is strongly negative (southward), it reconnects with Earth's magnetosphere and allows solar wind energy to pour in. Sustained Bz below −10 nT typically leads to a geomagnetic storm. Positive Bz (northward) means Earth's field is mostly shielded. The mini-chart shows the 1-hour Bz trend — a sudden southward turn warrants attention.</li>
+            <li><strong>Speed (km/s)</strong> — Solar wind plasma speed. Normal is 300–500 km/s. After a coronal mass ejection, the shock front can arrive at 600–800 km/s or faster. High speed alone won't cause a storm — the Bz direction matters more — but a high-speed stream combined with southward Bz is a recipe for a severe G3+ storm.</li>
+            <li><strong>Density (p/cm³)</strong> — Proton density. Normal is 3–10 p/cm³. A density spike, especially in front of a CME, can compress the magnetosphere and briefly enhance storm effects.</li>
+          </ul>
+          <h3>Why DSCOVR matters</h3>
+          <p>Before DSCOVR and its predecessor ACE, storms arrived with little warning. Now, the ~30–60 minute lead time from L1 means operators can see a negative Bz arriving before it affects the ionosphere — enough time to make a note that conditions may deteriorate, switch to a backup path, or wait out the storm.</p>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">Bz colour coding</p>
+            <p>On the dashboard, a strongly negative Bz turns the badge red — southward, storm-driving. Strongly positive Bz turns it green — northward, shielded. Near zero stays neutral grey. The mini-chart's zero-line makes trend direction easy to read at a glance.</p>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">Exam relevance</p>
+            <p>The IMF, solar wind speed, and CME lead time appear in <strong>General class Element 3, Group G3</strong> as propagation-influencing factors. Understanding Bz direction is key to understanding why some CMEs cause storms and others pass harmlessly.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════ 16 — RADIO BLACKOUT INDICATOR -->
+  <section id="radio-blackout" class="learn-section" aria-label="Radio blackout indicator">
+    <div class="wrap">
+      <p class="seclabel">Concept 16</p>
+      <h2>Radio Blackout Indicator — the R-scale decoded</h2>
+      <p class="sec-intro">The radio blackout indicator on the dashboard derives the NOAA R-scale in real-time from the live X-ray flux reading, and tells you which HF frequencies are currently affected on the sunlit side of Earth.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <h3>From X-ray flux to blackout scale</h3>
+          <p>Solar flares flood the dayside ionosphere with intense X-ray radiation, dramatically increasing ionisation in the D-layer. The D-layer normally absorbs HF signals during the day, but during a flare the absorption can become so intense that signals are completely blocked — a <strong>short-wave fadeout (SWF)</strong>. The NOAA R-scale maps flare class to impact:</p>
+          <div class="scale-table">
+            <div class="st-row"><span class="st-val excel">R0</span><span class="st-desc">No blackout. Background X-ray (A/B class). Normal conditions.</span></div>
+            <div class="st-row"><span class="st-val good">R1</span><span class="st-desc">Minor (M1–M4). Degradation of 15–20 MHz on sunlit side. Lasts minutes.</span></div>
+            <div class="st-row"><span class="st-val mod">R2</span><span class="st-desc">Moderate (M5–M9). Limited blackout 10–20 MHz. HF degraded 10–30 min.</span></div>
+            <div class="st-row"><span class="st-val low">R3</span><span class="st-desc">Strong (X1–X9). Wide-area HF blackout 10–30 MHz. 1–2 hours.</span></div>
+            <div class="st-row"><span class="st-val bad">R4–R5</span><span class="st-desc">Severe/Extreme (X10+). Major to complete HF blackout 3–30 MHz. Hours.</span></div>
+          </div>
+          <h3>Key operating insight</h3>
+          <p>Blackouts only affect the sunlit hemisphere — if it's nighttime at your location, an X-class flare may not affect you directly, but paths to the dayside will be disrupted. After a flare, conditions usually recover within minutes to a couple of hours as X-ray flux drops back to background. Watch the X-ray chart for the characteristic rise-and-fall spike shape.</p>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">Low vs high bands</p>
+            <p>Higher HF frequencies are affected first and most severely. A moderate R2 event may only degrade 15–20 m, leaving 40 m and 80 m usable. An R4+ event can wipe out the entire 3–30 MHz range on the dayside.</p>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">Recovery time</p>
+            <ul class="aside-list">
+              <li>R1 — recovers in 5–15 minutes</li>
+              <li>R2 — 15–60 minutes</li>
+              <li>R3 — 1–2 hours</li>
+              <li>R4/R5 — several hours</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════════════════════════════════ 17 — SOLAR CYCLE 25 CHART -->
+  <section id="solar-cycle-chart" class="learn-section alt-bg" aria-label="Solar Cycle 25 chart">
+    <div class="wrap">
+      <p class="seclabel">Concept 17</p>
+      <h2>Solar Cycle 25 Chart — where are we in the cycle?</h2>
+      <p class="sec-intro">The Solar Cycle 25 chart in the Trends section shows the observed smoothed sunspot number (SSN) alongside NOAA's predicted curve and uncertainty band — placing today's conditions in the context of the entire 11-year cycle.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <h3>What the chart shows</h3>
+          <ul class="learn-list">
+            <li><strong>Solid green line</strong> — Observed monthly smoothed SSN, from the start of Solar Cycle 25 in December 2019 to the present. The smoothing averages 13 months to remove noise.</li>
+            <li><strong>Dashed line</strong> — NOAA's predicted SSN for the remainder of the cycle, updated monthly.</li>
+            <li><strong>Shaded band</strong> — The high/low uncertainty envelope around the prediction. Solar cycle prediction is still imprecise — the actual peak may arrive earlier, later, higher, or lower than the central forecast.</li>
+          </ul>
+          <h3>Why this matters for propagation</h3>
+          <p>The SSN directly drives the F2-layer's critical frequency. Near solar maximum — when SSN is highest — the MUF is elevated for most of the day, opening 10 m, 12 m, and 15 m to worldwide DX. Near solar minimum, only 20 m and below remain reliably open for long-distance contacts. Cycle 25 is tracking significantly above the initial low predictions — the current peak suggests conditions similar to moderate Cycle 24 years, with excellent 10 m activity.</p>
+          <p>The current SSN label in the chart header shows the most recent observed monthly value. Compare it against the chart to see how close we are to the predicted maximum — and whether the trend is still rising or beginning to decline.</p>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">Solar Cycle 25 facts</p>
+            <ul class="aside-list">
+              <li>Cycle start: December 2019 (solar minimum)</li>
+              <li>Predicted peak: 2025–2026</li>
+              <li>Cycle 25 is running above initial predictions</li>
+              <li>Expected end: ~2030–2031</li>
+            </ul>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">SSN vs SFI</p>
+            <p>The Sunspot Number (SSN) and Solar Flux Index (SFI) are closely correlated but not identical. SSN counts visible sunspots; SFI measures radio emissions at 10.7 cm. The daily SFI you see on the dashboard is the operational value — the SSN is the historical benchmark used for cycle tracking.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ 18 — MUF ESTIMATOR -->
+  <section id="muf-estimator" class="learn-section" aria-label="MUF estimator">
+    <div class="wrap">
+      <p class="seclabel">Concept 18</p>
+      <h2>MUF Estimator — finding the highest usable frequency</h2>
+      <p class="sec-intro">The <a href="/grid/">Grid page</a> great-circle tool now calculates the Maximum Usable Frequency (MUF) and Frequency of Optimum Traffic (FOT) for the specific path you draw, using the current Solar Flux Index.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <h3>What MUF means</h3>
+          <p>The <strong>Maximum Usable Frequency (MUF)</strong> is the highest frequency that the ionosphere can refract back to Earth for a given path length and solar conditions. Above the MUF, signals pass through the ionosphere into space instead of bouncing back — the path is lost. Operating close to the MUF gives the strongest signals and longest skip distances, but also the most variability.</p>
+          <p>The <strong>Frequency of Optimum Traffic (FOT)</strong> is typically 85% of the MUF — the frequency that provides a reliable daily-median circuit while still being close enough to the MUF for good signal strength. Operators planning schedules should use the FOT as their target frequency; use the MUF as an upper bound to explore.</p>
+          <h3>How the estimate is calculated</h3>
+          <p>The estimator uses a simplified relationship between SFI and the F2-layer critical frequency (foF2):</p>
+          <ul class="learn-list">
+            <li><code>foF2 ≈ 4.35 + 0.0141 × SFI</code> MHz (vertical-incidence critical frequency)</li>
+            <li>For an oblique path of distance <em>d</em> km, the MUF is elevated by a geometry factor: <code>MUF = foF2 × √(1 + (d / 600)²)</code></li>
+            <li>The 600 km denominator corresponds to a nominal F2-layer height of 300 km and a single-hop reflection.</li>
+          </ul>
+          <p>This is a rough estimate — actual MUF depends on geographic latitude, time of day, season, and ionospheric irregularities. For precise planning, tools like VOACAP or PropLab Pro use full ionospheric models. The dashboard estimate is useful for a quick sanity check on which bands are worth trying for a given path.</p>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">Using the result</p>
+            <p>After drawing a path on the Grid page, the info bar shows: distance · MUF ≈ X MHz · FOT ≈ Y MHz · Try [band]. Start on the recommended band, then work up toward the MUF for stronger signals — but expect more flutter near the top.</p>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">Exam relevance</p>
+            <p>MUF, FOT, and critical frequency appear prominently in <strong>General class Group G3</strong>. Understanding that MUF increases with SFI and path length — and that operating above MUF loses the path — is tested directly.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="cta-row" style="margin-top:2rem">
+        <a class="btn btn-ghost" href="/grid/">Open the Grid Map →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════ 19 — PUSH NOTIFICATIONS -->
+  <section id="push-alerts" class="learn-section alt-bg" aria-label="Push notifications">
+    <div class="wrap">
+      <p class="seclabel">Concept 19</p>
+      <h2>Push Notifications — space weather alerts on your phone</h2>
+      <p class="sec-intro">The Alerts button on the dashboard lets you subscribe to browser push notifications for space weather events — geomagnetic storms and major solar flares — so you never miss an opening or a blackout while away from the screen.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <h3>How it works</h3>
+          <ul class="learn-list">
+            <li><strong>Service worker</strong> — Your browser registers a background script (service worker) that can receive push messages even when the tab is closed, as long as the browser is running.</li>
+            <li><strong>VAPID keys</strong> — The server uses Web Push Protocol (RFC 8030) with VAPID authentication (RFC 8292). Your subscription is stored securely; no email or account is required.</li>
+            <li><strong>Encryption</strong> — Push payloads are end-to-end encrypted using RFC 8291 (aes128gcm content encoding). Only your browser can decrypt the notification — the push relay (Google, Mozilla, Apple) sees only ciphertext.</li>
+            <li><strong>Cron trigger</strong> — Every 15 minutes, the NOAA data cron checks Kp against your configured threshold, and X-ray flux for X-class events. If conditions cross your threshold, a push is sent.</li>
+          </ul>
+          <h3>Setting your threshold</h3>
+          <p>The Kp threshold (default 5) determines when you're notified. Kp 5 is a G1 minor storm — already disrupting polar paths. If you only care about severe events, raise it to 6 or 7. If you want early warning for any disturbance affecting high-latitude paths, set it to 4. X-class flare alerts fire regardless of the Kp threshold.</p>
+          <p>To subscribe: click the <strong>Alerts</strong> button on the dashboard, choose your Kp threshold, and click Enable alerts. Your browser will ask for notification permission. To unsubscribe, click the same button and select Disable alerts — the subscription is removed from the server immediately.</p>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">Browser support</p>
+            <ul class="aside-list">
+              <li>Chrome / Edge / Firefox — full support</li>
+              <li>Safari on macOS 13+ / iOS 16.4+ — supported</li>
+              <li>Older browsers — button is hidden gracefully</li>
+            </ul>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">Privacy</p>
+            <p>Your push endpoint, encryption key, and Kp threshold are stored in a Cloudflare D1 database. No personal information (email, location, call sign) is collected. Subscriptions can be deleted at any time via the Disable alerts button.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="cta-row" style="margin-top:2rem">
+        <a class="btn btn-ghost" href="/">Enable alerts on the dashboard →</a>
       </div>
     </div>
   </section>

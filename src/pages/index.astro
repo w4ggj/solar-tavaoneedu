@@ -90,6 +90,37 @@ import Shell from '../layouts/Shell.astro';
         <div class="band-pills" id="band-pills" aria-label="HF band conditions summary"></div>
       </div>
 
+      <!-- Solar wind (DSCOVR real-time) -->
+      <div class="sw-row" id="sw-row" hidden>
+        <span class="wwv-label">Solar Wind</span>
+        <div class="sw-badges">
+          <div class="sw-badge" id="sw-bz-badge">
+            <span class="sw-val" id="sw-bz">—</span>
+            <span class="sw-sub">Bz (nT)</span>
+          </div>
+          <div class="sw-badge">
+            <span class="sw-val" id="sw-speed">—</span>
+            <span class="sw-sub">Speed km/s</span>
+          </div>
+          <div class="sw-badge">
+            <span class="sw-val" id="sw-density">—</span>
+            <span class="sw-sub">Density p/cm³</span>
+          </div>
+        </div>
+        <canvas id="sw-bz-chart" class="sw-mini-chart" width="180" height="44" aria-label="Bz 1-hour trend"></canvas>
+        <span class="sw-updated" id="sw-updated"></span>
+      </div>
+
+      <!-- Radio blackout indicator (derived from X-ray flux) -->
+      <div class="rb-row" id="rb-row">
+        <span class="wwv-label">Blackout</span>
+        <div class="rb-badge rb-none" id="rb-badge">
+          <span class="rb-scale" id="rb-scale">R0</span>
+          <span class="rb-desc" id="rb-desc">No blackout</span>
+        </div>
+        <span class="rb-freqs" id="rb-freqs"></span>
+      </div>
+
       <div class="share-row">
         <a href="/card/" class="share-link">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -100,6 +131,28 @@ import Shell from '../layouts/Shell.astro';
           </svg>
           Share conditions
         </a>
+        <div class="push-wrap" id="push-wrap">
+          <button id="push-btn" class="push-btn" type="button" title="Space weather push alerts" aria-label="Enable push notifications">
+            <svg width="13" height="14" viewBox="0 0 13 14" fill="none" aria-hidden="true">
+              <path d="M6.5 1C4.3 1 2.5 2.8 2.5 5v4L1 10.5h11L10.5 9V5C10.5 2.8 8.7 1 6.5 1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+              <path d="M5.2 10.8c0 .7.6 1.2 1.3 1.2s1.3-.5 1.3-1.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+            </svg>
+            <span id="push-label">Alerts</span>
+          </button>
+          <div class="push-panel" id="push-panel" hidden>
+            <div class="push-prow">
+              <label class="push-plabel" for="push-kp">Alert when Kp ≥</label>
+              <select id="push-kp" class="push-sel">
+                <option value="4">4</option>
+                <option value="5" selected>5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+              </select>
+            </div>
+            <button id="push-subscribe" class="push-sub-btn">Enable alerts</button>
+            <button id="push-unsubscribe" class="push-unsub-btn" hidden>Disable alerts</button>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -303,6 +356,15 @@ import Shell from '../layouts/Shell.astro';
           <div class="tc-body"><canvas id="canvas-ssn"></canvas></div>
         </div>
 
+        <!-- Solar Cycle 25 position -->
+        <div class="trend-card trend-card--wide" id="tc-solarcycle">
+          <div class="tc-head">
+            <span class="tc-lbl">Solar Cycle 25 — Observed SSN vs NOAA Predicted</span>
+            <span class="chart-cur" id="sc-cur-ssn"></span>
+          </div>
+          <div class="tc-body"><canvas id="canvas-solarcycle"></canvas></div>
+        </div>
+
       </div>
     </div>
   </section>
@@ -439,6 +501,86 @@ import Shell from '../layouts/Shell.astro';
   .band-pill.bc-fair      { background: rgba(251,191,36,.10); color: #fbbf24; border: 1px solid rgba(251,191,36,.25); }
   .band-pill.bc-poor      { background: rgba(251,146,60,.10); color: #fb923c; border: 1px solid rgba(251,146,60,.2); }
   .band-pill.bc-closed    { background: rgba(148,163,184,.05); color: var(--muted); border: 1px solid var(--border); opacity: .5; }
+
+  /* ── Solar wind row ── */
+  .sw-row {
+    margin-top: 14px;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .sw-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+  .sw-badge {
+    display: flex; flex-direction: column; align-items: center;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 9px; padding: 6px 14px; min-width: 68px;
+    transition: border-color .18s, background .18s;
+  }
+  .sw-badge.sw-south { border-color: rgba(239,68,68,.4); background: rgba(239,68,68,.05); }
+  .sw-badge.sw-north { border-color: rgba(16,185,129,.35); background: rgba(16,185,129,.05); }
+  .sw-val {
+    font-family: var(--mono); font-size: .98rem; font-weight: 700; color: var(--text); line-height: 1;
+  }
+  .sw-badge.sw-south .sw-val { color: #f87171; }
+  .sw-badge.sw-north .sw-val { color: #10b981; }
+  .sw-sub { font-family: var(--mono); font-size: .58rem; color: var(--muted); margin-top: 3px; letter-spacing: .04em; white-space: nowrap; }
+  .sw-mini-chart { border-radius: 4px; background: rgba(0,0,0,.2); flex-shrink: 0; }
+  .sw-updated { font-family: var(--mono); font-size: .65rem; color: var(--muted); }
+
+  /* ── Radio blackout row ── */
+  .rb-row {
+    margin-top: 10px;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .rb-badge {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 9px; padding: 5px 14px;
+    transition: border-color .18s, background .18s;
+  }
+  .rb-badge.rb-minor   { border-color: rgba(251,191,36,.4);  background: rgba(251,191,36,.05); }
+  .rb-badge.rb-moderate{ border-color: rgba(251,146,60,.4);  background: rgba(251,146,60,.05); }
+  .rb-badge.rb-strong  { border-color: rgba(239,68,68,.4);   background: rgba(239,68,68,.06); }
+  .rb-scale { font-family: var(--mono); font-size: .98rem; font-weight: 700; color: var(--muted); line-height: 1; }
+  .rb-badge.rb-minor    .rb-scale { color: #fbbf24; }
+  .rb-badge.rb-moderate .rb-scale { color: #fb923c; }
+  .rb-badge.rb-strong   .rb-scale { color: #f87171; }
+  .rb-desc  { font-family: var(--mono); font-size: .7rem; color: var(--muted); }
+  .rb-freqs { font-family: var(--mono); font-size: .68rem; color: var(--muted); }
+
+  /* ── Push notification button ── */
+  .push-wrap { position: relative; }
+  .push-btn {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    font-family: var(--mono); font-size: .75rem; letter-spacing: .06em;
+    color: var(--muted); padding: 6px 12px;
+    border: 1px solid var(--border); border-radius: 7px;
+    background: none; cursor: pointer;
+    transition: color .18s, border-color .18s;
+  }
+  .push-btn:hover { color: var(--green-lt); border-color: var(--green-dk); }
+  .push-btn.push-active { color: var(--green-lt); border-color: var(--green-dk); }
+  .push-panel {
+    position: absolute; bottom: calc(100% + 6px); left: 0;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px; min-width: 190px; z-index: 20;
+    display: flex; flex-direction: column; gap: 9px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.3);
+  }
+  .push-prow { display: flex; align-items: center; gap: 8px; }
+  .push-plabel { font-family: var(--mono); font-size: .72rem; color: var(--muted); flex: 1; }
+  .push-sel {
+    font-family: var(--mono); font-size: .75rem; background: var(--bg);
+    border: 1px solid var(--border); color: var(--text); border-radius: 5px;
+    padding: 3px 6px; cursor: pointer;
+  }
+  .push-sub-btn, .push-unsub-btn {
+    font-family: var(--mono); font-size: .72rem; letter-spacing: .04em;
+    padding: 6px 10px; border-radius: 6px; cursor: pointer; border: none;
+    transition: background .15s;
+  }
+  .push-sub-btn { background: var(--green-dk); color: var(--green-lt); }
+  .push-sub-btn:hover { background: #10b981; color: #fff; }
+  .push-unsub-btn { background: rgba(248,113,113,.12); color: #f87171; border: 1px solid rgba(248,113,113,.2); }
+  .push-unsub-btn:hover { background: rgba(248,113,113,.22); }
 
   .share-row {
     margin-top: 16px;
@@ -1300,6 +1442,7 @@ import Shell from '../layouts/Shell.astro';
       updateTimestamp();
       updateStormBanner(d);
       updateAlerts(d);
+      updateRadioBlackout(d.xray_class);
     } catch (e) {
       console.error('solar fetch failed', e);
       const s = document.getElementById('conditions-summary');
@@ -1505,25 +1648,190 @@ import Shell from '../layouts/Shell.astro';
     } catch { /* non-fatal */ }
   }
 
+  /* ── X-ray → R-scale ── */
+  function xrayToR(xclass: string | null): { scale: number; label: string; freqs: string | null } {
+    if (!xclass) return { scale: 0, label: 'No blackout', freqs: null };
+    const l = xclass[0].toUpperCase();
+    const v = parseFloat(xclass.slice(1));
+    if (l === 'X' && v >= 20) return { scale: 5, label: 'Extreme blackout (R5)', freqs: '3–30 MHz completely blacked out' };
+    if (l === 'X' && v >= 10) return { scale: 4, label: 'Severe blackout (R4)',  freqs: '3–30 MHz major HF degradation' };
+    if (l === 'X')            return { scale: 3, label: 'Strong blackout (R3)',   freqs: '10–30 MHz wide-area HF blackout' };
+    if (l === 'M' && v >= 5)  return { scale: 2, label: 'Moderate blackout (R2)', freqs: '10–20 MHz degraded on sunlit side' };
+    if (l === 'M')            return { scale: 1, label: 'Minor blackout (R1)',    freqs: '15–20 MHz minor degradation' };
+    return { scale: 0, label: 'No blackout', freqs: null };
+  }
+
+  function updateRadioBlackout(xclass: string | null): void {
+    const badge  = document.getElementById('rb-badge');
+    const scaleEl = document.getElementById('rb-scale');
+    const descEl  = document.getElementById('rb-desc');
+    const freqsEl = document.getElementById('rb-freqs');
+    if (!badge || !scaleEl || !descEl || !freqsEl) return;
+    const rb = xrayToR(xclass);
+    scaleEl.textContent = 'R' + rb.scale;
+    descEl.textContent  = rb.label;
+    freqsEl.textContent = rb.freqs ?? '';
+    badge.classList.remove('rb-none', 'rb-minor', 'rb-moderate', 'rb-strong');
+    badge.classList.add(rb.scale === 0 ? 'rb-none' : rb.scale <= 2 ? 'rb-minor' : rb.scale <= 3 ? 'rb-moderate' : 'rb-strong');
+  }
+
+  /* ── Solar wind ── */
+  function drawBzMiniChart(canvas: HTMLCanvasElement, bz: (number | null)[]): void {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    const vals = bz.filter((v): v is number => v !== null);
+    if (!vals.length) return;
+    const minV = Math.min(...vals, -10);
+    const maxV = Math.max(...vals, 10);
+    const range = maxV - minV || 1;
+    const toX = (i: number) => (i / Math.max(bz.length - 1, 1)) * W;
+    const toY = (v: number) => H - ((v - minV) / range) * H;
+    const zeroY = toY(0);
+    ctx.strokeStyle = '#334155'; ctx.lineWidth = 0.5;
+    ctx.setLineDash([2, 2]);
+    ctx.beginPath(); ctx.moveTo(0, zeroY); ctx.lineTo(W, zeroY); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    let started = false;
+    for (let i = 0; i < bz.length; i++) {
+      if (bz[i] === null) { started = false; continue; }
+      const x = toX(i), y = toY(bz[i]!);
+      if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = '#6ee7b7'; ctx.lineWidth = 1.5; ctx.stroke();
+  }
+
+  async function loadSolarWind(): Promise<void> {
+    try {
+      const res = await fetch('/api/solarwind');
+      if (!res.ok) return;
+      const d = await res.json() as {
+        bz: number | null; speed: number | null; density: number | null;
+        updated: string;
+        series?: { labels: string[]; bz: (number | null)[] };
+      };
+      const row = document.getElementById('sw-row');
+      if (!row) return;
+      const bzEl     = document.getElementById('sw-bz');
+      const speedEl  = document.getElementById('sw-speed');
+      const densEl   = document.getElementById('sw-density');
+      const bzBadge  = document.getElementById('sw-bz-badge');
+      const updEl    = document.getElementById('sw-updated');
+      if (bzEl && d.bz !== null) {
+        bzEl.textContent = (d.bz > 0 ? '+' : '') + d.bz.toFixed(1);
+        bzBadge?.classList.remove('sw-south', 'sw-north');
+        if (d.bz < -5) bzBadge?.classList.add('sw-south');
+        else if (d.bz > 5) bzBadge?.classList.add('sw-north');
+      }
+      if (speedEl  && d.speed   !== null) speedEl.textContent  = Math.round(d.speed) + '';
+      if (densEl   && d.density !== null) densEl.textContent   = d.density.toFixed(1);
+      if (updEl    && d.updated)          updEl.textContent    = relTime(d.updated);
+      row.hidden = false;
+      if (d.series?.bz?.length) {
+        const canvas = document.getElementById('sw-bz-chart') as HTMLCanvasElement | null;
+        if (canvas) drawBzMiniChart(canvas, d.series.bz);
+      }
+      updateRadioBlackout(lastData?.xray_class ?? null);
+    } catch { /* non-fatal */ }
+  }
+
+  /* ── Push notifications ── */
+  function urlBase64ToUint8Array(b64: string): Uint8Array {
+    const pad = b64.length % 4 === 0 ? '' : '='.repeat(4 - (b64.length % 4));
+    const str = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+    return Uint8Array.from(str, c => c.charCodeAt(0));
+  }
+
+  function setPushUI(active: boolean): void {
+    const btn   = document.getElementById('push-btn');
+    const label = document.getElementById('push-label');
+    const sub   = document.getElementById('push-subscribe');
+    const unsub = document.getElementById('push-unsubscribe');
+    if (!btn || !label || !sub || !unsub) return;
+    btn.classList.toggle('push-active', active);
+    label.textContent = active ? 'Alerts on' : 'Alerts';
+    (sub   as HTMLButtonElement).hidden = active;
+    (unsub as HTMLButtonElement).hidden = !active;
+  }
+
+  async function initPushUI(): Promise<void> {
+    const btn    = document.getElementById('push-btn');
+    const panel  = document.getElementById('push-panel') as HTMLElement | null;
+    const subBtn = document.getElementById('push-subscribe');
+    const unsubBtn = document.getElementById('push-unsubscribe');
+    if (!btn || !panel || !subBtn || !unsubBtn) return;
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    let reg: ServiceWorkerRegistration;
+    try { reg = await navigator.serviceWorker.register('/sw.js'); }
+    catch { return; }
+    const existing = await reg.pushManager.getSubscription();
+    setPushUI(!!existing);
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      panel.hidden = !panel.hidden;
+    });
+    document.addEventListener('click', (e) => {
+      if (!panel.hidden && !(e.target as Element)?.closest('#push-wrap')) panel.hidden = true;
+    });
+    subBtn.addEventListener('click', async () => {
+      try {
+        const res  = await fetch('/api/push-subscribe');
+        const { publicKey } = await res.json() as { publicKey: string };
+        if (!publicKey) throw new Error('no vapid key');
+        const pushSub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicKey),
+        });
+        const kpVal   = Number((document.getElementById('push-kp') as HTMLSelectElement).value);
+        const js: any = pushSub.toJSON();
+        await fetch('/api/push-subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: js.endpoint, p256dh: js.keys.p256dh, auth: js.keys.auth, kpThreshold: kpVal }),
+        });
+        setPushUI(true);
+        panel.hidden = true;
+      } catch (err) { console.warn('Push subscribe failed', err); }
+    });
+    unsubBtn.addEventListener('click', async () => {
+      const cur = await reg.pushManager.getSubscription();
+      if (cur) {
+        await fetch('/api/push-subscribe', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: cur.endpoint }),
+        });
+        await cur.unsubscribe();
+      }
+      setPushUI(false);
+      panel.hidden = true;
+    });
+  }
+
   loadSolar();
   loadHistory(24);
   drawGreyline(0);
   refreshImages();
   loadWwv();
+  loadSolarWind();
+  updateRadioBlackout(null);
+  initPushUI();
 </script>
 
 <script>
   import {
     Chart,
     LineController, BarController,
-    CategoryScale, LinearScale,
+    CategoryScale, LinearScale, LogarithmicScale,
     PointElement, LineElement, BarElement,
     Tooltip, Filler,
   } from 'chart.js';
 
   Chart.register(
     LineController, BarController,
-    CategoryScale, LinearScale,
+    CategoryScale, LinearScale, LogarithmicScale,
     PointElement, LineElement, BarElement,
     Tooltip, Filler,
   );
@@ -1835,6 +2143,91 @@ import Shell from '../layouts/Shell.astro';
     // Sunspots
     const ssnData = await fetchSeries('sunspots', 30);
     if (ssnData) charts['ssn'] = makeLineChart('canvas-ssn', ssnData, '#6ee7b7');
+
+    // Solar Cycle 25 position
+    try {
+      const scRes = await fetch('/api/solarcycle');
+      if (scRes.ok) {
+        const sc = await scRes.json() as {
+          data: Array<{ t: string; observed: number | null; predicted: number | null; high: number | null; low: number | null }>;
+          currentSsn: number | null;
+        };
+        if (sc.data?.length) {
+          const curEl = document.getElementById('sc-cur-ssn');
+          if (curEl && sc.currentSsn !== null) curEl.textContent = 'SSN ' + sc.currentSsn;
+          charts['solarcycle'] = makeSolarCycleChart('canvas-solarcycle', sc.data);
+        }
+      }
+    } catch {}
+  }
+
+  function makeSolarCycleChart(
+    id: string,
+    data: Array<{ t: string; observed: number | null; predicted: number | null; high: number | null; low: number | null }>
+  ): Chart {
+    const canvas = document.getElementById(id) as HTMLCanvasElement;
+    const ctx = canvas.getContext('2d')!;
+    const labels = data.map((r, i) => i % 6 === 0 ? r.t : '');
+    return new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Observed SSN',
+            data: data.map(r => r.observed),
+            borderColor: '#10b981',
+            backgroundColor: '#10b98118',
+            borderWidth: 2,
+            pointRadius: 0,
+            fill: true,
+            tension: 0.35,
+            spanGaps: false,
+          },
+          {
+            label: 'NOAA Predicted',
+            data: data.map(r => r.predicted),
+            borderColor: '#6ee7b7',
+            borderWidth: 1.5,
+            borderDash: [5, 4],
+            pointRadius: 0,
+            fill: false,
+            tension: 0.35,
+            spanGaps: true,
+          },
+          {
+            label: 'High',
+            data: data.map(r => r.high),
+            borderColor: '#6ee7b722',
+            borderWidth: 0,
+            pointRadius: 0,
+            fill: '+1',
+            tension: 0.35,
+            spanGaps: true,
+          },
+          {
+            label: 'Low',
+            data: data.map(r => r.low),
+            borderColor: '#6ee7b710',
+            backgroundColor: '#6ee7b710',
+            borderWidth: 0,
+            pointRadius: 0,
+            fill: false,
+            tension: 0.35,
+            spanGaps: true,
+          },
+        ] as any[],
+      },
+      options: {
+        responsive: false,
+        animation: false,
+        plugins: { tooltip: { mode: 'index', intersect: false }, legend: { display: false } },
+        scales: {
+          x: { grid: { color: '#1e293b' }, ticks: { maxTicksLimit: 10, maxRotation: 0 } },
+          y: { min: 0, grid: { color: '#1e293b' }, ticks: { maxTicksLimit: 5 } },
+        },
+      },
+    });
   }
 
   async function fetchSeries(metric: string, days: number): Promise<ChartSeries | null> {

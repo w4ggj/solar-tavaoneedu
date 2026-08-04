@@ -1,6 +1,9 @@
 export interface Env {
   DB: D1Database;
   SOLAR_CACHE: KVNamespace;
+  VAPID_PRIVATE_KEY?: string;
+  VAPID_PUBLIC_KEY?: string;
+  VAPID_SUBJECT?: string;
 }
 
 const SWPC = {
@@ -77,13 +80,11 @@ function parseSsn(rows: any[] | null): number | null {
 function parseKp(rows: any[] | null): { kp: number | null; time: string | null } {
   if (!rows?.length) return { kp: null, time: null };
   const last = rows[rows.length - 1];
-  // estimated_kp is real-time (1-min); kp_index is the official 3-hour value
   const raw = last.estimated_kp ?? last.kp_index ?? last.kp;
   const kp = parseFloat(raw);
   return { kp: isNaN(kp) ? null : Math.round(kp * 10) / 10, time: last.time_tag ?? null };
 }
 
-// Standard Kp → equivalent 3-hour ap lookup table
 const KP_AP: [number, number][] = [
   [0, 0], [0.33, 2], [0.67, 3], [1, 4], [1.33, 5], [1.67, 6],
   [2, 7], [2.33, 9], [2.67, 12], [3, 15], [3.33, 18], [3.67, 22],
@@ -110,15 +111,12 @@ function fluxToClass(flux: number): string {
   return 'A' + (flux / 1e-8).toFixed(1);
 }
 
-/** GOES X-ray — walk backwards through entire dataset, long-band (0.1-0.8 nm) only */
 function parseXray(rows: any[] | null, label = ''): { xclass: string | null; flux: number | null; time: string | null } {
   if (!Array.isArray(rows) || !rows.length) return { xclass: null, flux: null, time: null };
 
   for (let i = rows.length - 1; i >= 0; i--) {
     const r = rows[i];
     if (!r || typeof r !== 'object' || Array.isArray(r)) continue;
-
-    // Band filter: skip entries clearly identified as short-band (0.05–0.4 nm / XRS-B)
     const bandRaw = r.energy ?? r.band ?? r.wavelength;
     if (bandRaw != null) {
       const band = String(bandRaw).toLowerCase();
@@ -126,23 +124,17 @@ function parseXray(rows: any[] | null, label = ''): { xclass: string | null; flu
                       band === 'short' || band.startsWith('short') || band === 'b' || band === 'xrs-b';
       if (isShort) continue;
     }
-
-    // Flux: try every known/observed NOAA field name; handle number or string
     const rawFlux = r.observed_flux ?? r.flux ?? r.current_int_xrlong ?? r.flux_observed ??
                     r.xrlong ?? r.xrslong ?? r.long_flux ?? null;
     if (rawFlux == null) continue;
     const flux = typeof rawFlux === 'number' ? rawFlux : parseFloat(String(rawFlux));
     if (!isFinite(flux) || flux <= 0) continue;
-    // Sanity range: A0.1 background (1e-9) to extreme X-flares (~1e-2)
     if (flux < 1e-9 || flux > 1e-2) continue;
-
-    // X-ray class: use labeled class if present, else derive from flux
     const cls: string = r.current_class ?? r.xray_class ?? '';
     const xclass = /^[A-Z]\d/.test(cls) ? cls : fluxToClass(flux);
     return { xclass, flux, time: r.time_tag ?? null };
   }
 
-  // Diagnostic: log a sample of raw rows so we can see what fields NOAA actually sends
   const sample = rows.filter(r => r && typeof r === 'object' && !Array.isArray(r)).slice(-3);
   console.log(`solar-cron: parseXray(${label}) no match in ${rows.length} rows. sample=${JSON.stringify(sample)}`);
   return { xclass: null, flux: null, time: null };
@@ -166,11 +158,8 @@ function parseAlerts(rows: any[] | null): LiveData['alerts'] {
     });
 }
 
-/** Backfill 30-day Kp/Ap history so the A-index chart has data immediately */
 async function backfillKpHistory(env: Env, kpHistRaw: any[] | null): Promise<void> {
   if (!Array.isArray(kpHistRaw) || kpHistRaw.length < 2) return;
-
-  // Guard: only run while few a_index rows exist
   const { results } = await env.DB.prepare(
     'SELECT COUNT(*) AS cnt FROM solar_history WHERE a_index IS NOT NULL'
   ).all();
@@ -210,19 +199,17 @@ async function backfillKpHistory(env: Env, kpHistRaw: any[] | null): Promise<voi
   console.log(`solar-cron: backfilled ${stmts.length} Kp/Ap history rows`);
 }
 
-/** Backfill historical SFI/SSN into D1 on first run using already-fetched NOAA data */
 async function backfillHistory(
   env: Env,
   flux10Raw: any[] | null,
   cycleRaw: any[] | null,
 ): Promise<void> {
   const { results } = await env.DB.prepare('SELECT COUNT(*) AS cnt FROM solar_history').all();
-  if (((results[0] as any)?.cnt ?? 0) >= 48) return; // skip if >12 h of data already present
+  if (((results[0] as any)?.cnt ?? 0) >= 48) return;
 
   const cutoff = new Date(Date.now() - 90 * 86400_000).toISOString().slice(0, 10);
   const stmts: D1PreparedStatement[] = [];
 
-  // Daily SFI from 10cm-flux-30-day (handles both object and array-of-arrays formats)
   if (Array.isArray(flux10Raw)) {
     for (const e of flux10Raw) {
       let tag: string | null = null;
@@ -247,13 +234,12 @@ async function backfillHistory(
     }
   }
 
-  // Monthly SFI + SSN from solar-cycle indices (fills 60/90-day range)
   if (Array.isArray(cycleRaw)) {
     for (const e of cycleRaw) {
       if (!e || typeof e !== 'object' || Array.isArray(e)) continue;
       const tag = e['time-tag'] ?? e.time_tag;
       if (!tag || typeof tag !== 'string') continue;
-      const dateStr = tag.slice(0, 7); // "2025-07"
+      const dateStr = tag.slice(0, 7);
       if (dateStr < cutoff.slice(0, 7)) continue;
       const ts = dateStr + '-01T12:00:00Z';
       const sfiVal = parseFloat(e.observed_swpc_solar_flux ?? e.solar_flux ?? e.flux ?? '-1');
@@ -272,6 +258,201 @@ async function backfillHistory(
     await env.DB.batch(stmts.slice(i, i + 100));
   }
   console.log(`solar-cron: backfilled ${stmts.length} historical rows`);
+}
+
+/* ── Web Push helpers ── */
+
+function toBase64Url(buf: ArrayBuffer | Uint8Array): string {
+  const bytes = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+  let str = '';
+  bytes.forEach(b => { str += String.fromCharCode(b); });
+  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+function fromBase64Url(s: string): Uint8Array {
+  const pad = s.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = pad + '=='.slice(0, (4 - pad.length % 4) % 4);
+  const bin = atob(padded);
+  return new Uint8Array([...bin].map(c => c.charCodeAt(0)));
+}
+
+function concatBytes(...arrs: Uint8Array[]): Uint8Array {
+  const total = arrs.reduce((n, a) => n + a.length, 0);
+  const out = new Uint8Array(total);
+  let off = 0;
+  for (const a of arrs) { out.set(a, off); off += a.length; }
+  return out;
+}
+
+interface PushSub {
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+}
+
+/** Encrypt payload with RFC 8291 (aes128gcm) and send with VAPID authorization */
+async function sendWebPush(
+  sub: PushSub,
+  payloadObj: Record<string, unknown>,
+  vapidPrivB64: string,
+  vapidPubB64: string,
+  subject: string
+): Promise<void> {
+  const enc = new TextEncoder();
+  const payloadStr = JSON.stringify(payloadObj);
+
+  // Ephemeral ECDH sender key pair
+  const senderPair = await crypto.subtle.generateKey(
+    { name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']
+  );
+  const senderPubRaw = new Uint8Array(await crypto.subtle.exportKey('raw', senderPair.publicKey));
+
+  // Receiver keys
+  const receiverPubBytes = fromBase64Url(sub.p256dh);
+  const authSecretBytes  = fromBase64Url(sub.auth);
+
+  const receiverPubKey = await crypto.subtle.importKey(
+    'raw', receiverPubBytes, { name: 'ECDH', namedCurve: 'P-256' }, false, []
+  );
+
+  // ECDH shared secret
+  const ecdhBits = new Uint8Array(
+    await crypto.subtle.deriveBits({ name: 'ECDH', public: receiverPubKey }, senderPair.privateKey, 256)
+  );
+
+  // RFC 8291 §3.4: IKM = HKDF(salt=auth_secret, IKM=ecdh, info="WebPush: info\0"||recv||send)
+  const pushInfo = concatBytes(enc.encode('WebPush: info\x00'), receiverPubBytes, senderPubRaw);
+  const ecdhKey  = await crypto.subtle.importKey('raw', ecdhBits, { name: 'HKDF' }, false, ['deriveBits']);
+  const ikm = new Uint8Array(
+    await crypto.subtle.deriveBits(
+      { name: 'HKDF', hash: 'SHA-256', salt: authSecretBytes, info: pushInfo },
+      ecdhKey, 256
+    )
+  );
+
+  // Random 16-byte salt for RFC 8188 record
+  const recordSalt = crypto.getRandomValues(new Uint8Array(16));
+
+  // CEK + NONCE from record salt + IKM
+  const ikmKey = await crypto.subtle.importKey('raw', ikm, { name: 'HKDF' }, false, ['deriveBits']);
+  const cekInfo   = enc.encode('Content-Encoding: aes128gcm\x00');
+  const nonceInfo = enc.encode('Content-Encoding: nonce\x00');
+
+  const cek = new Uint8Array(
+    await crypto.subtle.deriveBits(
+      { name: 'HKDF', hash: 'SHA-256', salt: recordSalt, info: cekInfo }, ikmKey, 128
+    )
+  );
+  const nonce = new Uint8Array(
+    await crypto.subtle.deriveBits(
+      { name: 'HKDF', hash: 'SHA-256', salt: recordSalt, info: nonceInfo }, ikmKey, 96
+    )
+  );
+
+  // AES-128-GCM encrypt (append \x02 padding delimiter per RFC 8188)
+  const cekKey = await crypto.subtle.importKey('raw', cek, { name: 'AES-GCM' }, false, ['encrypt']);
+  const padded  = concatBytes(enc.encode(payloadStr), new Uint8Array([2]));
+  const cipher  = new Uint8Array(
+    await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce }, cekKey, padded)
+  );
+
+  // RFC 8188 body: salt(16) + rs(4 BE uint32=4096) + keyIdLen(1=65) + senderPub(65) + cipher
+  const rsBytes = new Uint8Array([0x00, 0x00, 0x10, 0x00]);
+  const body    = concatBytes(recordSalt, rsBytes, new Uint8Array([65]), senderPubRaw, cipher);
+
+  // VAPID JWT (RFC 8292)
+  const origin     = new URL(sub.endpoint).origin;
+  const now        = Math.floor(Date.now() / 1000);
+  const jwtHeader  = toBase64Url(enc.encode(JSON.stringify({ typ: 'JWT', alg: 'ES256' })));
+  const jwtPayload = toBase64Url(enc.encode(JSON.stringify({ aud: origin, exp: now + 43200, sub: subject })));
+  const toSign     = `${jwtHeader}.${jwtPayload}`;
+
+  const vapidPrivBytes = fromBase64Url(vapidPrivB64);
+  const vapidPrivKey   = await crypto.subtle.importKey(
+    'pkcs8', vapidPrivBytes, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']
+  );
+  const sigBytes = await crypto.subtle.sign(
+    { name: 'ECDSA', hash: { name: 'SHA-256' } }, vapidPrivKey, enc.encode(toSign)
+  );
+  const jwt = `${toSign}.${toBase64Url(sigBytes)}`;
+
+  const resp = await fetch(sub.endpoint, {
+    method: 'POST',
+    headers: {
+      Authorization:    `vapid t=${jwt},k=${vapidPubB64}`,
+      'Content-Type':   'application/octet-stream',
+      'Content-Encoding': 'aes128gcm',
+      TTL:              '86400',
+    },
+    body,
+  });
+
+  if (!resp.ok && resp.status !== 201) {
+    const txt = await resp.text().catch(() => '');
+    console.error(`solar-cron: push failed ${resp.status} for ${sub.endpoint.slice(0, 60)}: ${txt.slice(0, 100)}`);
+    // Remove gone subscriptions
+    if (resp.status === 410 || resp.status === 404) {
+      console.log(`solar-cron: removing gone subscription`);
+    }
+  }
+}
+
+/** Send push alerts to subscribed users if conditions cross their threshold */
+async function sendPushAlerts(env: Env, live: LiveData): Promise<void> {
+  if (!env.VAPID_PRIVATE_KEY || !env.VAPID_PUBLIC_KEY) return;
+
+  const kp    = live.k_index;
+  const xray  = live.xray_class;
+  const isXM  = xray && /^[XM]/.test(xray);
+
+  if (kp === null && !isXM) return; // nothing to alert about
+
+  let subs: Array<{ endpoint: string; p256dh: string; auth: string; kp_threshold: number }>;
+  try {
+    const { results } = await env.DB.prepare('SELECT endpoint, p256dh, auth, kp_threshold FROM push_subscriptions').all();
+    subs = results as typeof subs;
+  } catch {
+    return;
+  }
+
+  if (!subs.length) return;
+
+  const subject = env.VAPID_SUBJECT ?? 'mailto:alerts@tavaone.edu';
+
+  for (const sub of subs) {
+    const kpAlert  = kp !== null && kp >= sub.kp_threshold;
+    const xrayAlert = isXM && xray && xray[0] === 'X';
+
+    if (!kpAlert && !xrayAlert) continue;
+
+    let title = 'Solar Alert';
+    let body  = '';
+    if (kpAlert && kp !== null) {
+      title = `Kp ${kp} — Geomagnetic Storm`;
+      body  = `Kp index has reached ${kp}. HF polar paths may be disrupted.`;
+      if (kp >= 7) body += ' Aurora visible at mid-latitudes.';
+    }
+    if (xrayAlert && xray) {
+      title = `${xray} Solar Flare`;
+      body  = body ? `${body} Also: ${xray}-class flare detected.` : `${xray}-class solar flare — HF blackout possible on sunlit side.`;
+    }
+
+    try {
+      await sendWebPush(
+        { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth },
+        { title, body, kp, xray },
+        env.VAPID_PRIVATE_KEY,
+        env.VAPID_PUBLIC_KEY,
+        subject
+      );
+    } catch (e) {
+      console.error('solar-cron: push send error', e);
+    }
+  }
+
+  if (subs.length > 0) {
+    console.log(`solar-cron: push alerts sent to ${subs.length} subscriber(s) — Kp=${kp} Xray=${xray}`);
+  }
 }
 
 export default {
@@ -293,7 +474,6 @@ export default {
     const ssn = parseSsn(cycleRaw);
     const { kp, time: kpTime } = parseKp(kpRaw);
     const a_index = kp !== null ? kpToAp(kp) : null;
-    // Try 7-day → 3-day → 1-day fallback chain
     let { xclass, flux: xflux, time: xtime } = parseXray(xray7dRaw, '7d');
     if (xclass === null) ({ xclass, flux: xflux, time: xtime } = parseXray(xray3dRaw, '3d'));
     if (xclass === null) ({ xclass, flux: xflux, time: xtime } = parseXray(xray1dRaw, '1d'));
@@ -326,5 +506,6 @@ export default {
 
     await backfillHistory(env, flux10Raw, cycleRaw);
     await backfillKpHistory(env, kpHistRaw);
+    await sendPushAlerts(env, live);
   },
 };

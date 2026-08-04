@@ -12,3 +12,6 @@ database_id = "2a7b5600-3362-421e-94ff-23f5cee5c2c4"
 [[kv_namespaces]]
 binding = "SOLAR_CACHE"
 id = "87c78f7686db4af2a323e5fd604ec3ff"
+
+[vars]
+VAPID_PUBLIC_KEY = "BPx6rZBD1vl7h3x4LWXPwysmLOaX7Xa75SscME7b3LMIA5tyUFigrdhaSrRxRdJpTGciB8KkxoTdJgQmAE3zkSk"
