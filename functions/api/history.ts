@@ -66,6 +66,15 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       ORDER BY bucket ASC
       LIMIT 60
     `;
+  } else if (metric === 'aindex') {
+    query = `
+      SELECT strftime('%Y-%m-%d', recorded_at) AS bucket, ROUND(AVG(a_index), 0) AS value
+      FROM solar_history
+      WHERE recorded_at > ? AND a_index IS NOT NULL
+      GROUP BY bucket
+      ORDER BY bucket ASC
+      LIMIT 90
+    `;
   } else if (metric === 'sunspots') {
     query = `
       SELECT strftime('%Y-%m-%d', recorded_at) AS bucket, ROUND(AVG(sunspots), 0) AS value

@@ -241,7 +241,12 @@ import Shell from '../../layouts/Shell.astro';
   .swatch { display: inline-block; width: 14px; height: 10px; border-radius: 3px; flex-shrink: 0; }
 
   @media (max-width: 600px) {
-    .map-outer { margin: 0 -16px; }
+    .map-outer { margin: 0 -16px; border-radius: 0; }
+    .map-top { flex-wrap: wrap; gap: 10px; }
+    .locator-bar { gap: 12px; padding: 12px 14px; }
+    .loc-lookup { min-width: 0; width: 100%; }
+    .cond-strip { flex-wrap: wrap; gap: 4px 10px; }
+    .cond-note { display: none; }
   }
 </style>
 

@@ -77,6 +77,19 @@ import Shell from '../layouts/Shell.astro';
     </div>
   </section>
 
+  <!-- Space weather alerts ribbon -->
+  <section id="space-alerts" aria-label="Space weather alerts" aria-live="polite">
+    <div class="wrap">
+      <div class="alerts-bar" id="alerts-bar">
+        <span class="ab-icon" id="ab-icon" aria-hidden="true">✓</span>
+        <div class="ab-body">
+          <span class="ab-status" id="ab-status">All quiet — no active NOAA space weather alerts</span>
+          <ul class="ab-list" id="ab-list" hidden></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section id="band-conditions" aria-label="HF band conditions">
     <div class="wrap">
       <p class="seclabel">Derived from Live Data</p>
@@ -94,6 +107,13 @@ import Shell from '../layouts/Shell.astro';
       </div>
 
       <div class="band-grid" id="band-grid"></div>
+
+      <!-- 24h propagation outlook from NOAA Kp forecast -->
+      <div class="fc-row" id="fc-row" hidden>
+        <span class="fc-label">24 h Kp outlook</span>
+        <div class="fc-strip" id="fc-strip" role="list" aria-label="24-hour Kp forecast slots"></div>
+      </div>
+
       <p class="data-updated" style="margin-top:14px">Estimated from SFI and Kp · real conditions vary by path, antenna, and solar terminator</p>
     </div>
   </section>
@@ -212,6 +232,19 @@ import Shell from '../layouts/Shell.astro';
             <span class="tc-lbl">Planetary K-Index — 7 days + forecast</span>
           </div>
           <div class="tc-body"><canvas id="canvas-kp"></canvas></div>
+        </div>
+
+        <!-- A-index daily geomagnetic activity -->
+        <div class="trend-card trend-card--wide" id="tc-aindex">
+          <div class="tc-head">
+            <span class="tc-lbl">A-Index (Ap) — Daily Geomagnetic Activity</span>
+            <div class="tc-tabs" role="group" aria-label="A-index range">
+              <button class="tc-tab active" data-chart="aindex" data-days="7">7 d</button>
+              <button class="tc-tab" data-chart="aindex" data-days="30">30 d</button>
+              <button class="tc-tab" data-chart="aindex" data-days="90">90 d</button>
+            </div>
+          </div>
+          <div class="tc-body"><canvas id="canvas-aindex"></canvas></div>
         </div>
 
         <!-- Sunspot trend -->
@@ -478,6 +511,62 @@ import Shell from '../layouts/Shell.astro';
     .trend-card--wide { grid-column: auto; }
   }
 
+  /* ── Space weather alerts bar ── */
+  #space-alerts { padding: 0 0 8px; }
+  .alerts-bar {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 18px; border-radius: 12px;
+    border: 1px solid var(--border); background: var(--card);
+    transition: border-color .2s, background .2s;
+  }
+  .alerts-bar.has-alerts {
+    border-color: rgba(245,158,11,.45);
+    background: rgba(245,158,11,.04);
+  }
+  .ab-icon { font-family: var(--mono); font-size: .88rem; color: var(--green-lt); flex-shrink: 0; margin-top: 2px; }
+  .alerts-bar.has-alerts .ab-icon { color: #f59e0b; }
+  .ab-body { flex: 1; min-width: 0; }
+  .ab-status { font-family: var(--mono); font-size: .76rem; color: var(--muted); }
+  .ab-list {
+    list-style: none; margin: 8px 0 0; padding: 0;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .ab-item { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .ab-pid {
+    font-family: var(--mono); font-size: .66rem; letter-spacing: .06em;
+    color: #f59e0b; background: rgba(245,158,11,.12);
+    padding: 1px 6px; border-radius: 4px; flex-shrink: 0;
+  }
+  .ab-time { font-family: var(--mono); font-size: .68rem; color: var(--muted); flex-shrink: 0; }
+  .ab-line { font-family: var(--mono); font-size: .74rem; color: var(--text); }
+
+  /* ── 24-hour forecast strip ── */
+  .fc-row {
+    display: flex; align-items: center; gap: 14px;
+    margin-top: 18px; flex-wrap: wrap;
+  }
+  .fc-label {
+    font-family: var(--mono); font-size: .7rem; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted); flex-shrink: 0;
+  }
+  .fc-strip {
+    display: flex; gap: 4px; flex: 1; flex-wrap: wrap;
+  }
+  .fc-slot {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 3px; min-width: 36px; flex: 1;
+  }
+  .fc-bar {
+    width: 100%; height: 10px; border-radius: 3px;
+    background: var(--border);
+  }
+  .fc-time {
+    font-family: var(--mono); font-size: .6rem; color: var(--muted); white-space: nowrap;
+  }
+  .fc-kp {
+    font-family: var(--mono); font-size: .64rem; font-weight: 700;
+  }
+
   /* ── Band conditions time slider ── */
   .bc-time-row {
     margin: 16px 0 12px;
@@ -571,6 +660,14 @@ import Shell from '../layouts/Shell.astro';
   }
   @media (max-width: 640px) {
     .imagery-grid { grid-template-columns: 1fr; }
+    .tc-body canvas { height: 110px !important; }
+    .fc-slot { min-width: 28px; }
+    .fc-time { font-size: .55rem; }
+  }
+  @media (max-width: 420px) {
+    .fc-strip { gap: 2px; }
+    .fc-bar { height: 8px; }
+    .ab-list { gap: 8px; }
   }
 
   /* ── Band conditions — :global() because tiles are injected via innerHTML ── */
@@ -745,6 +842,32 @@ import Shell from '../layouts/Shell.astro';
 
     textEl.textContent = msg;
     banner.hidden = false;
+  }
+
+  function updateAlerts(d: SolarData): void {
+    const bar    = document.getElementById('alerts-bar');
+    const status = document.getElementById('ab-status');
+    const list   = document.getElementById('ab-list') as HTMLUListElement | null;
+    if (!bar || !status || !list) return;
+
+    if (!d.alerts.length) {
+      bar.classList.remove('has-alerts');
+      status.textContent = 'All quiet — no active NOAA space weather alerts';
+      list.hidden = true;
+      return;
+    }
+
+    bar.classList.add('has-alerts');
+    status.textContent = `${d.alerts.length} active NOAA alert${d.alerts.length > 1 ? 's' : ''}`;
+    list.hidden = false;
+    list.innerHTML = d.alerts.map(a => {
+      const t = new Date(a.issue_datetime).toUTCString().slice(5, 22);
+      return `<li class="ab-item">
+        <span class="ab-pid">${a.product_id}</span>
+        <span class="ab-time">${t} UTC</span>
+        <span class="ab-line">${a.headline}</span>
+      </li>`;
+    }).join('');
   }
 
   /* ── Propagation summaries ── */
@@ -1059,6 +1182,7 @@ import Shell from '../layouts/Shell.astro';
       nextRefreshAt = Date.now() + 10 * 60_000;
       updateTimestamp();
       updateStormBanner(d);
+      updateAlerts(d);
     } catch (e) {
       console.error('solar fetch failed', e);
       const s = document.getElementById('conditions-summary');
@@ -1420,6 +1544,29 @@ import Shell from '../layouts/Shell.astro';
       .filter(r => r.t && !isNaN(r.v));
   }
 
+  function renderForecastStrip(fcst: Array<{ t: string; v: number }>): void {
+    const row   = document.getElementById('fc-row') as HTMLElement | null;
+    const strip = document.getElementById('fc-strip');
+    if (!row || !strip) return;
+
+    const now = Date.now();
+    const future = fcst.filter(f => new Date(f.t).getTime() > now).slice(0, 8);
+    if (!future.length) return;
+
+    row.hidden = false;
+    strip.innerHTML = future.map(f => {
+      const h   = new Date(f.t).getUTCHours().toString().padStart(2, '0') + ':00Z';
+      const kp  = f.v;
+      const col = kp >= 5 ? '#f87171' : kp >= 3 ? '#fbbf24' : '#10b981';
+      const lbl = kp >= 5 ? 'storm' : kp >= 3 ? 'uns.' : 'quiet';
+      return `<div class="fc-slot" role="listitem" aria-label="Kp ${kp.toFixed(1)} at ${h}">
+        <div class="fc-bar" style="background:${col};opacity:0.75"></div>
+        <span class="fc-kp" style="color:${col}">${kp.toFixed(1)}</span>
+        <span class="fc-time">${h}</span>
+      </div>`;
+    }).join('');
+  }
+
   async function loadTrends() {
     // SFI
     const sfiData = await fetchSeries('sfi', 30);
@@ -1432,6 +1579,11 @@ import Shell from '../layouts/Shell.astro';
     ]);
     const fcst = parseForecast(fcstRaw ?? []);
     if (kpData) charts['kp'] = makeKpChart('canvas-kp', kpData, fcst);
+    renderForecastStrip(fcst);
+
+    // A-index (daily geomagnetic activity)
+    const aiData = await fetchSeries('aindex', 7);
+    if (aiData) charts['aindex'] = makeLineChart('canvas-aindex', aiData, '#a78bfa', 50);
 
     // Sunspots
     const ssnData = await fetchSeries('sunspots', 30);
@@ -1449,13 +1601,23 @@ import Shell from '../layouts/Shell.astro';
     }
   }
 
-  async function reloadChart(chartKey: string, metric: string, days: number) {
+  const CHART_METRIC: Record<string, string> = {
+    sfi: 'sfi', ssn: 'sunspots', aindex: 'aindex', kp: 'kindex',
+  };
+  const CHART_COLOR: Record<string, string> = {
+    sfi: '#10b981', ssn: '#6ee7b7', aindex: '#a78bfa', kp: '#10b981',
+  };
+  const CHART_REF: Record<string, number | undefined> = {
+    aindex: 50,
+  };
+
+  async function reloadChart(chartKey: string, days: number) {
+    const metric = CHART_METRIC[chartKey] ?? chartKey;
     const data = await fetchSeries(metric, days);
     if (!data) return;
     const old = charts[chartKey];
     if (old) old.destroy();
-    const color = chartKey === 'ssn' ? '#6ee7b7' : '#10b981';
-    charts[chartKey] = makeLineChart(`canvas-${chartKey}`, data, color);
+    charts[chartKey] = makeLineChart(`canvas-${chartKey}`, data, CHART_COLOR[chartKey] ?? '#10b981', CHART_REF[chartKey]);
   }
 
   // Tab wiring
@@ -1463,10 +1625,9 @@ import Shell from '../layouts/Shell.astro';
     btn.addEventListener('click', async () => {
       const chartKey = btn.dataset.chart!;
       const days = Number(btn.dataset.days);
-      // Update tab active state within the same card
       btn.closest('.tc-tabs')!.querySelectorAll('.tc-tab').forEach(t => t.classList.remove('active'));
       btn.classList.add('active');
-      await reloadChart(chartKey, chartKey === 'ssn' ? 'sunspots' : 'sfi', days);
+      await reloadChart(chartKey, days);
     });
   });
 
