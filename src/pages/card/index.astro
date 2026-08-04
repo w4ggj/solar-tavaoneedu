@@ -470,19 +470,21 @@ import Shell from '../../layouts/Shell.astro';
   function kpColor(v: number)  { return v <= 3  ? '#10b981' : v <= 5  ? '#f59e0b' : '#ef4444'; }
 
   // ── Text generators ──
-  function overlayText(sfi: number | null, kp: number | null, cond: ReturnType<typeof condFrom>): string {
+  function overlayText(sfi: number | null, kp: number | null, xray: string | null, cond: ReturnType<typeof condFrom>): string {
     const lines: string[] = [];
     if (sfi !== null) lines.push(`SOLAR FLUX ${Math.round(sfi)}`);
     if (kp  !== null) lines.push(`K-INDEX ${kp} — ${kp >= 5 ? 'STORM' : kp >= 3 ? 'UNSETTLED' : 'QUIET'}`);
+    if (xray !== null) lines.push(`X-RAY ${xray}`);
     const band = cond.bands.match(/(\d+m)/i);
     if (band) lines.push(`${band[1].toUpperCase()} OPEN`);
     return lines.join('\n');
   }
 
-  function captionText(cond: ReturnType<typeof condFrom>, sfi: number | null, kp: number | null): string {
+  function captionText(cond: ReturnType<typeof condFrom>, sfi: number | null, kp: number | null, xray: string | null): string {
     let t = `${cond.label} conditions for ham radio today.`;
     if (sfi !== null) t += ` Solar flux at ${Math.round(sfi)}.`;
     if (kp  !== null) t += ` Kp ${kp} — ${kp <= 2 ? 'quiet' : kp <= 4 ? 'unsettled' : 'stormy'}.`;
+    if (xray !== null) t += ` X-ray ${xray}.`;
     const firstBand = cond.bands.split('·')[0].trim();
     t += ` ${firstBand}.`;
     if (kp === null || kp <= 3) t += ' Good window for a POTA run.';
@@ -502,11 +504,12 @@ import Shell from '../../layouts/Shell.astro';
   }
 
   function refreshCopyBlocks(data: any) {
-    const sfi  = data?.sfi     ?? null;
-    const kp   = data?.k_index ?? null;
+    const sfi  = data?.sfi        ?? null;
+    const kp   = data?.k_index    ?? null;
+    const xray = data?.xray_class ?? null;
     const cond = condFrom(sfi, kp);
-    setText('overlay-text', overlayText(sfi, kp, cond));
-    setText('caption-text', captionText(cond, sfi, kp));
+    setText('overlay-text', overlayText(sfi, kp, xray, cond));
+    setText('caption-text', captionText(cond, sfi, kp, xray));
     setText('htag-text',    HTAG[selHtag]);
     setText('title-text',   titleText(cond, sfi));
   }
