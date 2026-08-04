@@ -3,10 +3,10 @@ export interface Env {
 }
 
 const TESTS = [
-  'https://services.swpc.noaa.gov/products/solar-wind/plasma-7-day.json',
-  'https://services.swpc.noaa.gov/products/solar-wind/mag-7-day.json',
-  'https://services.swpc.noaa.gov/products/solar-wind/plasma-2-hour.json',
-  'https://services.swpc.noaa.gov/products/solar-wind/mag-2-hour.json',
+  'https://services.swpc.noaa.gov/json/rtsw/rtsw_wind_1m.json',
+  'https://services.swpc.noaa.gov/json/rtsw/rtsw_mag_1m.json',
+  'https://services.swpc.noaa.gov/json/ace/ace_swepam_1h.json',
+  'https://services.swpc.noaa.gov/json/ace/ace_mag_1h.json',
   'https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json',
   'https://services.swpc.noaa.gov/products/summary/solar-wind-mag-field.json',
 ];
