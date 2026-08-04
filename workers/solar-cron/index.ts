@@ -165,6 +165,70 @@ function parseAlerts(rows: any[] | null): LiveData['alerts'] {
     });
 }
 
+/** Backfill historical SFI/SSN into D1 on first run using already-fetched NOAA data */
+async function backfillHistory(
+  env: Env,
+  flux10Raw: any[] | null,
+  cycleRaw: any[] | null,
+): Promise<void> {
+  const { results } = await env.DB.prepare('SELECT COUNT(*) AS cnt FROM solar_history').all();
+  if (((results[0] as any)?.cnt ?? 0) >= 48) return; // skip if >12 h of data already present
+
+  const cutoff = new Date(Date.now() - 90 * 86400_000).toISOString().slice(0, 10);
+  const stmts: D1PreparedStatement[] = [];
+
+  // Daily SFI from 10cm-flux-30-day (handles both object and array-of-arrays formats)
+  if (Array.isArray(flux10Raw)) {
+    for (const e of flux10Raw) {
+      let tag: string | null = null;
+      let fluxStr: string | null = null;
+      if (Array.isArray(e)) {
+        tag = String(e[0]); fluxStr = String(e[1] ?? '');
+      } else if (e && typeof e === 'object') {
+        tag = e['time-tag'] ?? e.time_tag ?? e.date ?? null;
+        fluxStr = String(e.flux ?? e.observed_flux ?? e['observed-flux'] ?? e['f10.7'] ?? '');
+      }
+      if (!tag || tag === 'time-tag') continue;
+      const dateStr = String(tag).slice(0, 10);
+      if (dateStr < cutoff) continue;
+      const ts = dateStr + 'T12:00:00Z';
+      const sfiVal = parseFloat(fluxStr ?? '-1');
+      if (isNaN(sfiVal) || sfiVal <= 0) continue;
+      stmts.push(env.DB.prepare(
+        `INSERT INTO solar_history (recorded_at, sfi, a_index, k_index, xray_flux, xray_class, sunspots)
+         SELECT ?, ?, NULL, NULL, NULL, NULL, NULL
+         WHERE NOT EXISTS (SELECT 1 FROM solar_history WHERE DATE(recorded_at) = DATE(?))`
+      ).bind(ts, sfiVal, ts));
+    }
+  }
+
+  // Monthly SFI + SSN from solar-cycle indices (fills 60/90-day range)
+  if (Array.isArray(cycleRaw)) {
+    for (const e of cycleRaw) {
+      if (!e || typeof e !== 'object' || Array.isArray(e)) continue;
+      const tag = e['time-tag'] ?? e.time_tag;
+      if (!tag || typeof tag !== 'string') continue;
+      const dateStr = tag.slice(0, 7); // "2025-07"
+      if (dateStr < cutoff.slice(0, 7)) continue;
+      const ts = dateStr + '-01T12:00:00Z';
+      const sfiVal = parseFloat(e.observed_swpc_solar_flux ?? e.solar_flux ?? e.flux ?? '-1');
+      const ssnVal = parseFloat(e.observed_ssn ?? e.ssn ?? e.smoothed_ssn ?? '-1');
+      if (isNaN(sfiVal) || sfiVal <= 0) continue;
+      stmts.push(env.DB.prepare(
+        `INSERT INTO solar_history (recorded_at, sfi, a_index, k_index, xray_flux, xray_class, sunspots)
+         SELECT ?, ?, NULL, NULL, NULL, NULL, ?
+         WHERE NOT EXISTS (SELECT 1 FROM solar_history WHERE DATE(recorded_at) = DATE(?))`
+      ).bind(ts, sfiVal, (!isNaN(ssnVal) && ssnVal >= 0) ? Math.round(ssnVal) : null, ts));
+    }
+  }
+
+  if (stmts.length === 0) return;
+  for (let i = 0; i < stmts.length; i += 100) {
+    await env.DB.batch(stmts.slice(i, i + 100));
+  }
+  console.log(`solar-cron: backfilled ${stmts.length} historical rows`);
+}
+
 export default {
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
     console.log('solar-cron: fetch start');
@@ -213,5 +277,7 @@ export default {
       .run();
 
     console.log('solar-cron: D1 row inserted');
+
+    await backfillHistory(env, flux10Raw, cycleRaw);
   },
 };
