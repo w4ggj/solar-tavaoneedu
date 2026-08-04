@@ -1,5 +1,7 @@
-const PLASMA_URL = 'https://services.swpc.noaa.gov/products/solar-wind/plasma-2-hour.json';
-const MAG_URL    = 'https://services.swpc.noaa.gov/products/solar-wind/mag-2-hour.json';
+const PLASMA_URL   = 'https://services.swpc.noaa.gov/products/solar-wind/plasma-2-hour.json';
+const MAG_URL      = 'https://services.swpc.noaa.gov/products/solar-wind/mag-2-hour.json';
+const SW_SPEED_URL = 'https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json';
+const SW_MAG_URL   = 'https://services.swpc.noaa.gov/products/summary/solar-wind-mag-field.json';
 
 export interface Env {
   SOLAR_CACHE: KVNamespace;
@@ -106,31 +108,69 @@ async function fetchLive() {
   };
 }
 
-export const onRequestGet: PagesFunction<Env> = async (context) => {
+async function fetchSummary() {
   try {
-    // Try live NOAA fetch first (real-time, ~1 min resolution)
+    const [speedRes, magRes] = await Promise.all([
+      fetch(SW_SPEED_URL, { headers: { Accept: 'application/json' } }),
+      fetch(SW_MAG_URL,   { headers: { Accept: 'application/json' } }),
+    ]);
+    if (!speedRes.ok && !magRes.ok) {
+      console.error(`[solarwind] summary fetch failed: speed=${speedRes.status}, mag=${magRes.status}`);
+      return null;
+    }
+    const speedData = speedRes.ok ? await speedRes.json() as Record<string, unknown> : null;
+    const magData   = magRes.ok  ? await magRes.json()   as Record<string, unknown> : null;
+
+    const speed   = typeof speedData?.WindSpeed === 'number' && isFinite(speedData.WindSpeed as number) && (speedData.WindSpeed as number) > 50
+      ? Math.round(speedData.WindSpeed as number) : null;
+    const density = typeof speedData?.Density   === 'number' && isFinite(speedData.Density as number) && (speedData.Density as number) >= 0
+      ? Math.round((speedData.Density as number) * 10) / 10 : null;
+    const bz      = typeof magData?.Bz === 'number' && isFinite(magData.Bz as number) && (magData.Bz as number) > -500 && (magData.Bz as number) < 500
+      ? Math.round((magData.Bz as number) * 10) / 10 : null;
+    const bt      = typeof magData?.Bt === 'number' && isFinite(magData.Bt as number) && (magData.Bt as number) >= 0
+      ? Math.round((magData.Bt as number) * 10) / 10 : null;
+    const updated = (speedData?.TimeStamp ?? magData?.TimeStamp ?? null) as string | null;
+
+    if (speed === null && density === null && bz === null && bt === null) return null;
+
+    return { bz, bt, speed, density, updated, series: { labels: [], bz: [], bt: [], speed: [], density: [] } };
+  } catch (err) {
+    console.error('[solarwind] fetchSummary threw:', err);
+    return null;
+  }
+}
+
+export const onRequestGet: PagesFunction<Env> = async (context) => {
+  // 1. Try row-based live NOAA fetch (real-time, includes chart series)
+  try {
     const live = await fetchLive();
     if (live) {
       return Response.json(live, {
-        headers: {
-          'Cache-Control': 'public, max-age=60',
-          'Access-Control-Allow-Origin': '*',
-        },
+        headers: { 'Cache-Control': 'public, max-age=60', 'Access-Control-Allow-Origin': '*' },
       });
     }
   } catch (err) {
     console.error('[solarwind] fetchLive threw:', err);
   }
 
-  // Fall back to KV cache populated by the cron worker
+  // 2. Try summary endpoints (scalar values only, no chart series)
+  try {
+    const summary = await fetchSummary();
+    if (summary) {
+      return Response.json(summary, {
+        headers: { 'Cache-Control': 'public, max-age=60', 'Access-Control-Allow-Origin': '*' },
+      });
+    }
+  } catch (err) {
+    console.error('[solarwind] fetchSummary threw:', err);
+  }
+
+  // 3. Fall back to KV cache populated by the cron worker
   try {
     const cached = await context.env.SOLAR_CACHE.get('solarwind', 'json');
     if (cached) {
       return Response.json(cached, {
-        headers: {
-          'Cache-Control': 'public, max-age=60',
-          'Access-Control-Allow-Origin': '*',
-        },
+        headers: { 'Cache-Control': 'public, max-age=60', 'Access-Control-Allow-Origin': '*' },
       });
     }
   } catch { /* fall through */ }
