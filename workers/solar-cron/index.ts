@@ -15,8 +15,8 @@ const SWPC = {
   xrayFlux3d:  'https://services.swpc.noaa.gov/json/goes/primary/xrays-3-day.json',
   xrayFlux1d:  'https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json',
   geoAlerts:   'https://services.swpc.noaa.gov/products/alerts.json',
-  swSpeed:     'https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json',
-  swMag:       'https://services.swpc.noaa.gov/products/summary/solar-wind-mag-field.json',
+  swWind:      'https://services.swpc.noaa.gov/json/rtsw/rtsw_wind_1m.json',
+  swMag:       'https://services.swpc.noaa.gov/json/rtsw/rtsw_mag_1m.json',
 } as const;
 
 interface LiveData {
@@ -474,36 +474,38 @@ interface SolarWindData {
   };
 }
 
-// Actual API shape confirmed: arrays of objects with lowercase field names
-// speed → [{"proton_speed":394,"time_tag":"..."}]
-// mag   → [{"bt":3,"bz_gsm":0,"time_tag":"..."}]
-interface SwSpeedItem { proton_speed: number; time_tag: string }
-interface SwMagItem   { bz_gsm: number; bt: number; time_tag: string }
+// RTSW 1-minute real-time feed — arrays sorted oldest-to-newest; last element is most recent
+// rtsw_wind_1m → [{"proton_speed":391.8,"proton_density":1.25,"time_tag":"..."}]
+// rtsw_mag_1m  → [{"bt":2.95,"bz_gsm":-0.5,"time_tag":"..."}]
+interface SwWindItem { proton_speed: number; proton_density: number; time_tag: string }
+interface SwMagItem  { bz_gsm: number; bt: number; time_tag: string }
 
-function parseSolarWind(speedArr: SwSpeedItem[] | null, magArr: SwMagItem[] | null): SolarWindData {
+function parseSolarWind(windArr: SwWindItem[] | null, magArr: SwMagItem[] | null): SolarWindData {
   const empty: SolarWindData = { bz: null, bt: null, speed: null, density: null, updated: null,
     series: { labels: [], bz: [], bt: [], speed: [], density: [] } };
 
-  const speedItem = Array.isArray(speedArr) && speedArr.length > 0 ? speedArr[0] : null;
-  const magItem   = Array.isArray(magArr)   && magArr.length   > 0 ? magArr[0]   : null;
-  if (!speedItem && !magItem) return empty;
+  const windItem = Array.isArray(windArr) && windArr.length > 0 ? windArr[windArr.length - 1] : null;
+  const magItem  = Array.isArray(magArr)  && magArr.length  > 0 ? magArr[magArr.length - 1]   : null;
+  if (!windItem && !magItem) return empty;
 
-  const speed   = typeof speedItem?.proton_speed === 'number' && isFinite(speedItem.proton_speed) && speedItem.proton_speed > 50
-    ? Math.round(speedItem.proton_speed) : null;
+  const speed   = typeof windItem?.proton_speed === 'number' && isFinite(windItem.proton_speed) && windItem.proton_speed > 50
+    ? Math.round(windItem.proton_speed) : null;
+  const density = typeof windItem?.proton_density === 'number' && isFinite(windItem.proton_density) && windItem.proton_density >= 0
+    ? Math.round(windItem.proton_density * 10) / 10 : null;
   const bz      = typeof magItem?.bz_gsm === 'number' && isFinite(magItem.bz_gsm) && Math.abs(magItem.bz_gsm) < 500
     ? Math.round(magItem.bz_gsm * 10) / 10 : null;
   const bt      = typeof magItem?.bt === 'number' && isFinite(magItem.bt) && magItem.bt >= 0
     ? Math.round(magItem.bt * 10) / 10 : null;
-  const updated = speedItem?.time_tag ?? magItem?.time_tag ?? null;
+  const updated = windItem?.time_tag ?? magItem?.time_tag ?? null;
 
-  return { bz, bt, speed, density: null, updated, series: { labels: [], bz: [], bt: [], speed: [], density: [] } };
+  return { bz, bt, speed, density, updated, series: { labels: [], bz: [], bt: [], speed: [], density: [] } };
 }
 
 export default {
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
     console.log('solar-cron: fetch start');
 
-    const [flux10Raw, cycleRaw, kpRaw, xray7dRaw, xray3dRaw, xray1dRaw, alertsRaw, kpHistRaw, swSpeedRaw, swMagRaw] = await Promise.all([
+    const [flux10Raw, cycleRaw, kpRaw, xray7dRaw, xray3dRaw, xray1dRaw, alertsRaw, kpHistRaw, swWindRaw, swMagRaw] = await Promise.all([
       fetchJson<any[]>(SWPC.flux10cm),
       fetchJson<any[]>(SWPC.solarCycle),
       fetchJson<any[]>(SWPC.kpCurrent),
@@ -512,7 +514,7 @@ export default {
       fetchJson<any[]>(SWPC.xrayFlux1d),
       fetchJson<any[]>(SWPC.geoAlerts),
       fetchJson<any[]>(SWPC.kpHistory),
-      fetchJson<SwSpeedItem[]>(SWPC.swSpeed),
+      fetchJson<SwWindItem[]>(SWPC.swWind),
       fetchJson<SwMagItem[]>(SWPC.swMag),
     ]);
 
@@ -538,7 +540,7 @@ export default {
       alerts,
     };
 
-    const solarwind = parseSolarWind(swSpeedRaw, swMagRaw);
+    const solarwind = parseSolarWind(swWindRaw, swMagRaw);
     await Promise.all([
       env.SOLAR_CACHE.put('live', JSON.stringify(live), { expirationTtl: 3600 }),
       env.SOLAR_CACHE.put('solarwind', JSON.stringify(solarwind), { expirationTtl: 3600 }),
