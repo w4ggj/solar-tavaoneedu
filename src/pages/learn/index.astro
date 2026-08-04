@@ -72,10 +72,6 @@ import Shell from '../../layouts/Shell.astro';
           <span class="toc-num">11</span>
           <span class="toc-label">NOAA Storm Scales</span>
         </a>
-        <a href="#band-pills" class="toc-item">
-          <span class="toc-num">12</span>
-          <span class="toc-label">Band Status Strip</span>
-        </a>
         <a href="#xray-chart" class="toc-item">
           <span class="toc-num">13</span>
           <span class="toc-label">X-Ray Flux Chart</span>
@@ -708,47 +704,6 @@ import Shell from '../../layouts/Shell.astro';
           <div class="aside-box">
             <p class="aside-head">Reading the dashboard badges</p>
             <p>When an R, S, or G badge on the dashboard turns amber or red, conditions are active. All three at zero (R0, S0, G0) means no space weather event is in progress — a good time for DX on all bands.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ══════════════════════════════════════ 12 — BAND STATUS STRIP -->
-  <section id="band-pills" class="learn-section" aria-label="Band status strip">
-    <div class="wrap">
-      <p class="seclabel">Concept 12</p>
-      <h2>Band Status Strip — at-a-glance HF overview</h2>
-      <p class="sec-intro">The coloured pill row in the dashboard header summarises conditions on all nine HF amateur bands simultaneously — no scrolling required. Each pill reflects the same propagation model used by the full band conditions grid.</p>
-
-      <div class="explainer-block">
-        <div class="expl-text">
-          <h3>How it works</h3>
-          <p>The model takes three inputs: the current Solar Flux Index (SFI), the planetary K-index (Kp), and whether the current UTC hour is daytime (06:00–20:00 UTC) or nighttime. For each band from 160 m to 10 m, it applies a lookup table of thresholds and returns one of five ratings:</p>
-          <ul class="learn-list">
-            <li><span class="cond-ex excellent">Excellent</span> — optimal conditions; DX contacts should be straightforward.</li>
-            <li><span class="cond-ex good">Good</span> — above-average conditions; most paths open.</li>
-            <li><span class="cond-ex fair">Fair</span> — marginal conditions; shorter paths more reliable than DX.</li>
-            <li><span class="cond-ex poor">Poor</span> — degraded; signals weak and unreliable.</li>
-            <li><span class="cond-ex closed">Closed</span> — band not expected to support propagation under current conditions.</li>
-          </ul>
-          <h3>Daytime vs. nighttime logic</h3>
-          <p>The D-layer absorbs low-band signals (160 m, 80 m) during daylight hours. The model accounts for this: 80 m rates as <span class="cond-ex fair">Fair</span> or <span class="cond-ex poor">Poor</span> by day but can reach <span class="cond-ex excellent">Excellent</span> at night when the D-layer disappears. High bands (12 m, 10 m) need solar ionization — they're closed at night unless SFI is very high.</p>
-        </div>
-        <div class="expl-aside">
-          <div class="aside-box">
-            <p class="aside-head">Bands covered</p>
-            <ul class="aside-list">
-              <li>160 m (1.8 MHz) — nighttime DX band</li>
-              <li>80 m (3.5 MHz) — regional by day, DX at night</li>
-              <li>40 m (7 MHz) — all-rounder; nighttime DX</li>
-              <li>30 m (10 MHz) — WARC; reliable anytime</li>
-              <li>20 m (14 MHz) — workhorse DX</li>
-              <li>17 m (18 MHz) — WARC; needs SFI &gt; 80</li>
-              <li>15 m (21 MHz) — needs SFI &gt; 95</li>
-              <li>12 m (24 MHz) — needs SFI &gt; 110</li>
-              <li>10 m (28 MHz) — needs SFI &gt; 120</li>
-            </ul>
           </div>
         </div>
       </div>
