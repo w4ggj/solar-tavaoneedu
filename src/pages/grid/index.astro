@@ -259,9 +259,9 @@ import Shell from '../../layouts/Shell.astro';
   .loc-acc { font-family: var(--mono); font-size: .62rem; color: var(--muted); letter-spacing: .02em; }
   .loc-acc.acc-coarse { color: #fbbf24; }
   .loc-lookup { flex: 1; min-width: 200px; }
-  .lookup-row { display: flex; gap: 8px; margin-top: 4px; }
+  .lookup-row { display: flex; gap: 8px; margin-top: 4px; min-width: 0; }
   .lookup-input {
-    flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
     padding: 8px 12px; color: var(--text); font-family: var(--mono); font-size: .9rem;
     text-transform: uppercase; letter-spacing: .08em; outline: none;
     transition: border-color .15s;
