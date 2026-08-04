@@ -581,6 +581,7 @@ import Shell from '../layouts/Shell.astro';
   .band-pill.bc-fair      { background: rgba(251,191,36,.10); color: #fbbf24; border: 1px solid rgba(251,191,36,.25); }
   .band-pill.bc-poor      { background: rgba(251,146,60,.10); color: #fb923c; border: 1px solid rgba(251,146,60,.2); }
   .band-pill.bc-closed    { background: rgba(148,163,184,.05); color: var(--muted); border: 1px solid var(--border); opacity: .5; }
+  .bp-cond { font-weight: 400; opacity: .8; }
 
   /* ── Solar wind row ── */
   .sw-row {
@@ -1505,7 +1506,7 @@ import Shell from '../layouts/Shell.astro';
     el.innerHTML = HF_BANDS.map(({ band, mhz }) => {
       const sc  = calcBandScore(mhz, sfiVal, kpVal, isDay);
       const cls = BC_CLASSES[sc];
-      return `<span class="band-pill ${cls}" title="${BC_LABELS[sc]}">${band}</span>`;
+      return `<span class="band-pill ${cls}">${band}<span class="bp-cond"> · ${BC_LABELS[sc]}</span></span>`;
     }).join('');
   }
 
