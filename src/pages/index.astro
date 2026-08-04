@@ -559,7 +559,7 @@ import Shell from '../layouts/Shell.astro';
   .wwv-explain:hover { color: var(--green-lt); }
 
   /* ── Solar wind row ── */
-  .sw-row {
+  .sw-row:not([hidden]) {
     margin-top: 14px;
     display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   }
