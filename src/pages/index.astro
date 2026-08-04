@@ -63,6 +63,27 @@ import Shell from '../layouts/Shell.astro';
         </div>
       </div>
       <p class="data-updated" id="data-updated"></p>
+
+      <!-- NOAA storm scales from WWV/WWVH bulletin -->
+      <div class="wwv-row" id="wwv-row" hidden>
+        <span class="wwv-label">NOAA Scales</span>
+        <div class="wwv-badges">
+          <div class="wwv-badge" id="wb-r">
+            <span class="wb-val" id="wb-r-val">R0</span>
+            <span class="wb-lbl">Radio blackout</span>
+          </div>
+          <div class="wwv-badge" id="wb-s">
+            <span class="wb-val" id="wb-s-val">S0</span>
+            <span class="wb-lbl">Solar radiation</span>
+          </div>
+          <div class="wwv-badge" id="wb-g">
+            <span class="wb-val" id="wb-g-val">G0</span>
+            <span class="wb-lbl">Geomagnetic</span>
+          </div>
+        </div>
+        <a href="https://www.swpc.noaa.gov/noaa-scales-explanation" target="_blank" rel="noopener" class="wwv-explain">What are NOAA scales? ↗</a>
+      </div>
+
       <div class="share-row">
         <a href="/card/" class="share-link">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -349,6 +370,36 @@ import Shell from '../layouts/Shell.astro';
     opacity: .6;
     letter-spacing: .06em;
   }
+
+  /* ── NOAA storm scales (WWV) ── */
+  .wwv-row {
+    margin-top: 18px;
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  .wwv-label {
+    font-family: var(--mono); font-size: .7rem; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted); flex-shrink: 0;
+  }
+  .wwv-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+  .wwv-badge {
+    display: flex; flex-direction: column; align-items: center;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 9px; padding: 8px 16px; min-width: 76px;
+    transition: border-color .18s, background .18s;
+  }
+  .wwv-badge.scale-active { border-color: rgba(245,158,11,.5); background: rgba(245,158,11,.06); }
+  .wwv-badge.scale-severe { border-color: rgba(220,38,38,.5);  background: rgba(220,38,38,.06); }
+  .wb-val {
+    font-family: var(--mono); font-size: 1.1rem; font-weight: 700; color: var(--text); line-height: 1;
+  }
+  .wwv-badge.scale-active .wb-val { color: #fbbf24; }
+  .wwv-badge.scale-severe .wb-val { color: #f87171; }
+  .wb-lbl { font-family: var(--mono); font-size: .58rem; color: var(--muted); margin-top: 4px; letter-spacing: .04em; }
+  .wwv-explain {
+    font-family: var(--mono); font-size: .68rem; color: var(--muted);
+    text-decoration: none; margin-left: auto;
+  }
+  .wwv-explain:hover { color: var(--green-lt); }
 
   .share-row {
     margin-top: 16px;
@@ -1373,10 +1424,37 @@ import Shell from '../layouts/Shell.astro';
   // Refresh solar images every 15 minutes
   setInterval(refreshImages, 15 * 60_000);
 
+  async function loadWwv(): Promise<void> {
+    try {
+      const res = await fetch('/api/wwv');
+      if (!res.ok) return;
+      const d = await res.json() as Record<string, unknown>;
+      const r = Number(d['R'] ?? d['r'] ?? 0);
+      const s = Number(d['S'] ?? d['s'] ?? 0);
+      const g = Number(d['G'] ?? d['g'] ?? 0);
+      const row = document.getElementById('wwv-row');
+      if (!row) return;
+      function applyBadge(id: string, letter: string, val: number) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const valEl = el.querySelector<HTMLElement>('.wb-val');
+        if (valEl) valEl.textContent = letter + val;
+        el.classList.remove('scale-active', 'scale-severe');
+        if (val >= 3) el.classList.add('scale-severe');
+        else if (val >= 1) el.classList.add('scale-active');
+      }
+      applyBadge('wb-r', 'R', r);
+      applyBadge('wb-s', 'S', s);
+      applyBadge('wb-g', 'G', g);
+      row.hidden = false;
+    } catch { /* non-fatal */ }
+  }
+
   loadSolar();
   loadHistory(24);
   drawGreyline(0);
   refreshImages();
+  loadWwv();
 </script>
 
 <script>
