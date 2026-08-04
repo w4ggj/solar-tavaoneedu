@@ -297,14 +297,29 @@ import Shell from '../../layouts/Shell.astro';
   }
 
   @media (max-width: 600px) {
+    .page-hero { padding: 48px 0 0; }
     .map-outer { margin: 0 -16px; border-radius: 0; }
+    .map-container { min-height: 160px; }
     .map-top { flex-wrap: wrap; gap: 10px; }
+    .map-top .btn { padding: 9px 16px; font-size: .88rem; }
     .locator-bar { gap: 12px; padding: 12px 14px; }
     .loc-lookup { min-width: 0; width: 100%; }
+    .lookup-row .btn { padding: 8px 14px; font-size: .85rem; }
     .cond-strip { flex-wrap: wrap; gap: 4px 10px; }
     .cond-note { display: none; }
-    .gc-tool { flex-direction: column; align-items: flex-start; }
+    .gc-tool { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .gc-inputs { width: 100%; }
+    .gc-inputs .btn { padding: 8px 14px; font-size: .85rem; }
     .gc-info { margin-left: 0; }
+    #map-section { padding-bottom: 32px; }
+    #about-maidenhead { padding: 48px 0; }
+  }
+
+  @media (max-width: 420px) {
+    .gc-inputs { flex-direction: column; align-items: stretch; }
+    .gc-arrow { transform: rotate(90deg); align-self: center; }
+    .gc-inputs .lookup-input { width: 100%; }
+    .gc-inputs .btn { align-self: flex-start; }
   }
 
   /* ── Band panel drawer ── */
@@ -367,6 +382,7 @@ import Shell from '../../layouts/Shell.astro';
   .bp-band.bc-closed    .bp-band-label { color: var(--muted); }
   .bp-note { font-family: var(--mono); font-size: .66rem; color: var(--muted); opacity: .5; }
   @media (max-width: 420px) { .bp-bands { grid-template-columns: repeat(2, 1fr); } }
+
 </style>
 
 <script>
