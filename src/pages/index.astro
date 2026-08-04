@@ -84,6 +84,12 @@ import Shell from '../layouts/Shell.astro';
         <a href="https://www.swpc.noaa.gov/noaa-scales-explanation" target="_blank" rel="noopener" class="wwv-explain">What are NOAA scales? ↗</a>
       </div>
 
+      <!-- Band status pills — quick overview of all 9 HF bands -->
+      <div class="band-pills-row" id="band-pills-row">
+        <span class="wwv-label">Bands now</span>
+        <div class="band-pills" id="band-pills" aria-label="HF band conditions summary"></div>
+      </div>
+
       <div class="share-row">
         <a href="/card/" class="share-link">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -255,6 +261,22 @@ import Shell from '../layouts/Shell.astro';
           <div class="tc-body"><canvas id="canvas-kp"></canvas></div>
         </div>
 
+        <!-- K-index 24h bar chart -->
+        <div class="trend-card" id="tc-kp24">
+          <div class="tc-head">
+            <span class="tc-lbl">Kp — Last 24 hours (3-hour buckets)</span>
+          </div>
+          <div class="tc-body"><canvas id="canvas-kp24"></canvas></div>
+        </div>
+
+        <!-- X-ray flux 6-hour timeline -->
+        <div class="trend-card trend-card--wide" id="tc-xray-chart">
+          <div class="tc-head">
+            <span class="tc-lbl">X-Ray Flux — 6 hours (GOES · log scale)</span>
+          </div>
+          <div class="tc-body"><canvas id="canvas-xray"></canvas></div>
+        </div>
+
         <!-- A-index daily geomagnetic activity -->
         <div class="trend-card trend-card--wide" id="tc-aindex">
           <div class="tc-head">
@@ -400,6 +422,23 @@ import Shell from '../layouts/Shell.astro';
     text-decoration: none; margin-left: auto;
   }
   .wwv-explain:hover { color: var(--green-lt); }
+
+  /* ── Band status pills ── */
+  .band-pills-row {
+    margin-top: 14px;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .band-pills { display: flex; gap: 5px; flex-wrap: wrap; }
+  .band-pill {
+    font-family: var(--mono); font-size: .67rem; font-weight: 600;
+    padding: 3px 9px; border-radius: 5px; letter-spacing: .04em; line-height: 1.6;
+    transition: opacity .2s;
+  }
+  .band-pill.bc-excellent { background: rgba(16,185,129,.14); color: #10b981; border: 1px solid rgba(16,185,129,.3); }
+  .band-pill.bc-good      { background: rgba(132,204,22,.12); color: #84cc16; border: 1px solid rgba(132,204,22,.25); }
+  .band-pill.bc-fair      { background: rgba(251,191,36,.10); color: #fbbf24; border: 1px solid rgba(251,191,36,.25); }
+  .band-pill.bc-poor      { background: rgba(251,146,60,.10); color: #fb923c; border: 1px solid rgba(251,146,60,.2); }
+  .band-pill.bc-closed    { background: rgba(148,163,184,.05); color: var(--muted); border: 1px solid var(--border); opacity: .5; }
 
   .share-row {
     margin-top: 16px;
@@ -1031,6 +1070,20 @@ import Shell from '../layouts/Shell.astro';
     return Math.max(0, Math.min(4, sc));
   }
 
+  function renderBandPills(sfi: number | null, kp: number | null): void {
+    const el = document.getElementById('band-pills');
+    if (!el) return;
+    const sfiVal = sfi ?? 70;
+    const kpVal  = kp  ?? 0;
+    const utcH = new Date().getUTCHours() + new Date().getUTCMinutes() / 60;
+    const isDay = utcH >= 6 && utcH < 20;
+    el.innerHTML = HF_BANDS.map(({ band, mhz }) => {
+      const sc  = calcBandScore(mhz, sfiVal, kpVal, isDay);
+      const cls = BC_CLASSES[sc];
+      return `<span class="band-pill ${cls}" title="${BC_LABELS[sc]}">${band}</span>`;
+    }).join('');
+  }
+
   function renderBandGrid(sfi: number | null, kp: number | null, offsetHours = 0): void {
     const grid = document.getElementById('band-grid');
     if (!grid) return;
@@ -1222,6 +1275,7 @@ import Shell from '../layouts/Shell.astro';
           if (el) el.textContent = 'No data yet.';
         });
         renderBandGrid(null, null);
+        renderBandPills(null, null);
         return;
       }
       const d: SolarData = await res.json();
@@ -1232,6 +1286,7 @@ import Shell from '../layouts/Shell.astro';
       setTile('tile-xray',   'val-xray',   d.xray_class ?? '—',                          xrayCls(d.xray_class));
 
       renderBandGrid(d.sfi, d.k_index, bcOffset);
+      renderBandPills(d.sfi, d.k_index);
 
       const sumEl = document.getElementById('conditions-summary');
       if (sumEl) sumEl.textContent = overallSummary(d);
@@ -1658,6 +1713,88 @@ import Shell from '../layouts/Shell.astro';
     }).join('');
   }
 
+  function makeKp24Chart(id: string, data: ChartSeries): Chart {
+    const canvas = document.getElementById(id) as HTMLCanvasElement;
+    const ctx = canvas.getContext('2d')!;
+    function kpColor(v: number): string {
+      return v <= 2 ? '#10b981' : v <= 4 ? '#fbbf24' : '#f87171';
+    }
+    return new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: data.labels.map(b => {
+          const d = new Date(b);
+          return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + 'Z';
+        }),
+        datasets: [{
+          data: data.values,
+          backgroundColor: data.values.map(kpColor),
+          borderWidth: 0,
+          barPercentage: 0.85,
+        }] as any[],
+      },
+      options: {
+        responsive: false,
+        animation: false,
+        plugins: { tooltip: { mode: 'index', intersect: false }, legend: { display: false } },
+        scales: {
+          x: { grid: { color: '#1e293b' }, ticks: { maxTicksLimit: 8, maxRotation: 0 } },
+          y: { min: 0, max: 9, grid: { color: '#1e293b' }, ticks: { stepSize: 3 } },
+        },
+      },
+    });
+  }
+
+  function makeXrayChart(id: string, data: ChartSeries): Chart {
+    const canvas = document.getElementById(id) as HTMLCanvasElement;
+    const ctx = canvas.getContext('2d')!;
+    const grad = ctx.createLinearGradient(0, 0, 0, 140);
+    grad.addColorStop(0, '#f8717133');
+    grad.addColorStop(1, '#f8717100');
+    const safeValues = data.values.map(v => Math.max(0.001, v));
+    return new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: data.labels.map(l => {
+          const d = new Date(l);
+          return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + 'Z';
+        }),
+        datasets: [{
+          data: safeValues,
+          borderColor: '#f87171',
+          backgroundColor: grad,
+          borderWidth: 1.5,
+          pointRadius: 0,
+          fill: true,
+          tension: 0.2,
+        }] as any[],
+      },
+      options: {
+        responsive: false,
+        animation: false,
+        plugins: { tooltip: { mode: 'index', intersect: false }, legend: { display: false } },
+        scales: {
+          x: { grid: { color: '#1e293b' }, ticks: { maxTicksLimit: 8, maxRotation: 0 } },
+          y: {
+            type: 'logarithmic',
+            min: 0.001,
+            grid: { color: '#1e293b' },
+            ticks: {
+              callback: (v: any) => {
+                if (v === 0.1) return 'A';
+                if (v === 1) return 'B';
+                if (v === 10) return 'C';
+                if (v === 100) return 'M';
+                if (v === 1000) return 'X';
+                return '';
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
   async function loadTrends() {
     // SFI
     const sfiData = await fetchSeries('sfi', 30);
@@ -1671,6 +1808,19 @@ import Shell from '../layouts/Shell.astro';
     const fcst = parseForecast(fcstRaw ?? []);
     if (kpData) charts['kp'] = makeKpChart('canvas-kp', kpData, fcst);
     renderForecastStrip(fcst);
+
+    // 24h Kp bar chart
+    const kp24Data = await fetchSeries('kindex', 1);
+    if (kp24Data) charts['kp24'] = makeKp24Chart('canvas-kp24', kp24Data);
+
+    // X-ray flux 6-hour chart
+    try {
+      const xres = await fetch('/api/xray');
+      if (xres.ok) {
+        const xd: ChartSeries = await xres.json();
+        if (xd.labels?.length) charts['xray'] = makeXrayChart('canvas-xray', xd);
+      }
+    } catch {}
 
     // A-index (daily geomagnetic activity) — try 7 d then 30 d; show placeholder if no data yet
     let aiData = await fetchSeries('aindex', 7);
