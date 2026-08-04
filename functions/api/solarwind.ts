@@ -1,12 +1,6 @@
 const PLASMA_URL = 'https://services.swpc.noaa.gov/products/solar-wind/plasma-7-day.json';
 const MAG_URL    = 'https://services.swpc.noaa.gov/products/solar-wind/mag-7-day.json';
 
-/**
- * GET /api/solarwind
- * Returns DSCOVR real-time solar wind: Bz, speed, proton density.
- * Downsampled to 1 reading per 5 minutes over the last hour.
- * Response: { bz, speed, density, updated, series: { labels, bz, speed, density } }
- */
 export const onRequestGet: PagesFunction = async () => {
   try {
     const [plasmaRes, magRes] = await Promise.all([
@@ -25,7 +19,6 @@ export const onRequestGet: PagesFunction = async () => {
       return Response.json({ error: 'no data' }, { status: 502 });
     }
 
-    // First row is the header
     const ph = plasma[0];
     const mh = mag[0];
     const di  = ph.indexOf('density');
@@ -37,7 +30,18 @@ export const onRequestGet: PagesFunction = async () => {
       return Response.json({ error: 'schema changed' }, { status: 502 });
     }
 
-    // Build time-indexed mag map for quick lookup
+    // Latest values: take the last non-sentinel row from each file independently.
+    // Don't require time alignment — plasma and mag timestamps can drift a few minutes.
+    const lastPlasma = plasma[plasma.length - 1];
+    const lastMag    = mag[mag.length - 1];
+
+    const latestSpeed   = parseFloat(String(lastPlasma[si]  ?? 'NaN'));
+    const latestDensity = parseFloat(String(lastPlasma[di]  ?? 'NaN'));
+    const latestBz      = parseFloat(String(lastMag[bzi]    ?? 'NaN'));
+    const latestBt      = bti >= 0 ? parseFloat(String(lastMag[bti] ?? 'NaN')) : NaN;
+    const latestTime    = String(lastPlasma[0] ?? '');
+
+    // Build mag lookup for series chart
     const magByTime = new Map<string, { bz: number; bt: number }>();
     for (const row of mag.slice(1)) {
       const t  = String(row[0] ?? '');
@@ -46,9 +50,14 @@ export const onRequestGet: PagesFunction = async () => {
       if (t && !isNaN(bz)) magByTime.set(t, { bz, bt });
     }
 
-    // Downsample plasma to ~5-min intervals over last hour, join with mag
+    // Downsample to ~5-min intervals for the last hour for the chart series.
+    // If no mag match within ±10 min, still include plasma point (bz/bt = null).
     const cutoffMs = Date.now() - 3_600_000;
-    const kept: { t: string; bz: number; bt: number; speed: number; density: number }[] = [];
+    const seriesLabels:  string[]           = [];
+    const seriesBz:      (number | null)[]  = [];
+    const seriesBt:      (number | null)[]  = [];
+    const seriesSpeed:   number[]           = [];
+    const seriesDensity: number[]           = [];
     let lastMs = 0;
 
     for (const row of plasma.slice(1)) {
@@ -61,41 +70,30 @@ export const onRequestGet: PagesFunction = async () => {
       const density = parseFloat(String(row[di] ?? 'NaN'));
       if (isNaN(speed) || isNaN(density)) continue;
 
-      // Find mag reading closest in time (within ±2 min)
       const magEntry = magByTime.get(t) ?? [...magByTime.entries()]
-        .filter(([mt]) => Math.abs(new Date(mt).getTime() - ms) < 2 * 60_000)
+        .filter(([mt]) => Math.abs(new Date(mt).getTime() - ms) < 10 * 60_000)
         .sort(([a], [b]) => Math.abs(new Date(a).getTime() - ms) - Math.abs(new Date(b).getTime() - ms))[0]?.[1];
 
-      if (!magEntry) continue;
-
-      kept.push({
-        t,
-        bz:      Math.round(magEntry.bz * 10) / 10,
-        bt:      isNaN(magEntry.bt) ? 0 : Math.round(magEntry.bt * 10) / 10,
-        speed:   Math.round(speed),
-        density: Math.round(density * 10) / 10,
-      });
+      seriesLabels.push(t);
+      seriesBz.push(magEntry && !isNaN(magEntry.bz) ? Math.round(magEntry.bz * 10) / 10 : null);
+      seriesBt.push(magEntry && !isNaN(magEntry.bt) ? Math.round(magEntry.bt * 10) / 10 : null);
+      seriesSpeed.push(Math.round(speed));
+      seriesDensity.push(Math.round(density * 10) / 10);
       lastMs = ms;
     }
 
-    if (!kept.length) {
-      return Response.json({ error: 'no recent data' }, { status: 502 });
-    }
-
-    const latest = kept[kept.length - 1];
-
     return Response.json({
-      bz:      latest.bz,
-      bt:      latest.bt,
-      speed:   latest.speed,
-      density: latest.density,
-      updated: latest.t,
+      bz:      !isNaN(latestBz)      ? Math.round(latestBz      * 10) / 10 : null,
+      bt:      !isNaN(latestBt)      ? Math.round(latestBt      * 10) / 10 : null,
+      speed:   !isNaN(latestSpeed)   ? Math.round(latestSpeed)            : null,
+      density: !isNaN(latestDensity) ? Math.round(latestDensity * 10) / 10 : null,
+      updated: latestTime,
       series: {
-        labels:  kept.map(r => r.t),
-        bz:      kept.map(r => r.bz),
-        bt:      kept.map(r => r.bt),
-        speed:   kept.map(r => r.speed),
-        density: kept.map(r => r.density),
+        labels:  seriesLabels,
+        bz:      seriesBz,
+        bt:      seriesBt,
+        speed:   seriesSpeed,
+        density: seriesDensity,
       },
     }, {
       headers: { 'Cache-Control': 'public, max-age=60' },
