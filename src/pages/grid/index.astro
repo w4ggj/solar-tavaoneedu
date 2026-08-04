@@ -223,7 +223,7 @@ import Shell from '../../layouts/Shell.astro';
   .cond-note { font-size: .74rem; opacity: .65; }
 
   /* ── Map outer (full bleed within wrap) ── */
-  .map-outer { position: relative; margin: 0 -24px; }
+  .map-outer { position: relative; margin: 0; }
   .map-col-labels { display: none; }
   .map-row-wrap { display: flex; }
   .map-row-labels { display: none; }
@@ -298,7 +298,7 @@ import Shell from '../../layouts/Shell.astro';
 
   @media (max-width: 600px) {
     .page-hero { padding: 48px 0 0; }
-    .map-outer { margin: 0 -16px; border-radius: 0; }
+    .map-outer { margin: 0; border-radius: 0; }
     .map-container { min-height: 160px; }
     .map-top { flex-wrap: wrap; gap: 10px; }
     .map-top .btn { padding: 9px 16px; font-size: .88rem; }
