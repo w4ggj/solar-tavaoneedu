@@ -111,6 +111,7 @@ import Shell from '../../layouts/Shell.astro';
         <div class="loc-item">
           <span class="loc-label">Your grid square</span>
           <span class="loc-value" id="my-locator">—</span>
+          <span class="loc-acc" id="loc-acc"></span>
         </div>
         <div class="loc-item">
           <span class="loc-label">Selected</span>
@@ -255,6 +256,8 @@ import Shell from '../../layouts/Shell.astro';
   .loc-item { display: flex; flex-direction: column; gap: 4px; }
   .loc-label { font-family: var(--mono); font-size: .7rem; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
   .loc-value { font-family: var(--mono); font-size: 1.1rem; font-weight: 700; color: var(--green-lt); letter-spacing: .04em; }
+  .loc-acc { font-family: var(--mono); font-size: .62rem; color: var(--muted); letter-spacing: .02em; }
+  .loc-acc.acc-coarse { color: #fbbf24; }
   .loc-lookup { flex: 1; min-width: 200px; }
   .lookup-row { display: flex; gap: 8px; margin-top: 4px; }
   .lookup-input {
@@ -820,9 +823,23 @@ import Shell from '../../layouts/Shell.astro';
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const { latitude, longitude } = pos.coords;
+        const { latitude, longitude, accuracy } = pos.coords;
         const locator = latlonToMaidenhead(latitude, longitude);
         document.getElementById('my-locator')!.textContent = locator;
+
+        // Show accuracy so user knows if it's GPS or IP-based
+        const accEl = document.getElementById('loc-acc')!;
+        const accKm = (accuracy / 1000).toFixed(0);
+        if (accuracy > 50000) {
+          accEl.textContent = `~${accKm} km accuracy — IP location, may be inaccurate`;
+          accEl.className = 'loc-acc acc-coarse';
+        } else if (accuracy > 5000) {
+          accEl.textContent = `~${accKm} km accuracy`;
+          accEl.className = 'loc-acc acc-coarse';
+        } else {
+          accEl.textContent = `±${Math.round(accuracy)} m`;
+          accEl.className = 'loc-acc';
+        }
 
         // Place marker on SVG
         const svgX = longitude + 180;
@@ -842,7 +859,8 @@ import Shell from '../../layouts/Shell.astro';
       },
       () => {
         document.getElementById('my-locator')!.textContent = 'denied';
-      }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   }
 
