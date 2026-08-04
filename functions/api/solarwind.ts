@@ -48,7 +48,7 @@ export const onRequestGet: PagesFunction = async () => {
 
     // Downsample plasma to ~5-min intervals over last hour, join with mag
     const cutoffMs = Date.now() - 3_600_000;
-    const kept: { t: string; bz: number; speed: number; density: number }[] = [];
+    const kept: { t: string; bz: number; bt: number; speed: number; density: number }[] = [];
     let lastMs = 0;
 
     for (const row of plasma.slice(1)) {
@@ -71,6 +71,7 @@ export const onRequestGet: PagesFunction = async () => {
       kept.push({
         t,
         bz:      Math.round(magEntry.bz * 10) / 10,
+        bt:      isNaN(magEntry.bt) ? 0 : Math.round(magEntry.bt * 10) / 10,
         speed:   Math.round(speed),
         density: Math.round(density * 10) / 10,
       });
@@ -85,12 +86,14 @@ export const onRequestGet: PagesFunction = async () => {
 
     return Response.json({
       bz:      latest.bz,
+      bt:      latest.bt,
       speed:   latest.speed,
       density: latest.density,
       updated: latest.t,
       series: {
         labels:  kept.map(r => r.t),
         bz:      kept.map(r => r.bz),
+        bt:      kept.map(r => r.bt),
         speed:   kept.map(r => r.speed),
         density: kept.map(r => r.density),
       },
