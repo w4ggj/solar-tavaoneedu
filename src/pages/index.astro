@@ -1005,32 +1005,37 @@ import Shell from '../layouts/Shell.astro';
     display: flex; align-items: flex-start; gap: 14px; flex-wrap: wrap;
     margin-top: 10px;
   }
-  /* vertical stack: day cards on top, prob bars below */
-  .swx-inner {
-    display: flex; flex-direction: column; gap: 10px; flex: 1;
-  }
-  .swx-days { display: flex; gap: 6px; flex-wrap: wrap; }
+  .swx-inner { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+  .swx-days  { display: flex; gap: 8px; flex-wrap: wrap; }
   .swx-day {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 9px; padding: 8px 14px; min-width: 80px;
-    gap: 4px; transition: border-color .2s, background .2s;
+    display: flex; flex-direction: column; align-items: flex-start;
+    background: #1a2744; border: 1px solid #2d4a7a;
+    border-radius: 10px; padding: 10px 14px; min-width: 110px; gap: 6px;
+    transition: border-color .2s, background .2s;
   }
-  .swx-day.swx-active { border-color: rgba(245,158,11,.55); background: rgba(245,158,11,.07); }
-  .swx-day.swx-severe { border-color: rgba(239,68,68,.55); background: rgba(239,68,68,.07); }
+  .swx-day.swx-active { border-color: rgba(245,158,11,.6); background: rgba(245,158,11,.08); }
+  .swx-day.swx-severe { border-color: rgba(239,68,68,.6);  background: rgba(239,68,68,.08); }
   .swx-day-label {
-    font-family: var(--mono); font-size: .6rem; letter-spacing: .08em;
+    font-family: var(--mono); font-size: .6rem; letter-spacing: .1em;
     color: var(--muted); text-transform: uppercase;
   }
-  .swx-kp { font-family: var(--mono); font-size: 1.05rem; font-weight: 700; color: var(--text); line-height: 1; }
-  .swx-day.swx-active .swx-kp { color: #fbbf24; }
-  .swx-day.swx-severe .swx-kp { color: #f87171; }
-  .swx-rprob { font-family: var(--mono); font-size: .62rem; color: var(--muted); }
-  .swx-day.swx-active .swx-rprob { color: rgba(251,191,36,.7); }
+  .swx-kp {
+    font-family: var(--mono); font-size: 1.15rem; font-weight: 700; line-height: 1;
+  }
+  .swx-pills { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+  .swx-pill {
+    font-family: var(--mono); font-size: .6rem; padding: 2px 6px;
+    border-radius: 4px; letter-spacing: .03em;
+  }
+  .swx-pill b { font-weight: 700; }
+  .swx-pill-r  { background: rgba(251,191,36,.12); color: #fbbf24; border: 1px solid rgba(251,191,36,.25); }
+  .swx-pill-rx { background: rgba(248,113,113,.12); color: #f87171; border: 1px solid rgba(248,113,113,.25); }
+  .swx-pill-g  { background: rgba(167,139,250,.12); color: #a78bfa; border: 1px solid rgba(167,139,250,.25); }
+  .swx-quiet   { font-family: var(--mono); font-size: .62rem; color: var(--muted); opacity: .6; }
 
   /* probability bars — full width inside swx-inner column */
   .swx-probs {
-    display: flex; flex-direction: column; gap: 5px;
+    display: flex; flex-direction: column; gap: 6px;
     font-family: var(--mono); font-size: .7rem; color: var(--muted);
   }
   .swx-probs-title {
@@ -1041,7 +1046,7 @@ import Shell from '../layouts/Shell.astro';
   .swx-prob-lbl { min-width: 52px; letter-spacing: .01em; }
   .swx-prob-bar {
     flex: 1; height: 8px;
-    background: rgba(255,255,255,.2);
+    background: rgba(255,255,255,.08);
     border-radius: 4px; overflow: hidden;
   }
   .swx-prob-fill {
@@ -2101,12 +2106,18 @@ import Shell from '../layouts/Shell.astro';
       if (!row || !daysEl || !probsEl || !d.days?.length) return;
 
       daysEl.innerHTML = d.days.map(day => {
-        const cls = day.gScale >= 3 ? 'swx-severe' : day.gScale >= 1 ? 'swx-active' : '';
-        return `<div class="swx-day ${cls}">
+        const storm  = day.gScale >= 3 ? 'swx-severe' : day.gScale >= 1 ? 'swx-active' : '';
+        const kpCol  = day.kpMax >= 5 ? '#f87171' : day.kpMax >= 3 ? '#fbbf24' : '#34d399';
+        const kpTxt  = 'Kp' + (day.kpMax >= 5 ? '≥' : '≤') + day.kpMax;
+        const probes = [
+          day.rMinor > 0 ? `<span class="swx-pill swx-pill-r">R1+ <b>${day.rMinor}%</b></span>` : '',
+          day.rMajor > 0 ? `<span class="swx-pill swx-pill-rx">R3+ <b>${day.rMajor}%</b></span>` : '',
+          day.gProb  > 0 ? `<span class="swx-pill swx-pill-g">G <b>${day.gProb}%</b></span>`    : '',
+        ].filter(Boolean).join('');
+        return `<div class="swx-day ${storm}">
           <span class="swx-day-label">${day.label}</span>
-          <span class="swx-kp">Kp${day.kpMax >= 5 ? '≥' + day.kpMax : '≤' + day.kpMax}</span>
-          ${day.rMinor > 0 ? `<span class="swx-rprob">R1+ ${day.rMinor}%</span>` : ''}
-          ${day.rMajor > 0 ? `<span class="swx-rprob">R3+ ${day.rMajor}%</span>` : ''}
+          <span class="swx-kp" style="color:${kpCol}">${kpTxt}</span>
+          ${probes ? `<div class="swx-pills">${probes}</div>` : '<span class="swx-quiet">Quiet</span>'}
         </div>`;
       }).join('');
 
