@@ -660,8 +660,24 @@ import Shell from '../../layouts/Shell.astro';
       `<circle cx="${midX}" cy="${midY}" r="1.4" fill="#facc15" opacity="0.9"/>`;
 
     const distMi = Math.round(distKm * 0.621371);
+
+    // MUF estimator: foF2 from SFI (simplified ITU formula), MUF for oblique path
+    const sfiVal  = sfi ?? 90;
+    const foF2    = Math.max(2, 4.35 + 0.0141 * sfiVal);
+    const hopFactor = Math.sqrt(1 + (distKm / 2 / 300) ** 2);
+    const mufMhz  = Math.round(foF2 * hopFactor * 10) / 10;
+    const fotMhz  = Math.round(mufMhz * 0.85 * 10) / 10;
+    const recBands: string[] = [];
+    if (fotMhz >= 28) recBands.push('10 m');
+    else if (fotMhz >= 21) recBands.push('15 m');
+    else if (fotMhz >= 18) recBands.push('17 m');
+    else if (fotMhz >= 14) recBands.push('20 m');
+    else if (fotMhz >= 10) recBands.push('30 m');
+    else if (fotMhz >= 7) recBands.push('40 m');
+    else recBands.push('80 m');
+
     document.getElementById('gc-info')!.textContent =
-      `${Math.round(distKm).toLocaleString()} km · ${distMi.toLocaleString()} mi`;
+      `${Math.round(distKm).toLocaleString()} km · ${distMi.toLocaleString()} mi · MUF ≈ ${mufMhz} MHz · FOT ≈ ${fotMhz} MHz · Try ${recBands.join('/')} `;
 
     // Open band panel for the midpoint's grid cell
     const midCol = Math.min(17, Math.floor((mid[1] + 180) / CW));
