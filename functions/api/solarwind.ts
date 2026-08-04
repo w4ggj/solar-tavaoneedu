@@ -1,5 +1,5 @@
-const PLASMA_URL = 'https://services.swpc.noaa.gov/products/solar-wind/plasma-7-day.json';
-const MAG_URL    = 'https://services.swpc.noaa.gov/products/solar-wind/mag-7-day.json';
+const PLASMA_URL = 'https://services.swpc.noaa.gov/products/solar-wind/plasma-2-hour.json';
+const MAG_URL    = 'https://services.swpc.noaa.gov/products/solar-wind/mag-2-hour.json';
 
 export interface Env {
   SOLAR_CACHE: KVNamespace;
@@ -37,7 +37,10 @@ async function fetchLive() {
     fetch(MAG_URL,    { headers: { Accept: 'application/json' } }),
   ]);
 
-  if (!plasmaRes.ok || !magRes.ok) return null;
+  if (!plasmaRes.ok || !magRes.ok) {
+    console.error(`[solarwind] NOAA fetch failed: plasma=${plasmaRes.status}, mag=${magRes.status}`);
+    return null;
+  }
 
   const plasma = await plasmaRes.json() as Row[];
   const mag    = await magRes.json() as Row[];
@@ -115,7 +118,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         },
       });
     }
-  } catch { /* fall through to KV */ }
+  } catch (err) {
+    console.error('[solarwind] fetchLive threw:', err);
+  }
 
   // Fall back to KV cache populated by the cron worker
   try {

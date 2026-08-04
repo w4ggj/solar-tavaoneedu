@@ -110,7 +110,7 @@ import Shell from '../layouts/Shell.astro';
             <span class="sw-sub">Bt (nT)</span>
           </div>
         </div>
-        <canvas id="sw-bz-chart" class="sw-mini-chart" width="180" height="44" aria-label="Bz 1-hour trend"></canvas>
+        <canvas id="sw-bz-chart" class="sw-mini-chart" width="180" height="44" aria-label="Bz 1-hour trend" hidden></canvas>
         <span class="sw-updated" id="sw-updated"></span>
       </div>
 
@@ -1966,7 +1966,10 @@ import Shell from '../layouts/Shell.astro';
       row.hidden = false;
       if (d.series?.bz?.length) {
         const canvas = document.getElementById('sw-bz-chart') as HTMLCanvasElement | null;
-        if (canvas) drawBzMiniChart(canvas, d.series.bz);
+        if (canvas) {
+          canvas.hidden = false;
+          drawBzMiniChart(canvas, d.series.bz);
+        }
       }
       updateRadioBlackout(lastData?.xray_class ?? null);
     } catch { /* non-fatal */ }
