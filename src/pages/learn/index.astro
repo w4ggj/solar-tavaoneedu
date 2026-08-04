@@ -104,6 +104,22 @@ import Shell from '../../layouts/Shell.astro';
           <span class="toc-num">19</span>
           <span class="toc-label">Push Notifications</span>
         </a>
+        <a href="#aurora-forecast" class="toc-item">
+          <span class="toc-num">20</span>
+          <span class="toc-label">Aurora Visibility</span>
+        </a>
+        <a href="#space-weather-prob" class="toc-item">
+          <span class="toc-num">21</span>
+          <span class="toc-label">Space Weather Outlook</span>
+        </a>
+        <a href="#active-regions" class="toc-item">
+          <span class="toc-num">22</span>
+          <span class="toc-label">Active Solar Regions</span>
+        </a>
+        <a href="#contest-calendar" class="toc-item">
+          <span class="toc-num">23</span>
+          <span class="toc-label">Contest Calendar</span>
+        </a>
       </nav>
     </div>
   </section>
@@ -986,6 +1002,155 @@ import Shell from '../../layouts/Shell.astro';
 
       <div class="cta-row" style="margin-top:2rem">
         <a class="btn btn-ghost" href="/">Enable alerts on the dashboard →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════ 20 — AURORA VISIBILITY -->
+  <section id="aurora-forecast" class="learn-section" aria-label="Aurora visibility forecast">
+    <div class="wrap">
+      <p class="seclabel">Concept 20</p>
+      <h2>Aurora Visibility Forecast — where the lights might show</h2>
+      <p class="sec-intro">The Aurora row on the dashboard calculates the equatorward boundary of the auroral oval in real time from the live Kp index. When Kp rises, the aurora expands toward lower latitudes and more people can see it.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <h3>How the boundary is calculated</h3>
+          <p>The auroral oval — the ring around each magnetic pole where charged particles from the solar wind collide with the atmosphere — shifts equatorward during geomagnetic storms. The dashboard uses the simplified empirical formula:</p>
+          <p><code>Equatorward boundary ≈ 67° − (Kp × 2°) latitude</code></p>
+          <p>This is a rough estimate based on statistical observations of the oval during different Kp levels. Real aurora visibility also depends on sky darkness, local magnetic declination, cloud cover, and how close you are to the boundary — being within a few degrees of the boundary gives the best chance of a display on the horizon.</p>
+
+          <div class="scale-table">
+            <div class="st-row"><span class="st-val excel">Kp 0–1</span><span class="st-desc">≥65–67°N — far northern Norway, Svalbard, northern Alaska. Aurora only visible well inside the Arctic.</span></div>
+            <div class="st-row"><span class="st-val good">Kp 3–4</span><span class="st-desc">≥59–61°N — southern Alaska, Helsinki, northern Scotland. Common during unsettled conditions.</span></div>
+            <div class="st-row"><span class="st-val mod">Kp 5–6</span><span class="st-desc">≥55–57°N — northern England, Scandinavia, southern Canada. G1–G2 storm level; aurora often visible.</span></div>
+            <div class="st-row"><span class="st-val low">Kp 7–8</span><span class="st-desc">≥51–53°N — London, Amsterdam, Warsaw, US northern states. Rare major storm events.</span></div>
+            <div class="st-row"><span class="st-val bad">Kp 9</span><span class="st-desc">≥49°N — France, Switzerland, Seattle, Portland. Extreme G5 storms; once or twice per solar cycle.</span></div>
+          </div>
+
+          <h3>What aurora means for radio</h3>
+          <p>Aurora is simultaneously beautiful and disruptive for HF. When the oval expands, polar paths — Europe to North America via the Arctic, or any trans-polar route — can suffer severe absorption and scatter. VHF operators running EME or meteor scatter may notice aurora scatter on 2 m and 6 m, which produces a distinctive rasping sound on CW signals (aurora scatter is not audiophile-quality SSB territory).</p>
+          <p class="tip-line"><strong>Operating tip:</strong> When Kp climbs to 5 or above, abandon trans-polar DX attempts and work east-west paths or equatorial directions instead. On 6 m, deliberately try aurora scatter — tune to the edges of the aurora oval and listen for the characteristic watery echo.</p>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">The auroral oval</p>
+            <p>The oval is not centered on the geographic poles but on the magnetic poles, which are offset by several degrees. This is why aurora is more common in northern Scandinavia and northern Canada than at equivalent latitudes elsewhere — those regions sit closer to the magnetic pole.</p>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">Ham radio connection</p>
+            <p>Kp ≥5 is the standard threshold for push notifications on this dashboard. Setting your alert threshold to Kp 5 means you get a heads-up when aurora visibility is plausible for much of the northern hemisphere — useful both for astrophotography and for checking polar path openings.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════ 21 — SPACE WEATHER OUTLOOK -->
+  <section id="space-weather-prob" class="learn-section alt-bg" aria-label="Space weather probability outlook">
+    <div class="wrap">
+      <p class="seclabel">Concept 21</p>
+      <h2>Space Weather Outlook — 3-day probabilities from NOAA</h2>
+      <p class="sec-intro">NOAA's Space Weather Prediction Center issues probability forecasts for solar flare activity (R-scale) and geomagnetic storms (G-scale) for the current and next two days. The 3-Day Outlook row translates those forecasts into radio-operator terms.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <h3>What the probabilities mean</h3>
+          <p>NOAA issues two probabilities for each day:</p>
+          <ul class="learn-list">
+            <li><strong>C-flare / R1+ probability</strong> — the chance that any solar flare will reach R1 (minor radio blackout) or higher. Even a 40% probability doesn't mean a blackout is certain — it means conditions are elevated and the chance of at least a minor R1 event is about 40%. On high-SFI days with active regions, this number can stay above 30% for days at a time.</li>
+            <li><strong>M-flare / R3+ probability</strong> — the chance of a moderate-to-major radio blackout (R3 or worse). This matters more operationally: R3 means 10–30 MHz is blacked out across most of the sunlit hemisphere for 10–60 minutes. Watch for this rising during major active region transits.</li>
+            <li><strong>G-storm probability</strong> — the chance of at least a G1 geomagnetic storm. As with flares, even a 30% G-storm probability should put you on alert — a G1 at the wrong time on a polar path can wipe out a DX contact you've been trying for days.</li>
+          </ul>
+          <h3>Kp max per day</h3>
+          <p>Each day card shows "Kp≤N" or "Kp≥N" — the forecasted maximum Kp derived from the predicted G scale. G0 = Kp below 5 (quiet), G1 = Kp 5, G2 = Kp 6, G3 = Kp 7, G4 = Kp 8, G5 = Kp 9. Use this to plan multi-day DX trips or Field Day preparation: if Kp≥6 is forecast for Saturday, polar and high-latitude paths may be compromised.</p>
+          <p class="tip-line"><strong>Operating tip:</strong> Check the 3-Day Outlook before scheduling a DX pile-up session or an international contest. G1+ probability above 25% is your cue to have a backup plan — either shorter paths, lower bands, or later in the day when storm effects sometimes ease.</p>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">Source: NOAA SWPC</p>
+            <p>The dashboard fetches <code>noaa-scales.json</code> from services.swpc.noaa.gov every hour. The file contains entries for yesterday (-1), today (0), tomorrow (1), and the day after (2). The dashboard displays periods 0, 1, and 2 to give a 3-day window.</p>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">Forecast accuracy</p>
+            <p>24-hour NOAA flare forecasts reach roughly 75–85% accuracy for the correct class. Storm forecasting is harder — CMEs can arrive early, late, or with different orientations than predicted. The Bz component (shown in the Solar Wind row) is only measurable ~30–60 minutes before impact at the ACE/DSCOVR L1 point.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════ 22 — ACTIVE SOLAR REGIONS -->
+  <section id="active-regions" class="learn-section" aria-label="Active solar regions">
+    <div class="wrap">
+      <p class="seclabel">Concept 22</p>
+      <h2>Active Solar Regions — the sources of flares and CMEs</h2>
+      <p class="sec-intro">NOAA assigns sequential numbers to clusters of sunspots on the solar disk that show potential for flares. The Active Regions table on the dashboard lists the current numbered regions, their magnetic classification, and flare probability for the next 24 hours.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <h3>Mount Wilson magnetic classifications</h3>
+          <p>The magnetic structure of a sunspot group determines how much energy it can store and release. NOAA uses the Mount Wilson classification system:</p>
+          <ul class="learn-list">
+            <li><strong>Alpha</strong> — a single polarity sunspot group. Low flare potential. Rarely produces significant events.</li>
+            <li><strong>Beta</strong> — a bipolar group with positive and negative polarities separated by a clear dividing line. Moderate potential. The most common active region class.</li>
+            <li><strong>Gamma</strong> — complex polarity distribution that doesn't fit into a simple bipolar pattern. Higher potential than Beta.</li>
+            <li><strong>Beta-Gamma</strong> — a bipolar group complex enough to show gamma characteristics. Can produce M-class flares.</li>
+            <li><strong>Beta-Delta</strong> — a bipolar group with opposite-polarity umbrae within the same penumbra — very close together. High M-class and X-class potential.</li>
+            <li><strong>Beta-Gamma-Delta</strong> — the most complex and dangerous classification. Major X-class flares are most likely from this type. Extremely rare outside solar maximum.</li>
+          </ul>
+          <h3>Flare probability percentages</h3>
+          <p>The C%, M%, and X% columns give the 24-hour probability that the listed region will produce a flare of at least that class. These are per-region probabilities, not overall solar probabilities. A region with M 40% and X 10% is the dominant event driver for the day — watch for its transit across the solar disk.</p>
+          <p>The dashboard sorts regions by an internal flare potential score (M probability × 1 + X probability × 10) so the highest-risk region always appears at the top.</p>
+          <p class="tip-line"><strong>Operating tip:</strong> When a Beta-Gamma-Delta region is on the disk and X probability is above 10%, X-ray flux peaks become more likely — watch for the Radio Blackout indicator to light up. If you're in a pile-up or a contest, keep an eye on the X-ray class tile and be ready for sudden short-wave fade.</p>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">Carrington numbers</p>
+            <p>NOAA Active Region numbers are sequential — the first AR of each solar cycle restarts from ~1 (or continues from the previous cycle at NOAA's discretion). The naming traces back to Richard Carrington, who drew the first systematic sunspot maps in the 1850s. The 1859 Carrington Event — which disrupted telegraphs worldwide — remains the most powerful geomagnetic storm in recorded history.</p>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">Source and update rate</p>
+            <p>The dashboard fetches <code>solar_regions.json</code> from NOAA SWPC every 30 minutes. The source is updated by NOAA's Space Weather Forecasters as they analyze the latest SDO/HMI sunspot maps throughout the day. A blank table means the disk is currently spotless — not rare during cycle minimum.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════ 23 — CONTEST CALENDAR -->
+  <section id="contest-calendar" class="learn-section alt-bg" aria-label="Ham radio contest calendar">
+    <div class="wrap">
+      <p class="seclabel">Concept 23</p>
+      <h2>Ham Contest Calendar — operating events and propagation windows</h2>
+      <p class="sec-intro">The contest calendar on the dashboard shows the next several major HF operating events. Contests aren't just competitive — they reliably populate the bands with stations worldwide, making them excellent propagation checkpoints regardless of whether you're contesting.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <h3>Why contests matter for propagation</h3>
+          <p>During a major contest like CQ WW or ARRL DX, 10,000–40,000 stations may be active simultaneously on HF bands. This density of signals makes it easy to hear faint-path openings that would otherwise go unnoticed — if a weak DX signal is detectable at all, someone during a contest will find it. Monitoring contest weekends is the fastest way to map current band conditions worldwide.</p>
+
+          <h3>Major contests on the calendar</h3>
+          <ul class="learn-list">
+            <li><strong>CQ WW DX (SSB + CW)</strong> — the world's largest amateur radio contest. Last full weekend of October (SSB) and November (CW). 48 hours, all HF bands, work anyone, exchange: signal report + CQ zone. Draws stations from every DXCC entity. If 10 m or 15 m are open anywhere on Earth, you'll hear it here.</li>
+            <li><strong>ARRL DX (CW + SSB)</strong> — third weekend of February (CW) and first weekend of March (SSB). W/VE stations work DX; DX stations work W/VE. Classic benchmark for North American HF propagation at the start of spring.</li>
+            <li><strong>ARRL Sweepstakes (CW + Phone)</strong> — first full weekend of November (CW) and third full weekend (Phone). North-American-only, 160–10 m. Requires working all 83 ARRL/RAC sections — a propagation workout that exercises every band from 160 m to 10 m.</li>
+            <li><strong>CQ WPX (SSB + CW)</strong> — last full weekend of March (SSB) and May (CW). Exchange includes a serial number and your prefix. Draws an enormous variety of rare prefixes onto the air — useful for checking low-band DX openings.</li>
+            <li><strong>ARRL Field Day</strong> — last full weekend of June. Emergency-preparedness exercise and social event. Stations operate from temporary/portable setups. Not a DX contest but a strong propagation indicator — if you can hear stations across the US on 15 m or 10 m on Field Day, those bands are open.</li>
+            <li><strong>IARU HF World Championship</strong> — second full weekend of July. IARU member-society HQ stations are multipliers. International participation. Good benchmark for summer HF propagation and ionospheric conditions post-solstice.</li>
+          </ul>
+          <p class="tip-line"><strong>Operating tip:</strong> Open the dashboard before a contest weekend and check SFI, Kp, and the 3-day outlook together. SFI above 120 + Kp below 3 = prime conditions. If the forecast shows G1+ activity for contest weekend, decide early whether to focus on lower bands (40 m, 80 m) that are more storm-resistant than 10 m and 15 m.</p>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">Solar cycle and contests</p>
+            <p>At solar maximum (SFI routinely above 150), the highest HF bands dominate contest scores — 10 m contacts across thousands of miles with a wire antenna. At solar minimum, successful contesters shift down to 20 m and 40 m and rely on their antennas and operating skill more than ionospheric luck.</p>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">Finding more contests</p>
+            <p>The calendar shows major global events. For regional contests, club competitions, and specialty events (digital modes, VHF, SOTA activations), see the WA7BNM Contest Calendar at contestcalendar.com — a comprehensive, community-maintained database updated weekly.</p>
+          </div>
+        </div>
       </div>
     </div>
   </section>
