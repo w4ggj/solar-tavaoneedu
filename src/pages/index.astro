@@ -89,12 +89,6 @@ import Shell from '../layouts/Shell.astro';
         <a href="https://www.swpc.noaa.gov/noaa-scales-explanation" target="_blank" rel="noopener" class="wwv-explain">What are NOAA scales? ↗</a>
       </div>
 
-      <!-- Band status pills — quick overview of all 9 HF bands -->
-      <div class="band-pills-row" id="band-pills-row">
-        <span class="wwv-label">Bands now</span>
-        <div class="band-pills" id="band-pills" aria-label="HF band conditions summary"></div>
-      </div>
-
       <!-- Solar wind (DSCOVR real-time) -->
       <div class="sw-row" id="sw-row" hidden>
         <span class="wwv-label">Solar Wind</span>
@@ -564,24 +558,6 @@ import Shell from '../layouts/Shell.astro';
     text-decoration: none; margin-left: auto;
   }
   .wwv-explain:hover { color: var(--green-lt); }
-
-  /* ── Band status pills ── */
-  .band-pills-row {
-    margin-top: 14px;
-    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  }
-  .band-pills { display: flex; gap: 5px; flex-wrap: wrap; }
-  .band-pill {
-    font-family: var(--mono); font-size: .67rem; font-weight: 600;
-    padding: 3px 9px; border-radius: 5px; letter-spacing: .04em; line-height: 1.6;
-    transition: opacity .2s;
-  }
-  .band-pill.bc-excellent { background: rgba(16,185,129,.14); color: #10b981; border: 1px solid rgba(16,185,129,.3); }
-  .band-pill.bc-good      { background: rgba(132,204,22,.12); color: #84cc16; border: 1px solid rgba(132,204,22,.25); }
-  .band-pill.bc-fair      { background: rgba(251,191,36,.10); color: #fbbf24; border: 1px solid rgba(251,191,36,.25); }
-  .band-pill.bc-poor      { background: rgba(251,146,60,.10); color: #fb923c; border: 1px solid rgba(251,146,60,.2); }
-  .band-pill.bc-closed    { background: rgba(148,163,184,.05); color: var(--muted); border: 1px solid var(--border); opacity: .5; }
-  .bp-cond { font-weight: 400; opacity: .8; }
 
   /* ── Solar wind row ── */
   .sw-row {
@@ -1496,19 +1472,6 @@ import Shell from '../layouts/Shell.astro';
     return Math.max(0, Math.min(4, sc));
   }
 
-  function renderBandPills(sfi: number | null, kp: number | null): void {
-    const el = document.getElementById('band-pills');
-    if (!el) return;
-    const sfiVal = sfi ?? 70;
-    const kpVal  = kp  ?? 0;
-    const utcH = new Date().getUTCHours() + new Date().getUTCMinutes() / 60;
-    const isDay = utcH >= 6 && utcH < 20;
-    el.innerHTML = HF_BANDS.map(({ band, mhz }) => {
-      const sc  = calcBandScore(mhz, sfiVal, kpVal, isDay);
-      const cls = BC_CLASSES[sc];
-      return `<span class="band-pill ${cls}">${band}<span class="bp-cond"> · ${BC_LABELS[sc]}</span></span>`;
-    }).join('');
-  }
 
   function renderBandGrid(sfi: number | null, kp: number | null, offsetHours = 0): void {
     const grid = document.getElementById('band-grid');
@@ -1701,7 +1664,6 @@ import Shell from '../layouts/Shell.astro';
           if (el) el.textContent = 'No data yet.';
         });
         renderBandGrid(null, null);
-        renderBandPills(null, null);
         return;
       }
       const d: SolarData = await res.json();
@@ -1712,7 +1674,6 @@ import Shell from '../layouts/Shell.astro';
       setTile('tile-xray',   'val-xray',   d.xray_class ?? '—',                          xrayCls(d.xray_class));
 
       renderBandGrid(d.sfi, d.k_index, bcOffset);
-      renderBandPills(d.sfi, d.k_index);
 
       const sumEl = document.getElementById('conditions-summary');
       if (sumEl) sumEl.textContent = overallSummary(d);
