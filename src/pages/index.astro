@@ -1001,7 +1001,7 @@ import Shell from '../layouts/Shell.astro';
   /* ── 3-Day space weather outlook row ── */
   /* .swx-row / .swx-inner / .swx-days / .swx-probs are static template elements — scoped CSS fine */
   .swx-row   { display: flex; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-top: 10px; }
-  .swx-inner { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+  .swx-inner { display: flex; flex-direction: column; gap: 12px; flex: 1; min-width: 0; }
   .swx-days  { display: flex; gap: 8px; flex-wrap: wrap; }
   .swx-probs { display: flex; flex-direction: column; gap: 6px; font-family: var(--mono); font-size: .7rem; color: var(--muted); }
 
