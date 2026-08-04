@@ -1001,63 +1001,46 @@ import Shell from '../layouts/Shell.astro';
   .aurora-badge.aurora-active .aurora-region { color: #a78bfa; }
 
   /* ── 3-Day space weather outlook row ── */
-  .swx-row {
-    display: flex; align-items: flex-start; gap: 14px; flex-wrap: wrap;
-    margin-top: 10px;
-  }
+  /* .swx-row / .swx-inner / .swx-days / .swx-probs are static template elements — scoped CSS fine */
+  .swx-row   { display: flex; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-top: 10px; }
   .swx-inner { display: flex; flex-direction: column; gap: 12px; flex: 1; }
   .swx-days  { display: flex; gap: 8px; flex-wrap: wrap; }
-  .swx-day {
+  .swx-probs { display: flex; flex-direction: column; gap: 6px; font-family: var(--mono); font-size: .7rem; color: var(--muted); }
+
+  /* Everything below is injected via innerHTML — must use :global() so Astro's scoped
+     data-attribute selector doesn't strip the rules from dynamically-created elements. */
+  :global(.swx-day) {
     display: flex; flex-direction: column; align-items: flex-start;
-    background: #1a2744; border: 1px solid #2d4a7a;
+    background: var(--card); border: 1px solid var(--border);
     border-radius: 10px; padding: 10px 14px; min-width: 110px; gap: 6px;
     transition: border-color .2s, background .2s;
   }
-  .swx-day.swx-active { border-color: rgba(245,158,11,.6); background: rgba(245,158,11,.08); }
-  .swx-day.swx-severe { border-color: rgba(239,68,68,.6);  background: rgba(239,68,68,.08); }
-  .swx-day-label {
+  :global(.swx-day.swx-active) { border-color: rgba(245,158,11,.6); background: rgba(245,158,11,.08); }
+  :global(.swx-day.swx-severe) { border-color: rgba(239,68,68,.6);  background: rgba(239,68,68,.08); }
+  :global(.swx-day-label) {
     font-family: var(--mono); font-size: .6rem; letter-spacing: .1em;
     color: var(--muted); text-transform: uppercase;
   }
-  .swx-kp {
-    font-family: var(--mono); font-size: 1.15rem; font-weight: 700; line-height: 1;
-  }
-  .swx-pills { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
-  .swx-pill {
+  :global(.swx-kp) { font-family: var(--mono); font-size: 1.15rem; font-weight: 700; line-height: 1; }
+  :global(.swx-pills) { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+  :global(.swx-pill) {
     font-family: var(--mono); font-size: .6rem; padding: 2px 6px;
     border-radius: 4px; letter-spacing: .03em;
   }
-  .swx-pill b { font-weight: 700; }
-  .swx-pill-r  { background: rgba(251,191,36,.12); color: #fbbf24; border: 1px solid rgba(251,191,36,.25); }
-  .swx-pill-rx { background: rgba(248,113,113,.12); color: #f87171; border: 1px solid rgba(248,113,113,.25); }
-  .swx-pill-g  { background: rgba(167,139,250,.12); color: #a78bfa; border: 1px solid rgba(167,139,250,.25); }
-  .swx-quiet   { font-family: var(--mono); font-size: .62rem; color: var(--muted); opacity: .6; }
-
-  /* probability bars — full width inside swx-inner column */
-  .swx-probs {
-    display: flex; flex-direction: column; gap: 6px;
-    font-family: var(--mono); font-size: .7rem; color: var(--muted);
-  }
-  .swx-probs-title {
+  :global(.swx-pill b)   { font-weight: 700; }
+  :global(.swx-pill-r)   { background: rgba(251,191,36,.12); color: #fbbf24; border: 1px solid rgba(251,191,36,.25); }
+  :global(.swx-pill-rx)  { background: rgba(248,113,113,.12); color: #f87171; border: 1px solid rgba(248,113,113,.25); }
+  :global(.swx-pill-g)   { background: rgba(167,139,250,.12); color: #a78bfa; border: 1px solid rgba(167,139,250,.25); }
+  :global(.swx-quiet)    { font-family: var(--mono); font-size: .62rem; color: var(--muted); opacity: .6; }
+  :global(.swx-probs-title) {
     font-size: .6rem; letter-spacing: .08em; text-transform: uppercase;
     color: var(--muted); opacity: .55; margin-bottom: 2px;
   }
-  .swx-prob-row { display: flex; align-items: center; gap: 8px; }
-  .swx-prob-lbl { min-width: 52px; letter-spacing: .01em; }
-  .swx-prob-bar {
-    flex: 1; height: 8px;
-    background: rgba(255,255,255,.08);
-    border-radius: 4px; overflow: hidden;
-  }
-  .swx-prob-fill {
-    height: 100%; border-radius: 4px;
-    min-width: 3px;
-    transition: width .35s ease;
-  }
-  .swx-prob-val {
-    min-width: 34px; text-align: right;
-    font-weight: 600; letter-spacing: .01em;
-  }
+  :global(.swx-prob-row) { display: flex; align-items: center; gap: 8px; }
+  :global(.swx-prob-lbl) { min-width: 52px; letter-spacing: .01em; font-family: var(--mono); }
+  :global(.swx-prob-bar) { flex: 1; height: 8px; background: rgba(255,255,255,.08); border-radius: 4px; overflow: hidden; }
+  :global(.swx-prob-fill) { height: 100%; border-radius: 4px; min-width: 3px; transition: width .35s ease; }
+  :global(.swx-prob-val) { min-width: 34px; text-align: right; font-weight: 600; letter-spacing: .01em; font-family: var(--mono); }
 
   /* ── Active Solar Regions table ── */
   #active-regions { padding-top: 0; }
