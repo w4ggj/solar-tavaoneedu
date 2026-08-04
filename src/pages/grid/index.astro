@@ -138,6 +138,26 @@ import Shell from '../../layouts/Shell.astro';
     </div>
   </section>
 
+  <!-- Band conditions panel (appears on cell click) -->
+  <div id="band-panel-backdrop" class="bp-backdrop" hidden></div>
+  <div id="band-panel" class="bp-drawer" role="dialog" aria-modal="true" aria-labelledby="bp-field" hidden>
+    <div class="bp-drag-handle"></div>
+    <div class="bp-header">
+      <div class="bp-title-row">
+        <span id="bp-field" class="bp-field-name"></span>
+        <span id="bp-loc" class="bp-loc"></span>
+        <span id="bp-lat-note" class="bp-lat-note"></span>
+      </div>
+      <button id="bp-close" class="bp-close-btn" type="button" aria-label="Close">✕</button>
+    </div>
+    <div class="bp-day-row">
+      <span id="bp-daynight" class="bp-daynight"></span>
+      <span id="bp-time-note" class="bp-time-note"></span>
+    </div>
+    <div id="bp-bands" class="bp-bands"></div>
+    <p class="bp-note">Estimates based on SFI and Kp · actual conditions vary by path and antenna</p>
+  </div>
+
   <section id="about-maidenhead" aria-label="About the Maidenhead system">
     <div class="wrap">
       <p class="seclabel">Reference</p>
@@ -248,6 +268,67 @@ import Shell from '../../layouts/Shell.astro';
     .cond-strip { flex-wrap: wrap; gap: 4px 10px; }
     .cond-note { display: none; }
   }
+
+  /* ── Band panel drawer ── */
+  .bp-backdrop {
+    position: fixed; inset: 0; z-index: 99;
+    background: rgba(0,0,0,.5); opacity: 0;
+    transition: opacity .26s;
+  }
+  .bp-backdrop.is-open { opacity: 1; }
+  .bp-drawer {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    background: var(--card); border-top: 1px solid var(--border);
+    border-radius: 18px 18px 0 0; padding: 12px 20px 32px;
+    transform: translateY(100%); transition: transform .28s cubic-bezier(.4,0,.2,1);
+    max-height: 82vh; overflow-y: auto;
+  }
+  .bp-drawer.is-open { transform: translateY(0); }
+  .bp-drag-handle {
+    width: 36px; height: 4px; background: var(--border);
+    border-radius: 2px; margin: 0 auto 14px;
+  }
+  .bp-header {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    margin-bottom: 6px;
+  }
+  .bp-title-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .bp-field-name { font-size: 1.5rem; font-weight: 700; color: var(--text); }
+  .bp-loc { font-family: var(--mono); font-size: .82rem; color: var(--green-lt); font-weight: 600; }
+  .bp-lat-note { font-family: var(--mono); font-size: .66rem; color: var(--muted); }
+  .bp-close-btn {
+    background: none; border: 1px solid var(--border); border-radius: 7px;
+    padding: 4px 10px; color: var(--muted); cursor: pointer; font-size: .82rem;
+    flex-shrink: 0; line-height: 1.4;
+  }
+  .bp-close-btn:hover { border-color: var(--green-dk); color: var(--text); }
+  .bp-day-row {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
+    font-family: var(--mono); font-size: .72rem;
+  }
+  .bp-daynight { color: var(--green-lt); font-weight: 600; }
+  .bp-time-note { color: var(--muted); }
+  .bp-bands {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px;
+  }
+  .bp-band {
+    background: rgba(255,255,255,.03); border: 1px solid var(--border);
+    border-radius: 9px; padding: 10px 12px;
+  }
+  .bp-band.bc-excellent { border-color: rgba(16,185,129,.65); }
+  .bp-band.bc-good      { border-color: rgba(16,185,129,.38); }
+  .bp-band.bc-fair      { border-color: rgba(245,158,11,.45); }
+  .bp-band.bc-poor      { border-color: rgba(220,38,38,.38); }
+  .bp-band.bc-closed    { opacity: .42; }
+  .bp-band-name { font-size: .95rem; font-weight: 700; display: block; color: var(--text); }
+  .bp-band-label { font-family: var(--mono); font-size: .66rem; display: block; margin-top: 3px; }
+  .bp-band.bc-excellent .bp-band-label { color: #10b981; }
+  .bp-band.bc-good      .bp-band-label { color: #34d399; }
+  .bp-band.bc-fair      .bp-band-label { color: #fbbf24; }
+  .bp-band.bc-poor      .bp-band-label { color: #f87171; }
+  .bp-band.bc-closed    .bp-band-label { color: var(--muted); }
+  .bp-note { font-family: var(--mono); font-size: .66rem; color: var(--muted); opacity: .5; }
+  @media (max-width: 420px) { .bp-bands { grid-template-columns: repeat(2, 1fr); } }
 </style>
 
 <script>
@@ -355,6 +436,110 @@ import Shell from '../../layouts/Shell.astro';
     el.innerHTML = html;
   }
 
+  /* ── Band panel ── */
+  const BANDS = [
+    { label: '160 m', mhz: 1.8 },
+    { label: '80 m',  mhz: 3.6 },
+    { label: '40 m',  mhz: 7.1 },
+    { label: '30 m',  mhz: 10.1 },
+    { label: '20 m',  mhz: 14.2 },
+    { label: '17 m',  mhz: 18.1 },
+    { label: '15 m',  mhz: 21.2 },
+    { label: '12 m',  mhz: 24.9 },
+    { label: '10 m',  mhz: 28.5 },
+  ];
+  const BC_LABELS  = ['Closed', 'Poor', 'Fair', 'Good', 'Excellent'];
+  const BC_CLASSES = ['bc-closed', 'bc-poor', 'bc-fair', 'bc-good', 'bc-excellent'];
+
+  function calcBandScoreGrid(mhz: number, sfiVal: number, kpVal: number, isDay: boolean): number {
+    const k = kpVal, s = sfiVal;
+    let sc = 0;
+    if      (mhz <= 2.5)  sc = isDay ? (k<=2?2:k<=4?1:0) : (k<=2?3:k<=4?2:1);
+    else if (mhz <= 5)    sc = isDay ? (k<=2?2:1) : (k<=2?4:k<=4?3:1);
+    else if (mhz <= 8)    sc = isDay ? (k<=2?3:k<=4?2:1) : (k<=2?4:k<=4?3:2);
+    else if (mhz <= 12)   sc = k<=2?4:k<=4?3:k<=6?2:1;
+    else if (mhz <= 15)   sc = k<=2?4:k<=4?3:k<=6?2:0;
+    else if (mhz <= 19) {
+      if      (s>=130) sc = k<=2?4:k<=4?3:1;
+      else if (s>=100) sc = k<=2?3:k<=4?2:1;
+      else if (s>= 80) sc = k<=2?2:1;
+      else             sc = 0;
+    } else if (mhz <= 22) {
+      if      (s>=150) sc = k<=2?4:k<=4?3:1;
+      else if (s>=120) sc = k<=2?3:k<=4?2:1;
+      else if (s>= 95) sc = k<=2?2:1;
+      else             sc = 0;
+    } else if (mhz <= 26) {
+      if      (s>=160) sc = k<=2?4:k<=4?3:1;
+      else if (s>=135) sc = k<=2?3:k<=4?2:0;
+      else if (s>=110) sc = k<=2?2:0;
+      else             sc = 0;
+    } else {
+      if      (s>=160) sc = k<=2?4:k<=4?3:1;
+      else if (s>=140) sc = k<=2?3:k<=4?2:0;
+      else if (s>=120) sc = k<=2?2:0;
+      else             sc = 0;
+    }
+    return Math.max(0, Math.min(4, sc));
+  }
+
+  function isLonDay(lonCenter: number): boolean {
+    const now = new Date();
+    const utcH = now.getUTCHours() + now.getUTCMinutes() / 60;
+    const sunLon = (12 - utcH) * 15;
+    const diff = ((lonCenter - sunLon + 540) % 360) - 180;
+    return Math.abs(diff) < 90;
+  }
+
+  function openBandPanel(col: number, row: number, kp: number | null, sfi: number | null) {
+    const coords  = cellCoords(col, row);
+    const lonMid  = (coords.lonStart + coords.lonEnd) / 2;
+    const latMid  = (coords.latBottom + coords.latTop) / 2;
+    const field   = fieldName(col, row);
+    const isDay   = isLonDay(lonMid);
+    const kpVal   = kp  ?? 2;
+    const sfiVal  = sfi ?? 90;
+
+    document.getElementById('bp-field')!.textContent = field;
+    document.getElementById('bp-loc')!.textContent =
+      `${Math.abs(Math.round(coords.latBottom))}°${coords.latBottom < 0 ? 'S' : 'N'} – ${Math.abs(Math.round(coords.latTop))}°${coords.latTop < 0 ? 'S' : 'N'} · ${coords.lonStart}°E – ${coords.lonEnd}°E`;
+    document.getElementById('bp-lat-note')!.textContent =
+      Math.abs(latMid) > 60 ? 'Polar region — aurora risk' :
+      Math.abs(latMid) > 45 ? 'Mid-high latitude' : 'Mid-low latitude';
+    document.getElementById('bp-daynight')!.textContent = isDay ? '☀ Daytime' : '☾ Nighttime';
+    document.getElementById('bp-time-note')!.textContent =
+      kp !== null ? `Kp ${kp} · SFI ${sfi ?? '—'}` : 'No live data — using defaults';
+
+    let html = '';
+    for (const b of BANDS) {
+      const sc  = calcBandScoreGrid(b.mhz, sfiVal, kpVal, isDay);
+      const cls = BC_CLASSES[sc];
+      const lbl = BC_LABELS[sc];
+      html += `<div class="bp-band ${cls}"><span class="bp-band-name">${b.label}</span><span class="bp-band-label">${lbl}</span></div>`;
+    }
+    document.getElementById('bp-bands')!.innerHTML = html;
+
+    const backdrop = document.getElementById('band-panel-backdrop')!;
+    const panel    = document.getElementById('band-panel')!;
+    backdrop.hidden = false;
+    panel.hidden    = false;
+    requestAnimationFrame(() => {
+      backdrop.classList.add('is-open');
+      panel.classList.add('is-open');
+    });
+  }
+
+  function closeBandPanel() {
+    const backdrop = document.getElementById('band-panel-backdrop')!;
+    const panel    = document.getElementById('band-panel')!;
+    backdrop.classList.remove('is-open');
+    panel.classList.remove('is-open');
+    panel.addEventListener('transitionend', () => {
+      panel.hidden    = true;
+      backdrop.hidden = true;
+    }, { once: true });
+  }
+
   /* ── Interaction ── */
   function initInteraction(kp: number | null, sfi: number | null) {
     const svg       = document.getElementById('grid-map') as SVGSVGElement;
@@ -425,7 +610,12 @@ import Shell from '../../layouts/Shell.astro';
       const sqLat = Math.min(9, 9 - Math.floor(yInField)); // 0=south, 9=north
 
       selEl.textContent = fieldName(col, row) + sqLon + sqLat;
+      openBandPanel(col, row, kp, sfi);
     });
+
+    document.getElementById('bp-close')!.addEventListener('click', closeBandPanel);
+    document.getElementById('band-panel-backdrop')!.addEventListener('click', closeBandPanel);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeBandPanel(); });
   }
 
   /* ── Locator lookup ── */

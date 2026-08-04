@@ -7,6 +7,7 @@ const SWPC = {
   flux10cm:    'https://services.swpc.noaa.gov/products/10cm-flux-30-day.json',
   solarCycle:  'https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json',
   kpCurrent:   'https://services.swpc.noaa.gov/json/planetary_k_index_1m.json',
+  kpHistory:   'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json',
   xrayFlux7d:  'https://services.swpc.noaa.gov/json/goes/primary/xrays-7-day.json',
   xrayFlux3d:  'https://services.swpc.noaa.gov/json/goes/primary/xrays-3-day.json',
   xrayFlux1d:  'https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json',
@@ -165,6 +166,50 @@ function parseAlerts(rows: any[] | null): LiveData['alerts'] {
     });
 }
 
+/** Backfill 30-day Kp/Ap history so the A-index chart has data immediately */
+async function backfillKpHistory(env: Env, kpHistRaw: any[] | null): Promise<void> {
+  if (!Array.isArray(kpHistRaw) || kpHistRaw.length < 2) return;
+
+  // Guard: only run while few a_index rows exist
+  const { results } = await env.DB.prepare(
+    'SELECT COUNT(*) AS cnt FROM solar_history WHERE a_index IS NOT NULL'
+  ).all();
+  if (((results[0] as any)?.cnt ?? 0) >= 40) return;
+
+  const headers = kpHistRaw[0];
+  if (!Array.isArray(headers)) return;
+  const ti = headers.findIndex((h: string) => /time.?tag/i.test(String(h)));
+  const ki = headers.findIndex((h: string) => /^kp$/i.test(String(h)));
+  if (ti < 0 || ki < 0) return;
+
+  const cutoff = new Date(Date.now() - 30 * 86400_000).toISOString();
+  const stmts: D1PreparedStatement[] = [];
+
+  for (const row of kpHistRaw.slice(1)) {
+    if (!Array.isArray(row)) continue;
+    const tag = String(row[ti] ?? '');
+    if (!tag || tag < cutoff) continue;
+    const kpVal = parseFloat(String(row[ki] ?? '-1'));
+    if (isNaN(kpVal) || kpVal < 0) continue;
+    const apVal = kpToAp(kpVal);
+    stmts.push(env.DB.prepare(
+      `INSERT INTO solar_history (recorded_at, sfi, a_index, k_index, xray_flux, xray_class, sunspots)
+       SELECT ?, NULL, ?, ?, NULL, NULL, NULL
+       WHERE NOT EXISTS (
+         SELECT 1 FROM solar_history
+         WHERE recorded_at > datetime(?, '-90 minutes')
+           AND recorded_at < datetime(?, '+90 minutes')
+       )`
+    ).bind(tag, apVal, Math.round(kpVal * 10) / 10, tag, tag));
+  }
+
+  if (!stmts.length) return;
+  for (let i = 0; i < stmts.length; i += 100) {
+    await env.DB.batch(stmts.slice(i, i + 100));
+  }
+  console.log(`solar-cron: backfilled ${stmts.length} Kp/Ap history rows`);
+}
+
 /** Backfill historical SFI/SSN into D1 on first run using already-fetched NOAA data */
 async function backfillHistory(
   env: Env,
@@ -233,7 +278,7 @@ export default {
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
     console.log('solar-cron: fetch start');
 
-    const [flux10Raw, cycleRaw, kpRaw, xray7dRaw, xray3dRaw, xray1dRaw, alertsRaw] = await Promise.all([
+    const [flux10Raw, cycleRaw, kpRaw, xray7dRaw, xray3dRaw, xray1dRaw, alertsRaw, kpHistRaw] = await Promise.all([
       fetchJson<any[]>(SWPC.flux10cm),
       fetchJson<any[]>(SWPC.solarCycle),
       fetchJson<any[]>(SWPC.kpCurrent),
@@ -241,6 +286,7 @@ export default {
       fetchJson<any[]>(SWPC.xrayFlux3d),
       fetchJson<any[]>(SWPC.xrayFlux1d),
       fetchJson<any[]>(SWPC.geoAlerts),
+      fetchJson<any[]>(SWPC.kpHistory),
     ]);
 
     const sfi = parseSfi10cm(flux10Raw) ?? parseSfi(cycleRaw);
@@ -279,5 +325,6 @@ export default {
     console.log('solar-cron: D1 row inserted');
 
     await backfillHistory(env, flux10Raw, cycleRaw);
+    await backfillKpHistory(env, kpHistRaw);
   },
 };
