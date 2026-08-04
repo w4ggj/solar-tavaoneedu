@@ -896,6 +896,10 @@ import Shell from '../layouts/Shell.astro';
     return Math.floor((d.getTime() - Date.UTC(d.getUTCFullYear(), 0, 0)) / 86400_000);
   }
 
+  // Preload the world map base image once
+  const _worldMapImg = new Image();
+  _worldMapImg.src = '/world-map.svg';
+
   function drawGreyline(offsetHours = 0): void {
     const canvas = document.getElementById('gl-canvas') as HTMLCanvasElement | null;
     if (!canvas) return;
@@ -910,77 +914,96 @@ import Shell from '../layouts/Shell.astro';
     const decRad = 23.4397 * (Math.PI / 180) * Math.sin(2 * Math.PI * (doy - 81) / 365);
     const lonSSRad = (12 - utcF) * 15 * (Math.PI / 180);
 
-    // Ocean background (day side)
-    ctx.fillStyle = '#0a1e33';
-    ctx.fillRect(0, 0, W, H);
+    function paint(baseImg: HTMLImageElement | null) {
+      // Ocean background
+      ctx!.fillStyle = '#0a1e33';
+      ctx!.fillRect(0, 0, W, H);
 
-    // Night + twilight via pixel data
-    const img  = ctx.createImageData(W, H);
-    const data = img.data;
-    for (let px = 0; px < W; px++) {
-      for (let py = 0; py < H; py++) {
-        const lon = (px / W - 0.5) * 2 * Math.PI;
-        const lat = (0.5 - py / H) * Math.PI;
-        const dot = Math.sin(lat) * Math.sin(decRad) + Math.cos(lat) * Math.cos(decRad) * Math.cos(lon - lonSSRad);
-        const i   = (py * W + px) * 4;
-        if (dot < -0.07) {
-          data[i] = 3; data[i+1] = 8; data[i+2] = 16; data[i+3] = 230;
-        } else if (dot < 0.07) {
-          const t = (dot + 0.07) / 0.14;
-          data[i] = 3; data[i+1] = 8; data[i+2] = 16;
-          data[i+3] = Math.round(230 - t * 230);
+      // Land masses from pre-generated world map SVG
+      if (baseImg?.complete && baseImg.naturalWidth > 0) {
+        ctx!.drawImage(baseImg, 0, 0, W, H);
+      }
+
+      // Night + twilight overlay via offscreen canvas so day-side alpha=0
+      // pixels don't erase the land we just drew
+      const overlay = document.createElement('canvas');
+      overlay.width = W; overlay.height = H;
+      const octx = overlay.getContext('2d')!;
+      const imgData = octx.createImageData(W, H);
+      const d = imgData.data;
+      for (let px = 0; px < W; px++) {
+        for (let py = 0; py < H; py++) {
+          const lon = (px / W - 0.5) * 2 * Math.PI;
+          const lat = (0.5 - py / H) * Math.PI;
+          const dot = Math.sin(lat) * Math.sin(decRad) + Math.cos(lat) * Math.cos(decRad) * Math.cos(lon - lonSSRad);
+          const i = (py * W + px) * 4;
+          if (dot < -0.07) {
+            d[i] = 3; d[i+1] = 8; d[i+2] = 16; d[i+3] = 210;
+          } else if (dot < 0.07) {
+            const t = (dot + 0.07) / 0.14;
+            d[i] = 3; d[i+1] = 8; d[i+2] = 16;
+            d[i+3] = Math.round(210 - t * 210);
+          }
         }
       }
+      octx.putImageData(imgData, 0, 0);
+      ctx!.drawImage(overlay, 0, 0);
+
+      // Graticule every 30°
+      ctx!.strokeStyle = 'rgba(255,255,255,0.07)';
+      ctx!.lineWidth = 1;
+      for (let lon = -180; lon <= 180; lon += 30) {
+        const x = ((lon + 180) / 360) * W;
+        ctx!.beginPath(); ctx!.moveTo(x, 0); ctx!.lineTo(x, H); ctx!.stroke();
+      }
+      for (let lat = -90; lat <= 90; lat += 30) {
+        const y = (0.5 - lat / 180) * H;
+        ctx!.beginPath(); ctx!.moveTo(0, y); ctx!.lineTo(W, y); ctx!.stroke();
+      }
+
+      // Equator (brighter)
+      ctx!.strokeStyle = 'rgba(255,255,255,0.17)';
+      ctx!.lineWidth = 1;
+      ctx!.beginPath(); ctx!.moveTo(0, H / 2); ctx!.lineTo(W, H / 2); ctx!.stroke();
+
+      // Tropics (dashed amber)
+      ctx!.strokeStyle = 'rgba(251,191,36,0.25)';
+      ctx!.setLineDash([5, 5]);
+      for (const tlat of [23.4397, -23.4397]) {
+        const ty = (0.5 - tlat / 180) * H;
+        ctx!.beginPath(); ctx!.moveTo(0, ty); ctx!.lineTo(W, ty); ctx!.stroke();
+      }
+      ctx!.setLineDash([]);
+
+      // Subsolar point
+      const lonSSDeg = lonSSRad * (180 / Math.PI);
+      const latSSDeg = decRad  * (180 / Math.PI);
+      const ssX = ((lonSSDeg + 180 + 360) % 360 / 360) * W;
+      const ssY = (0.5 - latSSDeg / 180) * H;
+      ctx!.fillStyle = 'rgba(251,191,36,0.25)';
+      ctx!.beginPath(); ctx!.arc(ssX, ssY, 14, 0, 2 * Math.PI); ctx!.fill();
+      ctx!.fillStyle = '#fbbf24';
+      ctx!.beginPath(); ctx!.arc(ssX, ssY, 5, 0, 2 * Math.PI); ctx!.fill();
+
+      // Info strip
+      const hh  = String(sim.getUTCHours()).padStart(2, '0');
+      const mm  = String(sim.getUTCMinutes()).padStart(2, '0');
+      const lat = Math.abs(latSSDeg).toFixed(1) + '° ' + (latSSDeg >= 0 ? 'N' : 'S');
+      const lon = Math.abs(lonSSDeg).toFixed(1) + '° ' + (lonSSDeg >= 0 ? 'E' : 'W');
+      const glUtc = document.getElementById('gl-utc');
+      const glSun = document.getElementById('gl-sun');
+      if (glUtc) glUtc.textContent = offsetHours !== 0
+        ? `${offsetHours > 0 ? '+' : ''}${offsetHours}h · UTC ${hh}:${mm}`
+        : `UTC ${hh}:${mm}`;
+      if (glSun) glSun.textContent = `subsolar: ${lat}, ${lon}`;
     }
-    ctx.putImageData(img, 0, 0);
 
-    // Graticule every 30°
-    ctx.strokeStyle = 'rgba(255,255,255,0.07)';
-    ctx.lineWidth = 1;
-    for (let lon = -180; lon <= 180; lon += 30) {
-      const x = ((lon + 180) / 360) * W;
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    if (_worldMapImg.complete && _worldMapImg.naturalWidth > 0) {
+      paint(_worldMapImg);
+    } else {
+      _worldMapImg.onload = () => paint(_worldMapImg);
+      _worldMapImg.onerror = () => paint(null);
     }
-    for (let lat = -90; lat <= 90; lat += 30) {
-      const y = (0.5 - lat / 180) * H;
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-    }
-
-    // Equator (brighter)
-    ctx.strokeStyle = 'rgba(255,255,255,0.17)';
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2); ctx.stroke();
-
-    // Tropics (dashed amber)
-    ctx.strokeStyle = 'rgba(251,191,36,0.25)';
-    ctx.setLineDash([5, 5]);
-    for (const tlat of [23.4397, -23.4397]) {
-      const ty = (0.5 - tlat / 180) * H;
-      ctx.beginPath(); ctx.moveTo(0, ty); ctx.lineTo(W, ty); ctx.stroke();
-    }
-    ctx.setLineDash([]);
-
-    // Subsolar point
-    const lonSSDeg = lonSSRad * (180 / Math.PI);
-    const latSSDeg = decRad  * (180 / Math.PI);
-    const ssX = ((lonSSDeg + 180 + 360) % 360 / 360) * W;
-    const ssY = (0.5 - latSSDeg / 180) * H;
-    ctx.fillStyle = 'rgba(251,191,36,0.25)';
-    ctx.beginPath(); ctx.arc(ssX, ssY, 14, 0, 2 * Math.PI); ctx.fill();
-    ctx.fillStyle = '#fbbf24';
-    ctx.beginPath(); ctx.arc(ssX, ssY, 5, 0, 2 * Math.PI); ctx.fill();
-
-    // Info strip
-    const hh  = String(sim.getUTCHours()).padStart(2, '0');
-    const mm  = String(sim.getUTCMinutes()).padStart(2, '0');
-    const lat = Math.abs(latSSDeg).toFixed(1) + '° ' + (latSSDeg >= 0 ? 'N' : 'S');
-    const lon = Math.abs(lonSSDeg).toFixed(1) + '° ' + (lonSSDeg >= 0 ? 'E' : 'W');
-    const glUtc = document.getElementById('gl-utc');
-    const glSun = document.getElementById('gl-sun');
-    if (glUtc) glUtc.textContent = offsetHours !== 0
-      ? `${offsetHours > 0 ? '+' : ''}${offsetHours}h · UTC ${hh}:${mm}`
-      : `UTC ${hh}:${mm}`;
-    if (glSun) glSun.textContent = `subsolar: ${lat}, ${lon}`;
   }
 
   /* ── Solar imagery ── */
