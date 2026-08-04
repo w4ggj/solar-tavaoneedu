@@ -96,6 +96,8 @@ import Shell from '../../layouts/Shell.astro';
             <!-- Selected cell highlight -->
             <rect id="highlight" x="0" y="0" width="20" height="10" fill="none"
                   stroke="#34d399" stroke-width="0.9" rx="0.4" opacity="0" pointer-events="none"/>
+            <!-- Great-circle path (rendered by JS) -->
+            <g id="gc-layer" pointer-events="none"></g>
           </svg>
 
           <div id="map-tooltip" class="map-tooltip" style="display:none"></div>
@@ -122,6 +124,19 @@ import Shell from '../../layouts/Shell.astro';
             <button id="lookup-btn" class="btn btn-ghost">Go</button>
           </div>
         </div>
+      </div>
+
+      <!-- Great-circle path tool -->
+      <div class="gc-tool" id="gc-tool">
+        <span class="gc-tool-label">Great-circle path</span>
+        <div class="gc-inputs">
+          <input id="gc-tx" class="lookup-input" type="text" placeholder="TX e.g. FN31" maxlength="6" aria-label="TX grid locator">
+          <span class="gc-arrow">→</span>
+          <input id="gc-rx" class="lookup-input" type="text" placeholder="RX e.g. JO22" maxlength="6" aria-label="RX grid locator">
+          <button id="gc-draw" class="btn btn-ghost">Draw</button>
+          <button id="gc-clear" class="btn btn-ghost" hidden>Clear</button>
+        </div>
+        <span id="gc-info" class="gc-info"></span>
       </div>
 
       <!-- Legend -->
@@ -260,6 +275,24 @@ import Shell from '../../layouts/Shell.astro';
   .legend-item { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: .74rem; }
   .swatch { display: inline-block; width: 14px; height: 10px; border-radius: 3px; flex-shrink: 0; }
 
+  /* ── Great-circle path tool ── */
+  .gc-tool {
+    margin-top: 14px; padding: 12px 16px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; display: flex; flex-wrap: wrap;
+    align-items: center; gap: 10px;
+  }
+  .gc-tool-label {
+    font-family: var(--mono); font-size: .7rem; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted); flex-shrink: 0;
+  }
+  .gc-inputs { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .gc-arrow { font-family: var(--mono); color: var(--green-dk); font-size: .9rem; }
+  .gc-info {
+    font-family: var(--mono); font-size: .72rem; color: var(--green-lt);
+    margin-left: auto;
+  }
+
   @media (max-width: 600px) {
     .map-outer { margin: 0 -16px; border-radius: 0; }
     .map-top { flex-wrap: wrap; gap: 10px; }
@@ -267,6 +300,8 @@ import Shell from '../../layouts/Shell.astro';
     .loc-lookup { min-width: 0; width: 100%; }
     .cond-strip { flex-wrap: wrap; gap: 4px 10px; }
     .cond-note { display: none; }
+    .gc-tool { flex-direction: column; align-items: flex-start; }
+    .gc-info { margin-left: 0; }
   }
 
   /* ── Band panel drawer ── */
@@ -540,6 +575,131 @@ import Shell from '../../layouts/Shell.astro';
     }, { once: true });
   }
 
+  /* ── Great-circle path tool ── */
+  function locatorToLatLon(loc: string): { lat: number; lon: number } | null {
+    const s = loc.toUpperCase().trim();
+    if (s.length < 2) return null;
+    const field0 = s.charCodeAt(0) - 65;
+    const field1 = s.charCodeAt(1) - 65;
+    if (field0 < 0 || field0 > 17 || field1 < 0 || field1 > 17) return null;
+    let lon = field0 * 20 - 180 + 10;
+    let lat = field1 * 10 - 90 + 5;
+    if (s.length >= 4) {
+      const sq0 = parseInt(s[2], 10), sq1 = parseInt(s[3], 10);
+      if (!isNaN(sq0) && !isNaN(sq1)) {
+        lon = field0 * 20 - 180 + sq0 * 2 + 1;
+        lat = field1 * 10 - 90 + sq1 + 0.5;
+      }
+    }
+    return { lat, lon };
+  }
+
+  function gcPoints(lat1d: number, lon1d: number, lat2d: number, lon2d: number, steps = 180): Array<[number, number]> {
+    const toR = (d: number) => d * Math.PI / 180;
+    const toDeg = (r: number) => r * 180 / Math.PI;
+    const lat1 = toR(lat1d), lon1 = toR(lon1d);
+    const lat2 = toR(lat2d), lon2 = toR(lon2d);
+    const pts: Array<[number, number]> = [];
+    for (let i = 0; i <= steps; i++) {
+      const f = i / steps;
+      const A = Math.sin((1 - f) * Math.PI);
+      const B = Math.sin(f * Math.PI);
+      const d = Math.acos(Math.sin(lat1) * Math.sin(lat2) + Math.cos(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1));
+      if (d < 1e-6) return [[lat1d, lon1d]];
+      const sinD = Math.sin(d);
+      const x = (A * Math.cos(lat1) * Math.cos(lon1) + B * Math.cos(lat2) * Math.cos(lon2)) / sinD;
+      const y = (A * Math.cos(lat1) * Math.sin(lon1) + B * Math.cos(lat2) * Math.sin(lon2)) / sinD;
+      const z = (A * Math.sin(lat1) + B * Math.sin(lat2)) / sinD;
+      pts.push([toDeg(Math.atan2(z, Math.sqrt(x * x + y * y))), toDeg(Math.atan2(y, x))]);
+    }
+    return pts;
+  }
+
+  function gcDistKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371, toR = (d: number) => d * Math.PI / 180;
+    const dLat = toR(lat2 - lat1), dLon = toR(lon2 - lon1);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toR(lat1)) * Math.cos(toR(lat2)) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(a));
+  }
+
+  function drawGcPath(txLoc: string, rxLoc: string, kp: number | null, sfi: number | null): boolean {
+    const tx = locatorToLatLon(txLoc);
+    const rx = locatorToLatLon(rxLoc);
+    if (!tx || !rx) return false;
+
+    const pts = gcPoints(tx.lat, tx.lon, rx.lat, rx.lon);
+    if (!pts.length) return false;
+
+    // Split into segments at the ±180° antimeridian
+    const segments: string[][] = [[]];
+    let prevLon = pts[0][1];
+    for (const [lat, lon] of pts) {
+      if (Math.abs(lon - prevLon) > 180) segments.push([]);
+      segments[segments.length - 1].push(`${lon + 180},${90 - lat}`);
+      prevLon = lon;
+    }
+
+    const pathStr = segments
+      .filter(s => s.length > 1)
+      .map(s => `<polyline points="${s.join(' ')}" fill="none" stroke="#facc15" stroke-width="1.2" stroke-opacity="0.9" stroke-dasharray="3 2"/>`)
+      .join('');
+
+    // Midpoint bearing marker
+    const mid = pts[Math.floor(pts.length / 2)];
+    const distKm = gcDistKm(tx.lat, tx.lon, rx.lat, rx.lon);
+    const midX = mid[1] + 180, midY = 90 - mid[0];
+
+    // TX and RX dots
+    const txX = tx.lon + 180, txY = 90 - tx.lat;
+    const rxX = rx.lon + 180, rxY = 90 - rx.lat;
+
+    document.getElementById('gc-layer')!.innerHTML =
+      pathStr +
+      `<circle cx="${txX}" cy="${txY}" r="2" fill="#22d3ee" stroke="#0e7490" stroke-width="0.6"/>` +
+      `<circle cx="${rxX}" cy="${rxY}" r="2" fill="#f472b6" stroke="#be185d" stroke-width="0.6"/>` +
+      `<circle cx="${midX}" cy="${midY}" r="1.4" fill="#facc15" opacity="0.9"/>`;
+
+    const distMi = Math.round(distKm * 0.621371);
+    document.getElementById('gc-info')!.textContent =
+      `${Math.round(distKm).toLocaleString()} km · ${distMi.toLocaleString()} mi`;
+
+    // Open band panel for the midpoint's grid cell
+    const midCol = Math.min(17, Math.floor((mid[1] + 180) / CW));
+    const midRow = Math.min(17, Math.floor((90 - mid[0]) / CH));
+    openBandPanel(midCol, midRow, kp, sfi);
+
+    return true;
+  }
+
+  function initGcTool(kp: number | null, sfi: number | null) {
+    const drawBtn  = document.getElementById('gc-draw')!;
+    const clearBtn = document.getElementById('gc-clear')!;
+
+    drawBtn.addEventListener('click', () => {
+      const tx = (document.getElementById('gc-tx') as HTMLInputElement).value.trim();
+      const rx = (document.getElementById('gc-rx') as HTMLInputElement).value.trim();
+      if (!tx || !rx) return;
+      const ok = drawGcPath(tx, rx, kp, sfi);
+      if (ok) {
+        clearBtn.hidden = false;
+        drawBtn.hidden  = true;
+      }
+    });
+
+    clearBtn.addEventListener('click', () => {
+      document.getElementById('gc-layer')!.innerHTML = '';
+      document.getElementById('gc-info')!.textContent = '';
+      clearBtn.hidden = true;
+      drawBtn.hidden  = false;
+    });
+
+    ['gc-tx', 'gc-rx'].forEach(id => {
+      document.getElementById(id)!.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') drawBtn.click();
+      });
+    });
+  }
+
   /* ── Interaction ── */
   function initInteraction(kp: number | null, sfi: number | null) {
     const svg       = document.getElementById('grid-map') as SVGSVGElement;
@@ -745,6 +905,7 @@ import Shell from '../../layouts/Shell.astro';
     renderGridTerminator();
     setInterval(renderGridTerminator, 60_000);
     initInteraction(kp, sfi);
+    initGcTool(kp, sfi);
 
     document.getElementById('locate-btn')!.addEventListener('click', tryGeolocate);
 

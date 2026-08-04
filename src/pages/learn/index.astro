@@ -68,6 +68,22 @@ import Shell from '../../layouts/Shell.astro';
           <span class="toc-num">10</span>
           <span class="toc-label">The Solar Cycle</span>
         </a>
+        <a href="#noaa-scales" class="toc-item">
+          <span class="toc-num">11</span>
+          <span class="toc-label">NOAA Storm Scales</span>
+        </a>
+        <a href="#band-pills" class="toc-item">
+          <span class="toc-num">12</span>
+          <span class="toc-label">Band Status Strip</span>
+        </a>
+        <a href="#xray-chart" class="toc-item">
+          <span class="toc-num">13</span>
+          <span class="toc-label">X-Ray Flux Chart</span>
+        </a>
+        <a href="#great-circle" class="toc-item">
+          <span class="toc-num">14</span>
+          <span class="toc-label">Great-Circle Path Tool</span>
+        </a>
       </nav>
     </div>
   </section>
@@ -601,6 +617,164 @@ import Shell from '../../layouts/Shell.astro';
             <li style="display:flex;gap:12px;align-items:baseline"><span style="font-family:var(--mono);color:#f87171;min-width:60px">G4–G5</span><span style="color:var(--muted);font-size:.92rem">Kp 8–9. Severe to extreme. Near-total HF blackout.</span></li>
           </ul>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════ 11 — NOAA STORM SCALES -->
+  <section id="noaa-scales" class="learn-section alt-bg" aria-label="NOAA storm scales">
+    <div class="wrap">
+      <p class="seclabel">Concept 11</p>
+      <h2>NOAA Storm Scales — R, S, and G</h2>
+      <p class="sec-intro">NOAA SWPC publishes three numbered scales (0–5) that describe the severity of different types of space weather events. The dashboard displays the current values from the WWV/WWVH geophysical alert bulletin, updated hourly.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <h3>R — Radio Blackout</h3>
+          <p>Caused by solar X-ray flares ionizing the D-layer. The D-layer absorbs HF signals — stronger ionization means stronger absorption. R1 produces minor degradation on low HF at high latitudes; R3–R4 causes wide-area blackouts on the sunlit side of Earth; R5 (X20+ flare) causes complete HF blackouts on the sunlit hemisphere for hours. Watch for elevated X-ray flux (C, M, X class) as the precursor.</p>
+          <h3>S — Solar Radiation Storm</h3>
+          <p>High-energy protons from large flares or CMEs can reach Earth in minutes to hours. S1–S2 are minor; S3 affects satellite operations and can cause elevated noise on polar-path HF links; S4–S5 events are rare and may disrupt transpolar airline communications. The S scale is most relevant to operators running polar or transpolar paths.</p>
+          <h3>G — Geomagnetic Storm</h3>
+          <p>Caused by solar wind pressure pulses and coronal mass ejections interacting with Earth's magnetosphere. This is the scale HF operators watch most closely. G1 (Kp 5) causes minor absorption at high latitudes; G2 (Kp 6) brings aurora to 55° latitude and noticeable HF degradation at high latitudes; G3 (Kp 7) degrades mid-latitude HF and generates very active aurora; G4–G5 events are rare and can shut down HF across entire hemispheres. The K-index tile on the dashboard is the real-time proxy for the G scale.</p>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">Scale to Kp mapping</p>
+            <ul class="aside-list">
+              <li>G0 — Kp 0–4 — no storm</li>
+              <li>G1 — Kp 5 — minor storm</li>
+              <li>G2 — Kp 6 — moderate storm</li>
+              <li>G3 — Kp 7 — strong storm</li>
+              <li>G4 — Kp 8 — severe storm</li>
+              <li>G5 — Kp 9 — extreme storm</li>
+            </ul>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">Reading the dashboard badges</p>
+            <p>When an R, S, or G badge on the dashboard turns amber or red, conditions are active. All three at zero (R0, S0, G0) means no space weather event is in progress — a good time for DX on all bands.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════ 12 — BAND STATUS STRIP -->
+  <section id="band-pills" class="learn-section" aria-label="Band status strip">
+    <div class="wrap">
+      <p class="seclabel">Concept 12</p>
+      <h2>Band Status Strip — at-a-glance HF overview</h2>
+      <p class="sec-intro">The coloured pill row in the dashboard header summarises conditions on all nine HF amateur bands simultaneously — no scrolling required. Each pill reflects the same propagation model used by the full band conditions grid.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <h3>How it works</h3>
+          <p>The model takes three inputs: the current Solar Flux Index (SFI), the planetary K-index (Kp), and whether the current UTC hour is daytime (06:00–20:00 UTC) or nighttime. For each band from 160 m to 10 m, it applies a lookup table of thresholds and returns one of five ratings:</p>
+          <ul class="learn-list">
+            <li><span class="cond-ex excellent">Excellent</span> — optimal conditions; DX contacts should be straightforward.</li>
+            <li><span class="cond-ex good">Good</span> — above-average conditions; most paths open.</li>
+            <li><span class="cond-ex fair">Fair</span> — marginal conditions; shorter paths more reliable than DX.</li>
+            <li><span class="cond-ex poor">Poor</span> — degraded; signals weak and unreliable.</li>
+            <li><span class="cond-ex closed">Closed</span> — band not expected to support propagation under current conditions.</li>
+          </ul>
+          <h3>Daytime vs. nighttime logic</h3>
+          <p>The D-layer absorbs low-band signals (160 m, 80 m) during daylight hours. The model accounts for this: 80 m rates as <span class="cond-ex fair">Fair</span> or <span class="cond-ex poor">Poor</span> by day but can reach <span class="cond-ex excellent">Excellent</span> at night when the D-layer disappears. High bands (12 m, 10 m) need solar ionization — they're closed at night unless SFI is very high.</p>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">Bands covered</p>
+            <ul class="aside-list">
+              <li>160 m (1.8 MHz) — nighttime DX band</li>
+              <li>80 m (3.5 MHz) — regional by day, DX at night</li>
+              <li>40 m (7 MHz) — all-rounder; nighttime DX</li>
+              <li>30 m (10 MHz) — WARC; reliable anytime</li>
+              <li>20 m (14 MHz) — workhorse DX</li>
+              <li>17 m (18 MHz) — WARC; needs SFI &gt; 80</li>
+              <li>15 m (21 MHz) — needs SFI &gt; 95</li>
+              <li>12 m (24 MHz) — needs SFI &gt; 110</li>
+              <li>10 m (28 MHz) — needs SFI &gt; 120</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════ 13 — X-RAY FLUX CHART -->
+  <section id="xray-chart" class="learn-section alt-bg" aria-label="X-ray flux chart">
+    <div class="wrap">
+      <p class="seclabel">Concept 13</p>
+      <h2>X-Ray Flux Chart — tracking solar flares in real time</h2>
+      <p class="sec-intro">The X-ray flux chart on the dashboard shows 6 hours of data from NOAA's GOES satellite. It's the most sensitive indicator of impending radio blackouts — a flare shows up in the X-ray data minutes before any propagation effect is felt on the bands.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <h3>Reading a logarithmic scale</h3>
+          <p>X-ray flux spans several orders of magnitude, so the chart uses a <strong>logarithmic Y-axis</strong>. The labels A, B, C, M, and X correspond to the standard solar flare classification system:</p>
+          <ul class="learn-list">
+            <li><strong>A (≈ 10⁻⁸ W/m²)</strong> — background quiet sun; no propagation effect.</li>
+            <li><strong>B (10⁻⁷)</strong> — slightly elevated; occasional minor HF enhancement at the subionospheric level.</li>
+            <li><strong>C (10⁻⁶)</strong> — weak flares; possible brief HF degradation at very high latitudes (R0–R1).</li>
+            <li><strong>M (10⁻⁵)</strong> — moderate flares; temporary HF blackouts on the sunlit side (R1–R2). May affect low HF bands for 10–30 minutes.</li>
+            <li><strong>X (10⁻⁴ and above)</strong> — major flares; wide-area HF blackouts (R3–R5). X1 and above can shut down 10 m through 15 m on the dayside for hours.</li>
+          </ul>
+          <h3>What to watch for</h3>
+          <p>A sharp spike on the chart — rising steeply within 5–15 minutes — is a flare in progress. The R-scale badge on the dashboard will update as NOAA publishes the event. If you lose a path suddenly during the day and the X-ray chart shows a recent spike, the flare is the likely cause. Most flares are short-lived (minutes to an hour); conditions recover quickly once the flux drops back to background levels.</p>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">Flare class and duration</p>
+            <ul class="aside-list">
+              <li>C flares — 5–15 minutes, minor effect</li>
+              <li>M flares — 15–60 minutes, moderate</li>
+              <li>X1–X5 — 1–3 hours, significant blackout</li>
+              <li>X5+ — hours, severe blackout on dayside</li>
+            </ul>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">Only on the sunlit side</p>
+            <p>X-ray flares only affect the D-layer on the hemisphere facing the sun. If it's nighttime at your location, an ongoing flare may not affect your local bands — but paths to the sunlit hemisphere will be degraded.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════ 14 — GREAT-CIRCLE PATH TOOL -->
+  <section id="great-circle" class="learn-section" aria-label="Great-circle path tool">
+    <div class="wrap">
+      <p class="seclabel">Concept 14</p>
+      <h2>Great-Circle Path Tool — planning a specific contact</h2>
+      <p class="sec-intro">The <a href="/grid/">Grid page</a> includes a path calculator that draws the great-circle arc between two Maidenhead grid squares and shows band conditions for that specific path.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <h3>Why great-circle matters for antennas</h3>
+          <p>Radio waves travel the shortest path between two points on a sphere — the great-circle route — not straight lines on a flat map. For DX contacts, pointing your beam antenna along the great-circle bearing (not the direction that looks straight on a Mercator map) is essential. A station in Japan from the US East Coast is to the northwest on a Mercator map, but the great-circle bearing is actually closer to due north.</p>
+          <h3>How to use the tool</h3>
+          <p>Enter a TX (transmit) and RX (receive) Maidenhead grid square — 4 or 6 characters each. Click Draw and the tool:</p>
+          <ul class="learn-list">
+            <li>Plots the great-circle arc on the map, colour-coded yellow.</li>
+            <li>Marks TX (cyan) and RX (pink) endpoints on the map.</li>
+            <li>Calculates the great-circle distance in km and miles.</li>
+            <li>Opens the band conditions panel for the midpoint of the path, showing which bands are most likely open on that particular route.</li>
+          </ul>
+          <h3>Short path vs. long path</h3>
+          <p>The tool plots the short path (the shorter of the two great-circle routes). Long path is always the complementary arc — 360° minus the short-path distance. Long-path contacts are productive when the short path traverses a polar region during a storm, or when the long path is entirely on the night side for a low-band contact.</p>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">Finding grid squares</p>
+            <p>Your own grid square is shown on the Grid page after clicking "Locate me". For a DX station, their grid square appears in contest exchanges, DX cluster spots, and QRZ.com profiles. A 4-character locator (e.g. FN31) is accurate to ±1° longitude and ±0.5° latitude.</p>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">Path midpoint conditions</p>
+            <p>The band panel that opens on "Draw" shows conditions at the midpoint of the path — roughly where F2 reflection is most important for that contact. If the midpoint is in polar or high-latitude regions, expect increased storm sensitivity on polar paths.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="cta-row" style="margin-top:2rem">
+        <a class="btn btn-ghost" href="/grid/">Open the Grid Map →</a>
       </div>
     </div>
   </section>
