@@ -120,6 +120,26 @@ import Shell from '../../layouts/Shell.astro';
           <span class="toc-num">23</span>
           <span class="toc-label">Contest Calendar</span>
         </a>
+        <a href="#proton-flux" class="toc-item">
+          <span class="toc-num">24</span>
+          <span class="toc-label">Proton Flux &amp; S-Scale</span>
+        </a>
+        <a href="#imf-bt" class="toc-item">
+          <span class="toc-num">25</span>
+          <span class="toc-label">IMF Bt</span>
+        </a>
+        <a href="#flare-log" class="toc-item">
+          <span class="toc-num">26</span>
+          <span class="toc-label">Flare Event Log</span>
+        </a>
+        <a href="#kp3day-chart" class="toc-item">
+          <span class="toc-num">27</span>
+          <span class="toc-label">3-Day Kp Chart</span>
+        </a>
+        <a href="#stereo-imagery" class="toc-item">
+          <span class="toc-num">28</span>
+          <span class="toc-label">STEREO-A Imagery</span>
+        </a>
       </nav>
     </div>
   </section>
@@ -1149,6 +1169,203 @@ import Shell from '../../layouts/Shell.astro';
           <div class="aside-box">
             <p class="aside-head">Finding more contests</p>
             <p>The calendar shows major global events. For regional contests, club competitions, and specialty events (digital modes, VHF, SOTA activations), see the WA7BNM Contest Calendar at contestcalendar.com — a comprehensive, community-maintained database updated weekly.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════ 24 — PROTON FLUX -->
+  <section id="proton-flux" class="learn-section" aria-label="Proton flux and S-scale">
+    <div class="wrap">
+      <p class="seclabel">Concept 24</p>
+      <h2>Proton Flux &amp; Solar Radiation Storms (S-Scale)</h2>
+      <p class="sec-intro">When the sun erupts, it can accelerate protons to a significant fraction of the speed of light. The GOES satellite's proton flux tile tracks these particles before they arrive — giving a warning window of minutes to hours.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <h3>What GOES is measuring</h3>
+          <p>The Proton Flux tile shows the integral proton flux in the <strong>&gt;10 MeV energy channel</strong>, measured in particle flux units (PFU = protons/cm²/s/sr). NOAA's GOES satellites orbit at 35,786 km and carry solid-state particle detectors pointed away from Earth. They sample the solar wind directly, detecting energetic proton streams that accompany major solar flares and fast CMEs.</p>
+          <p>The 10 MeV channel is the threshold for the NOAA S-scale (Solar Radiation Storm scale). Protons above 10 MeV are energetic enough to penetrate satellite electronics and ionize the polar ionosphere at low altitudes — affecting HF polar paths.</p>
+
+          <h3>The S-Scale</h3>
+          <div class="scale-table">
+            <div class="scale-row"><span class="scale-badge" style="background:rgba(16,185,129,.15);color:#10b981">S0</span><span class="scale-desc">&lt; 10 PFU — background level, no impact</span></div>
+            <div class="scale-row"><span class="scale-badge" style="background:rgba(251,191,36,.12);color:#fbbf24">S1</span><span class="scale-desc">≥ 10 PFU — minor; polar HF slightly degraded, satellite operators notified</span></div>
+            <div class="scale-row"><span class="scale-badge" style="background:rgba(251,146,60,.12);color:#fb923c">S2</span><span class="scale-desc">≥ 100 PFU — moderate; polar HF blackout possible; high-latitude passengers at risk</span></div>
+            <div class="scale-row"><span class="scale-badge" style="background:rgba(239,68,68,.12);color:#f87171">S3</span><span class="scale-desc">≥ 1,000 PFU — strong; single-event upsets in satellites; transpolar aviation disrupted</span></div>
+            <div class="scale-row"><span class="scale-badge" style="background:rgba(220,38,38,.18);color:#fca5a5">S4</span><span class="scale-desc">≥ 10,000 PFU — severe; satellite anomalies expected; star-tracker failures possible</span></div>
+            <div class="scale-row"><span class="scale-badge" style="background:rgba(185,28,28,.20);color:#fecaca">S5</span><span class="scale-desc">≥ 100,000 PFU — extreme; complete HF polar blackout; spacecraft at risk</span></div>
+          </div>
+
+          <h3>Ham radio impact</h3>
+          <p>The primary HF effect of an S1+ event is a <strong>polar cap absorption (PCA)</strong> event. The energetic protons ionize the D-layer at polar latitudes — adding absorption across all frequencies on transpolar paths. During a major S3+ event, signals on 14–28 MHz over the poles can drop 20–40 dB. Low-latitude and mid-latitude paths are largely unaffected.</p>
+          <p class="tip-line"><strong>Operator tip:</strong> If you're working polar paths (Europe-to-west-coast USA via the pole, transpolar DXpeditions), watch for S1+ and have a plan to switch to southern-hemisphere paths or lower frequencies if the polar cap absorbs your signal.</p>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">Lead time</p>
+            <p>Once a large flare fires, light takes 8 minutes to reach Earth. Energetic protons travel much slower — they typically arrive 15 minutes to several hours after the associated X-ray burst. GOES gives you that window to react before polar path absorption peaks.</p>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">Data source</p>
+            <p>The dashboard fetches the NOAA GOES primary integral proton flux JSON, filtered to the &gt;10 MeV channel. The S-scale is computed in real-time and updates every 5 minutes.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════ 25 — IMF Bt -->
+  <section id="imf-bt" class="learn-section alt-bg" aria-label="IMF Bt total field">
+    <div class="wrap">
+      <p class="seclabel">Concept 25</p>
+      <h2>IMF Bt — Total Interplanetary Magnetic Field</h2>
+      <p class="sec-intro">The solar wind carries the sun's magnetic field all the way to Earth. Bt is the total strength of that field. When it's high and pointed south (negative Bz), geomagnetic storms develop fast.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <h3>Bz vs. Bt — two sides of the same field</h3>
+          <p>The dashboard's Solar Wind row already shows <strong>Bz</strong> — the north-south component of the interplanetary magnetic field (IMF). A negative Bz means the field points southward, which is the key driver of geomagnetic activity: it allows magnetic reconnection with Earth's magnetosphere and pumps energy into the ring current, raising the Kp index.</p>
+          <p><strong>Bt</strong> (total field) is the magnitude of the complete IMF vector — the combination of all three components (Bx, By, Bz). It tells you how strong the field is overall:</p>
+          <ul class="learn-list">
+            <li><strong>Bt &lt; 5 nT</strong> — background solar wind; typical quiet conditions</li>
+            <li><strong>Bt 5–15 nT</strong> — moderate field; storm possible if Bz turns south</li>
+            <li><strong>Bt &gt; 15 nT</strong> — strong field; often associated with CME arrival; elevated storm potential regardless of Bz sign</li>
+            <li><strong>Bt &gt; 25 nT</strong> — intense; G2+ storms likely if Bz stays negative</li>
+          </ul>
+          <h3>Why Bt matters for storm prediction</h3>
+          <p>A high Bt event that arrives with northward Bz is harmless — but it tells you the field could rotate south at any moment. CME magnetic fields are complex and can rotate over hours. When you see a high Bt reading, the next Bz observation is critical. Operators monitoring for aurora or HF disruption should watch Bt and Bz together in real-time.</p>
+          <p class="tip-line"><strong>Operator tip:</strong> High Bt + Bz near zero = storm is a coin flip. High Bt + Bz turning negative = storm is developing fast. Plan your operating around the next 1–2 hour window.</p>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">Units</p>
+            <p>Both Bz and Bt are measured in nanoteslas (nT). Earth's surface magnetic field is about 25,000–65,000 nT; the interplanetary field is far weaker, but its direction matters more than its magnitude at that distance.</p>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">Data source</p>
+            <p>Bt is derived from the DSCOVR magnetometer (mag-7-day JSON) — the same instrument that provides real-time Bz. The dashboard's /api/solarwind endpoint computes Bt from the Bx, By, Bz field components.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════ 26 — FLARE LOG -->
+  <section id="flare-log" class="learn-section" aria-label="Solar flare event log">
+    <div class="wrap">
+      <p class="seclabel">Concept 26</p>
+      <h2>Flare Event Log — reading the X-ray record</h2>
+      <p class="sec-intro">The flare log shows every solar flare detected by NOAA's GOES satellite in the last 7 days. Each row tells you when the X-ray burst started, when it peaked, when it ended, and how strong it was — information you need to connect a dead band to its cause.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <h3>The flare classification system</h3>
+          <p>Flares are classified by peak X-ray flux in the 1–8 Å band. The letters follow a logarithmic scale with the same structure as the Richter scale — each class is 10× more powerful than the previous:</p>
+          <div class="scale-table">
+            <div class="scale-row"><span class="scale-badge" style="background:rgba(148,163,184,.08);color:#94a3b8">A</span><span class="scale-desc">&lt; 10⁻⁷ W/m² — background; no detectable HF impact</span></div>
+            <div class="scale-row"><span class="scale-badge" style="background:rgba(148,163,184,.08);color:#94a3b8">B</span><span class="scale-desc">10⁻⁷ to 10⁻⁶ W/m² — very minor; essentially harmless to radio</span></div>
+            <div class="scale-row"><span class="scale-badge" style="background:rgba(110,231,183,.12);color:#6ee7b7">C</span><span class="scale-desc">10⁻⁶ to 10⁻⁵ W/m² — minor; small short-wave fadeouts possible on sunlit side</span></div>
+            <div class="scale-row"><span class="scale-badge" style="background:rgba(251,191,36,.12);color:#fbbf24">M</span><span class="scale-desc">10⁻⁵ to 10⁻⁴ W/m² — moderate; R1–R2 blackout; 10–20 MHz degraded on sunlit side</span></div>
+            <div class="scale-row"><span class="scale-badge" style="background:rgba(248,113,113,.14);color:#f87171">X</span><span class="scale-desc">≥ 10⁻⁴ W/m² — strong to extreme; R3–R5 blackout; wide-area HF loss possible</span></div>
+          </div>
+          <p>Each class also has a decimal suffix — X2.5 is 2.5× more powerful than X1.0. The largest flares on record were around X45 (2003 Halloween storms).</p>
+
+          <h3>Begin, peak, end times</h3>
+          <p>A flare event has three phases recorded in the log:</p>
+          <ul class="learn-list">
+            <li><strong>Begin</strong> — X-ray flux starts rising above the pre-event background; this is when HF absorption on the sunlit hemisphere begins.</li>
+            <li><strong>Peak (max)</strong> — highest flux; worst blackout conditions. For large flares this can last 10–30 minutes.</li>
+            <li><strong>End</strong> — flux returns to the pre-event level. HF conditions recover, though secondary effects (elevated Kp from CMEs) can persist for days.</li>
+          </ul>
+          <p>The "Region" column links the flare to a NOAA-numbered Active Region — the same numbered sunspot groups shown in the Active Regions table. If a region produces multiple flares, it is elevated to watch it for subsequent larger events.</p>
+          <p class="tip-line"><strong>Operator tip:</strong> If you suddenly notice poor HF conditions on the sunlit side of Earth, scroll the flare log first. An M or X flare from the past hour is the most common cause. Conditions typically recover within 30–60 minutes after the end time.</p>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">Night side is unaffected</p>
+            <p>Flare-induced radio blackouts only affect the hemisphere facing the sun at the time of the flare. If the flare occurs when your path is over the dark side of Earth, you won't notice anything — the X-rays can't penetrate the planet. Check your greyline map alongside the flare log to determine if you were in the sunlit zone.</p>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">CME lag</p>
+            <p>A major flare often launches a CME, but the CME impact arrives 1–3 days later — long after the immediate X-ray blackout has cleared. The geomagnetic storm from the CME is a separate event and affects the night side too. Watch the Bz/Bt row for the CME arrival signature.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════ 27 — 3-DAY KP CHART -->
+  <section id="kp3day-chart" class="learn-section alt-bg" aria-label="3-day Kp bar chart">
+    <div class="wrap">
+      <p class="seclabel">Concept 27</p>
+      <h2>3-Day Kp Bar Chart — storm timeline at a glance</h2>
+      <p class="sec-intro">The 3-day Kp chart shows 72 hours of geomagnetic activity as individual 3-hour bars — the native resolution of the planetary K-index. It answers a question the 7-day trend chart can't: exactly when did the storm peak, and is it over?</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <h3>How the K-index is measured</h3>
+          <p>The K-index is derived from 13 ground-based magnetometers distributed around the world (the Kp, or planetary K, is the average). Each station measures the maximum deviation in Earth's horizontal magnetic field over each 3-hour window, then converts it to a quasi-logarithmic 0–9 scale. The 3-hour bucket is not adjustable — it is a fundamental property of how the index is computed.</p>
+          <p>This means each bar on the chart represents exactly three hours of geomagnetic conditions. A storm that peaks between 06:00–09:00 UTC will show up as one red bar; the neighboring bars may be amber or green. That time precision matters for planning:</p>
+          <ul class="learn-list">
+            <li><strong>Green (Kp ≤ 2)</strong> — quiet; stable propagation, polar paths open</li>
+            <li><strong>Amber (Kp 3–4)</strong> — unsettled; HF mostly fine; high-latitude paths slightly degraded</li>
+            <li><strong>Red (Kp ≥ 5)</strong> — storm (G1+); polar paths disrupted; aurora possible</li>
+          </ul>
+
+          <h3>Recovery vs. onset</h3>
+          <p>A geomagnetic storm has three phases: sudden commencement (CME arrives and Kp spikes), main phase (Kp peaks, ring current builds), and recovery (Kp declines over 12–48 hours). The 3-day chart shows all three phases in one view. Looking for a sequence of red bars followed by declining amber bars means you're watching a storm in recovery — conditions are improving, not worsening.</p>
+          <p>The 7-day trend chart shows a longer history; the 24-hour chart shows the most recent 8 buckets with time labels. The 3-day chart hits the middle ground: enough history to see storm context while keeping the 3-hour resolution that tells you what hour conditions shifted.</p>
+          <p class="tip-line"><strong>Operator tip:</strong> After a geomagnetic storm, watch the 3-day chart for two consecutive green bars (6 quiet hours) before committing to a long-path DX session. Post-storm recovery is real but not instant — one quiet bucket can be followed by another disturbed period.</p>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">Bar label format</p>
+            <p>Each bar is labeled with its UTC start hour (e.g. "12Z" for the 12:00–15:00 UTC window). Bars at 00:00 UTC show the date instead of the hour to mark the day boundary — making it easy to find where one day ends and the next begins.</p>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">Data source</p>
+            <p>The chart fetches the NOAA planetary K-index JSON in real-time. The K-index is published by NOAA's Space Weather Prediction Center within minutes of each 3-hour window closing.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════ 28 — STEREO-A -->
+  <section id="stereo-imagery" class="learn-section" aria-label="STEREO-A solar imagery">
+    <div class="wrap">
+      <p class="seclabel">Concept 28</p>
+      <h2>STEREO-A EUVI 195 Å — the sun from a different angle</h2>
+      <p class="sec-intro">NASA's STEREO-A spacecraft orbits the sun ahead of Earth, providing a view of solar regions that SDO cannot yet see. Active regions rotating toward Earth show up on STEREO-A days before they reach the Earth-facing disk.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <h3>What STEREO is and why it exists</h3>
+          <p>The Solar TErrestrial RElations Observatory (STEREO) mission launched two identical spacecraft in 2006. STEREO-A (Ahead) orbits slightly inside Earth's orbit, lapping Earth over a ~22-month cycle and drifting ahead in heliolongitude. STEREO-B (Behind) was lost to contact in 2014.</p>
+          <p>Because the sun rotates (one full rotation takes ~27 days as seen from Earth), regions on the solar limb — just rotating into view — are often the most flare-active. A region that fired off M and X flares while on the far side will be electrically charged and ready to erupt by the time it rotates into the Earth-facing disk. STEREO-A sees those regions before SDO and Earth-based observatories do.</p>
+
+          <h3>The 195 Å (EUVI) channel</h3>
+          <p>The Extreme Ultraviolet Imager (EUVI) on STEREO captures the sun at 195 Ångströms — sensitive to Fe XII emission at about 1.5 million Kelvin. This is the same temperature range as SDO's AIA 193 Å channel, so the two images show comparable features: coronal loops, active regions, and coronal holes appear in similar contrast. The key difference is the viewing angle, not the physics.</p>
+          <ul class="learn-list">
+            <li><strong>Bright compact regions</strong> — magnetically active areas; flare-prone. If bright on STEREO-A but not yet visible on SDO, it will rotate into view within days.</li>
+            <li><strong>Dark areas (coronal holes)</strong> — open magnetic field lines; source of fast solar wind streams. A large coronal hole rotating toward the Earth-facing disk predicts a high-speed stream arrival in 3–5 days.</li>
+            <li><strong>Faint diffuse arcs or halos</strong> — coronal mass ejections lifting off the limb.</li>
+          </ul>
+
+          <h3>Reading STEREO-A alongside SDO</h3>
+          <p>Compare the STEREO-A image to the SDO AIA 193 image side by side. Features visible only on STEREO-A are on the far-side or limb — they'll rotate into Earth view soon. Features visible on SDO's limb that are also bright on STEREO-A are confirmed active — they're being seen from two angles simultaneously, confirming the region is large and bright enough to matter.</p>
+          <p class="tip-line"><strong>Operator tip:</strong> If you see a large bright active region on STEREO-A that isn't prominent on SDO yet, check back in 3–7 days. That region may be rotating toward Earth — keep an eye on the flare log for increasing M and X flare activity as it approaches central meridian.</p>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">Beacon data</p>
+            <p>The STEREO-A image on the dashboard comes from the spacecraft's beacon mode — a low-resolution real-time downlink used when the main antenna is not pointed at Earth. Beacon images update every few hours and have slightly lower quality than archived full-res data, but they're available with minimal delay.</p>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">Spacecraft status</p>
+            <p>STEREO-A was launched in 2006 and is still operational as of 2026, far past its 2-year design life. Its orbit means it periodically passes behind the sun from Earth's perspective — during those windows (solar conjunctions), imagery may be temporarily unavailable.</p>
           </div>
         </div>
       </div>
