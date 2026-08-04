@@ -474,25 +474,29 @@ interface SolarWindData {
   };
 }
 
-interface SwSpeedSummary { TimeStamp: string; WindSpeed: number; Density: number }
-interface SwMagSummary   { TimeStamp: string; Bz: number; Bt: number }
+// Actual API shape confirmed: arrays of objects with lowercase field names
+// speed → [{"proton_speed":394,"time_tag":"..."}]
+// mag   → [{"bt":3,"bz_gsm":0,"time_tag":"..."}]
+interface SwSpeedItem { proton_speed: number; time_tag: string }
+interface SwMagItem   { bz_gsm: number; bt: number; time_tag: string }
 
-function parseSolarWind(speedSum: SwSpeedSummary | null, magSum: SwMagSummary | null): SolarWindData {
+function parseSolarWind(speedArr: SwSpeedItem[] | null, magArr: SwMagItem[] | null): SolarWindData {
   const empty: SolarWindData = { bz: null, bt: null, speed: null, density: null, updated: null,
     series: { labels: [], bz: [], bt: [], speed: [], density: [] } };
-  if (!speedSum && !magSum) return empty;
 
-  const speed   = typeof speedSum?.WindSpeed === 'number' && isFinite(speedSum.WindSpeed) && speedSum.WindSpeed > 50
-    ? Math.round(speedSum.WindSpeed) : null;
-  const density = typeof speedSum?.Density   === 'number' && isFinite(speedSum.Density)   && speedSum.Density >= 0
-    ? Math.round(speedSum.Density * 10) / 10 : null;
-  const bz      = typeof magSum?.Bz === 'number' && isFinite(magSum.Bz) && magSum.Bz > -500 && magSum.Bz < 500
-    ? Math.round(magSum.Bz * 10) / 10 : null;
-  const bt      = typeof magSum?.Bt === 'number' && isFinite(magSum.Bt) && magSum.Bt >= 0
-    ? Math.round(magSum.Bt * 10) / 10 : null;
-  const updated = speedSum?.TimeStamp ?? magSum?.TimeStamp ?? null;
+  const speedItem = Array.isArray(speedArr) && speedArr.length > 0 ? speedArr[0] : null;
+  const magItem   = Array.isArray(magArr)   && magArr.length   > 0 ? magArr[0]   : null;
+  if (!speedItem && !magItem) return empty;
 
-  return { bz, bt, speed, density, updated, series: { labels: [], bz: [], bt: [], speed: [], density: [] } };
+  const speed   = typeof speedItem?.proton_speed === 'number' && isFinite(speedItem.proton_speed) && speedItem.proton_speed > 50
+    ? Math.round(speedItem.proton_speed) : null;
+  const bz      = typeof magItem?.bz_gsm === 'number' && isFinite(magItem.bz_gsm) && Math.abs(magItem.bz_gsm) < 500
+    ? Math.round(magItem.bz_gsm * 10) / 10 : null;
+  const bt      = typeof magItem?.bt === 'number' && isFinite(magItem.bt) && magItem.bt >= 0
+    ? Math.round(magItem.bt * 10) / 10 : null;
+  const updated = speedItem?.time_tag ?? magItem?.time_tag ?? null;
+
+  return { bz, bt, speed, density: null, updated, series: { labels: [], bz: [], bt: [], speed: [], density: [] } };
 }
 
 export default {
@@ -508,8 +512,8 @@ export default {
       fetchJson<any[]>(SWPC.xrayFlux1d),
       fetchJson<any[]>(SWPC.geoAlerts),
       fetchJson<any[]>(SWPC.kpHistory),
-      fetchJson<SwSpeedSummary>(SWPC.swSpeed),
-      fetchJson<SwMagSummary>(SWPC.swMag),
+      fetchJson<SwSpeedItem[]>(SWPC.swSpeed),
+      fetchJson<SwMagItem[]>(SWPC.swMag),
     ]);
 
     const sfi = parseSfi10cm(flux10Raw) ?? parseSfi(cycleRaw);
