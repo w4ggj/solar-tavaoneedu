@@ -15,6 +15,8 @@ const SWPC = {
   xrayFlux3d:  'https://services.swpc.noaa.gov/json/goes/primary/xrays-3-day.json',
   xrayFlux1d:  'https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json',
   geoAlerts:   'https://services.swpc.noaa.gov/products/alerts.json',
+  plasma7d:    'https://services.swpc.noaa.gov/products/solar-wind/plasma-7-day.json',
+  mag7d:       'https://services.swpc.noaa.gov/products/solar-wind/mag-7-day.json',
 } as const;
 
 interface LiveData {
@@ -455,11 +457,113 @@ async function sendPushAlerts(env: Env, live: LiveData): Promise<void> {
   }
 }
 
+/* ── Solar wind parsing ── */
+
+type SwRow = (string | number | null)[];
+
+interface SolarWindData {
+  bz: number | null;
+  bt: number | null;
+  speed: number | null;
+  density: number | null;
+  updated: string | null;
+  series: {
+    labels:  string[];
+    bz:      (number | null)[];
+    bt:      (number | null)[];
+    speed:   number[];
+    density: number[];
+  };
+}
+
+function parseSolarWind(plasma: SwRow[] | null, mag: SwRow[] | null): SolarWindData {
+  const empty: SolarWindData = { bz: null, bt: null, speed: null, density: null, updated: null,
+    series: { labels: [], bz: [], bt: [], speed: [], density: [] } };
+  if (!Array.isArray(plasma) || plasma.length < 2 || !Array.isArray(mag) || mag.length < 2) return empty;
+
+  const ph  = plasma[0] as string[];
+  const mh  = mag[0]   as string[];
+  const si  = ph.indexOf('speed');
+  const di  = ph.indexOf('density');
+  const bzi = mh.indexOf('bz_gsm');
+  const bti = mh.indexOf('bt');
+  if (si < 0 || di < 0 || bzi < 0) { console.log('solar-cron: solarwind schema mismatch', ph, mh); return empty; }
+
+  // Scan backward for most recent row with physically valid values
+  let pLatest: { speed: number; density: number; time: string } | null = null;
+  for (let i = plasma.length - 1; i >= 1; i--) {
+    const row = plasma[i];
+    const speed   = parseFloat(String(row[si] ?? 'NaN'));
+    const density = parseFloat(String(row[di] ?? 'NaN'));
+    if (!isNaN(speed) && speed > 200 && speed < 1500 && !isNaN(density) && density >= 0) {
+      pLatest = { speed, density, time: String(row[0] ?? '') };
+      break;
+    }
+  }
+  if (!pLatest) { console.log('solar-cron: no valid plasma row found'); return empty; }
+
+  let mLatest: { bz: number; bt: number } | null = null;
+  for (let i = mag.length - 1; i >= 1; i--) {
+    const row = mag[i];
+    const bz = parseFloat(String(row[bzi] ?? 'NaN'));
+    if (!isNaN(bz) && bz > -500 && bz < 500) {
+      const bt = bti >= 0 ? parseFloat(String(row[bti] ?? 'NaN')) : NaN;
+      mLatest = { bz, bt: !isNaN(bt) && bt >= 0 ? bt : 0 };
+      break;
+    }
+  }
+
+  // Build mag lookup for 1-hour chart series
+  const magByTime = new Map<string, { bz: number; bt: number }>();
+  for (const row of mag.slice(1)) {
+    const t  = String(row[0] ?? '');
+    const bz = parseFloat(String(row[bzi] ?? 'NaN'));
+    const bt = bti >= 0 ? parseFloat(String(row[bti] ?? 'NaN')) : NaN;
+    if (t && !isNaN(bz)) magByTime.set(t, { bz, bt: !isNaN(bt) ? bt : 0 });
+  }
+
+  const cutoffMs = Date.now() - 3_600_000;
+  const labels:  string[]          = [];
+  const bzSeries: (number | null)[] = [];
+  const btSeries: (number | null)[] = [];
+  const speedSeries:   number[]    = [];
+  const densitySeries: number[]    = [];
+  let lastMs = 0;
+
+  for (const row of plasma.slice(1)) {
+    const t  = String(row[0] ?? '');
+    const ms = new Date(t).getTime();
+    if (isNaN(ms) || ms < cutoffMs) continue;
+    if (ms - lastMs < 5 * 60_000) continue;
+    const speed   = parseFloat(String(row[si] ?? 'NaN'));
+    const density = parseFloat(String(row[di] ?? 'NaN'));
+    if (isNaN(speed) || isNaN(density) || speed <= 0) continue;
+    const magEntry = magByTime.get(t) ?? [...magByTime.entries()]
+      .filter(([mt]) => Math.abs(new Date(mt).getTime() - ms) < 10 * 60_000)
+      .sort(([a], [b]) => Math.abs(new Date(a).getTime() - ms) - Math.abs(new Date(b).getTime() - ms))[0]?.[1];
+    labels.push(t);
+    bzSeries.push(magEntry && !isNaN(magEntry.bz) ? Math.round(magEntry.bz * 10) / 10 : null);
+    btSeries.push(magEntry && !isNaN(magEntry.bt) ? Math.round(magEntry.bt * 10) / 10 : null);
+    speedSeries.push(Math.round(speed));
+    densitySeries.push(Math.round(density * 10) / 10);
+    lastMs = ms;
+  }
+
+  return {
+    bz:      mLatest ? Math.round(mLatest.bz * 10) / 10 : null,
+    bt:      mLatest ? Math.round(mLatest.bt * 10) / 10 : null,
+    speed:   Math.round(pLatest.speed),
+    density: Math.round(pLatest.density * 10) / 10,
+    updated: pLatest.time,
+    series:  { labels, bz: bzSeries, bt: btSeries, speed: speedSeries, density: densitySeries },
+  };
+}
+
 export default {
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
     console.log('solar-cron: fetch start');
 
-    const [flux10Raw, cycleRaw, kpRaw, xray7dRaw, xray3dRaw, xray1dRaw, alertsRaw, kpHistRaw] = await Promise.all([
+    const [flux10Raw, cycleRaw, kpRaw, xray7dRaw, xray3dRaw, xray1dRaw, alertsRaw, kpHistRaw, plasma7dRaw, mag7dRaw] = await Promise.all([
       fetchJson<any[]>(SWPC.flux10cm),
       fetchJson<any[]>(SWPC.solarCycle),
       fetchJson<any[]>(SWPC.kpCurrent),
@@ -468,6 +572,8 @@ export default {
       fetchJson<any[]>(SWPC.xrayFlux1d),
       fetchJson<any[]>(SWPC.geoAlerts),
       fetchJson<any[]>(SWPC.kpHistory),
+      fetchJson<SwRow[]>(SWPC.plasma7d),
+      fetchJson<SwRow[]>(SWPC.mag7d),
     ]);
 
     const sfi = parseSfi10cm(flux10Raw) ?? parseSfi(cycleRaw);
@@ -492,8 +598,12 @@ export default {
       alerts,
     };
 
-    await env.SOLAR_CACHE.put('live', JSON.stringify(live), { expirationTtl: 3600 });
-    console.log(`solar-cron: KV updated — SFI=${sfi} SSN=${ssn} Kp=${kp} Ap=${a_index} Xray=${xclass ?? 'null'} alerts=${alerts.length}`);
+    const solarwind = parseSolarWind(plasma7dRaw, mag7dRaw);
+    await Promise.all([
+      env.SOLAR_CACHE.put('live', JSON.stringify(live), { expirationTtl: 3600 }),
+      env.SOLAR_CACHE.put('solarwind', JSON.stringify(solarwind), { expirationTtl: 3600 }),
+    ]);
+    console.log(`solar-cron: KV updated — SFI=${sfi} SSN=${ssn} Kp=${kp} Ap=${a_index} Xray=${xclass ?? 'null'} alerts=${alerts.length} SW speed=${solarwind.speed} Bz=${solarwind.bz}`);
 
     await env.DB.prepare(
       `INSERT INTO solar_history (recorded_at, sfi, a_index, k_index, xray_flux, xray_class, sunspots)
