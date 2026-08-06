@@ -37,7 +37,7 @@ import Shell from '../layouts/Shell.astro';
   <section id="dashboard" aria-label="Live data">
     <div class="wrap">
       <p class="seclabel">Live Conditions</p>
-      <h2>Current solar data</h2>
+      <h2>Current solar data <a class="learn-chip" href="/learn/#live-tiles">Learn →</a></h2>
       <p class="sec-intro">Solar flux index, geomagnetic conditions, and X-ray flux — refreshed every 15 minutes from NOAA SWPC.</p>
 
       <div class="data-grid">
@@ -71,7 +71,7 @@ import Shell from '../layouts/Shell.astro';
 
       <!-- NOAA storm scales from WWV/WWVH bulletin -->
       <div class="wwv-row" id="wwv-row" hidden>
-        <span class="wwv-label">NOAA Scales</span>
+        <span class="wwv-label">NOAA Scales <a class="learn-chip" href="/learn/#noaa-scales">Learn →</a></span>
         <div class="wwv-badges">
           <div class="wwv-badge" id="wb-r">
             <span class="wb-val" id="wb-r-val">R0</span>
@@ -91,7 +91,7 @@ import Shell from '../layouts/Shell.astro';
 
       <!-- Solar wind (DSCOVR real-time) -->
       <div class="sw-row" id="sw-row">
-        <span class="wwv-label">Solar Wind</span>
+        <span class="wwv-label">Solar Wind <a class="learn-chip" href="/learn/#solar-wind">Learn →</a></span>
         <div class="sw-badges">
           <div class="sw-badge" id="sw-bz-badge">
             <span class="sw-val" id="sw-bz">—</span>
@@ -116,7 +116,7 @@ import Shell from '../layouts/Shell.astro';
 
       <!-- Radio blackout indicator (derived from X-ray flux) -->
       <div class="rb-row" id="rb-row">
-        <span class="wwv-label">Blackout</span>
+        <span class="wwv-label">Blackout <a class="learn-chip" href="/learn/#radio-blackout">Learn →</a></span>
         <div class="rb-badge rb-none" id="rb-badge">
           <span class="rb-scale" id="rb-scale">R0</span>
           <span class="rb-desc" id="rb-desc">No blackout</span>
@@ -199,7 +199,7 @@ import Shell from '../layouts/Shell.astro';
   <section id="band-conditions" aria-label="HF band conditions">
     <div class="wrap">
       <p class="seclabel">Derived from Live Data</p>
-      <h2>HF band conditions</h2>
+      <h2>HF band conditions <a class="learn-chip" href="/learn/#band-conditions">Learn →</a></h2>
       <p class="sec-intro" id="band-basis">Loading conditions…</p>
 
       <div class="bc-time-row">
@@ -216,7 +216,7 @@ import Shell from '../layouts/Shell.astro';
 
       <!-- 24h propagation outlook from NOAA Kp forecast -->
       <div class="fc-row" id="fc-row" hidden>
-        <span class="fc-label">24 h Kp outlook</span>
+        <span class="fc-label">24 h Kp outlook <a class="learn-chip" href="/learn/#time-slider">Learn →</a></span>
         <div class="fc-strip" id="fc-strip" role="list" aria-label="24-hour Kp forecast slots"></div>
       </div>
 
@@ -227,7 +227,7 @@ import Shell from '../layouts/Shell.astro';
   <section id="greyline" aria-label="Solar terminator map">
     <div class="wrap">
       <p class="seclabel">Solar Terminator</p>
-      <h2>Greyline map</h2>
+      <h2>Greyline map <a class="learn-chip" href="/learn/#greyline">Learn →</a></h2>
       <p class="sec-intro">The greyline is the twilight boundary between day and night. The 30-minute window around it — when the ionosphere is in transition — often produces outstanding long-path propagation on 40 m and 80 m.</p>
       <div class="gl-outer">
         <canvas id="gl-canvas" class="gl-canvas" aria-label="Solar terminator world map"></canvas>
@@ -244,7 +244,7 @@ import Shell from '../layouts/Shell.astro';
   <section id="solar-imagery" aria-label="Live solar images">
     <div class="wrap">
       <p class="seclabel">NASA / ESA Live Imagery</p>
-      <h2>The sun right now</h2>
+      <h2>The sun right now <a class="learn-chip" href="/learn/#solar-imagery">Learn →</a></h2>
       <p class="sec-intro">Live solar imagery from NASA's Solar Dynamics Observatory and the ESA/NASA SOHO spacecraft — updated every few minutes.</p>
       <div class="imagery-grid">
         <figure class="img-card">
@@ -271,7 +271,7 @@ import Shell from '../layouts/Shell.astro';
   <section id="active-regions" aria-label="Active solar regions">
     <div class="wrap">
       <p class="seclabel">NOAA SWPC</p>
-      <h2>Active solar regions</h2>
+      <h2>Active solar regions <a class="learn-chip" href="/learn/#active-regions">Learn →</a></h2>
       <p class="sec-intro">Currently numbered NOAA Active Regions (AR) on the solar disk, ranked by flare potential. Magnetic classification and C/M/X flare probabilities are updated every 30 minutes.</p>
       <div id="ar-table-wrap" class="ar-table-wrap">
         <p class="data-updated" id="ar-status">Loading active regions…</p>
@@ -283,7 +283,7 @@ import Shell from '../layouts/Shell.astro';
   <section id="flare-log" aria-label="Recent solar flares">
     <div class="wrap">
       <p class="seclabel">GOES X-Ray Monitor</p>
-      <h2>Recent solar flares</h2>
+      <h2>Recent solar flares <a class="learn-chip" href="/learn/#flare-log">Learn →</a></h2>
       <p class="sec-intro">Solar flares detected by NOAA's GOES satellite in the last 7 days, newest first. Each flare briefly floods the sunlit hemisphere with X-rays — larger classes cause HF radio blackouts.</p>
       <div id="flare-table-wrap" class="flare-table-wrap">
         <p class="data-updated" id="flare-status">Loading flare log…</p>
@@ -297,7 +297,7 @@ import Shell from '../layouts/Shell.astro';
       <div class="history-top">
         <div>
           <p class="seclabel" id="history-label">24-Hour History</p>
-          <h2>Solar trend</h2>
+          <h2>Solar trend <a class="learn-chip" href="/learn/#history-charts">Learn →</a></h2>
         </div>
         <div class="range-tabs" role="group" aria-label="Time range">
           <button class="range-tab" data-hours="6">6 h</button>
@@ -342,7 +342,7 @@ import Shell from '../layouts/Shell.astro';
   <section id="trends" aria-label="Solar trend charts">
     <div class="wrap">
       <p class="seclabel">Trend Analysis</p>
-      <h2>Historical solar data</h2>
+      <h2>Historical solar data <a class="learn-chip" href="/learn/#solar-cycle">Learn →</a></h2>
       <p class="sec-intro">Long-term trends in solar flux, geomagnetic activity, and sunspot cycle — updated every 15 minutes from NOAA SWPC.</p>
 
       <div class="trends-grid">
@@ -436,7 +436,7 @@ import Shell from '../layouts/Shell.astro';
   <section id="what-it-means" aria-label="Impact on radio">
     <div class="wrap">
       <p class="seclabel">Ham Radio Impact</p>
-      <h2>What the numbers mean for your radio</h2>
+      <h2>What the numbers mean for your radio <a class="learn-chip" href="/learn/#quick-ref">Learn →</a></h2>
       <p class="sec-intro" id="conditions-summary">Loading current conditions…</p>
       <div class="grid cols3" style="margin-top:32px">
         <div class="card">
@@ -461,7 +461,7 @@ import Shell from '../layouts/Shell.astro';
   <section id="contest-calendar" aria-label="Ham radio contest calendar">
     <div class="wrap">
       <p class="seclabel">Ham Radio</p>
-      <h2>Upcoming major HF contests</h2>
+      <h2>Upcoming major HF contests <a class="learn-chip" href="/learn/#contest-calendar">Learn →</a></h2>
       <p class="sec-intro">Major HF operating events — knowing the calendar helps you plan propagation windows and choose the right bands to maximize contacts.</p>
       <div class="contest-list" id="contest-list"></div>
     </div>
@@ -1226,6 +1226,39 @@ import Shell from '../layouts/Shell.astro';
   :global(.bc-fair      .bt-seg.on) { background: #fbbf24; }
   :global(.bc-poor      .bt-seg.on) { background: #f87171; }
   :global(.bc-closed    .bt-seg.on) { background: #334155; }
+
+  /* ── Section learn chip ── */
+  .learn-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--mono);
+    font-size: .68rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--green-lt);
+    background: rgba(16,185,129,.08);
+    border: 1px solid rgba(16,185,129,.22);
+    border-radius: 6px;
+    padding: 3px 9px;
+    text-decoration: none;
+    vertical-align: middle;
+    margin-left: 10px;
+    white-space: nowrap;
+    transition: background .12s, border-color .12s;
+    position: relative;
+    top: -2px;
+  }
+  .learn-chip:hover {
+    background: rgba(16,185,129,.16);
+    border-color: rgba(16,185,129,.4);
+  }
+  /* inline variant for sub-rows that have no h2 */
+  .wwv-label .learn-chip,
+  .fc-label .learn-chip {
+    top: 0;
+    margin-left: 6px;
+  }
 </style>
 
 <script>
