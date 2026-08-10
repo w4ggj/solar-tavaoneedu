@@ -35,7 +35,7 @@ async function fetchJson<T>(url: string): Promise<T | null> {
   try {
     const res = await fetch(url);
     if (!res.ok) { console.error(`SWPC ${res.status}: ${url}`); return null; }
-    return res.json() as Promise<T>;
+    return await res.json() as T;
   } catch (e) {
     console.error(`SWPC fetch error: ${url}`, e);
     return null;
@@ -542,22 +542,25 @@ export default {
 
     const solarwind = parseSolarWind(swWindRaw, swMagRaw);
     await Promise.all([
-      env.SOLAR_CACHE.put('live', JSON.stringify(live), { expirationTtl: 3600 }),
-      env.SOLAR_CACHE.put('solarwind', JSON.stringify(solarwind), { expirationTtl: 3600 }),
+      env.SOLAR_CACHE.put('live', JSON.stringify(live), { expirationTtl: 7200 }),
+      env.SOLAR_CACHE.put('solarwind', JSON.stringify(solarwind), { expirationTtl: 7200 }),
     ]);
     console.log(`solar-cron: KV updated — SFI=${sfi} SSN=${ssn} Kp=${kp} Ap=${a_index} Xray=${xclass ?? 'null'} alerts=${alerts.length} SW speed=${solarwind.speed} Bz=${solarwind.bz}`);
 
-    await env.DB.prepare(
-      `INSERT INTO solar_history (recorded_at, sfi, a_index, k_index, xray_flux, xray_class, sunspots)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
-    )
-      .bind(live.updated, sfi, a_index, kp, xflux, xclass, ssn)
-      .run();
+    try {
+      await env.DB.prepare(
+        `INSERT INTO solar_history (recorded_at, sfi, a_index, k_index, xray_flux, xray_class, sunspots)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+      )
+        .bind(live.updated, sfi, a_index, kp, xflux, xclass, ssn)
+        .run();
+      console.log('solar-cron: D1 row inserted');
+    } catch (e) {
+      console.error('solar-cron: D1 insert error (KV already updated)', e);
+    }
 
-    console.log('solar-cron: D1 row inserted');
-
-    await backfillHistory(env, flux10Raw, cycleRaw);
-    await backfillKpHistory(env, kpHistRaw);
-    await sendPushAlerts(env, live);
+    try { await backfillHistory(env, flux10Raw, cycleRaw); } catch (e) { console.error('solar-cron: backfillHistory error', e); }
+    try { await backfillKpHistory(env, kpHistRaw); } catch (e) { console.error('solar-cron: backfillKpHistory error', e); }
+    try { await sendPushAlerts(env, live); } catch (e) { console.error('solar-cron: sendPushAlerts error', e); }
   },
 };
