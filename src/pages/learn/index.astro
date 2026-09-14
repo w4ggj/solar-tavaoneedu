@@ -136,6 +136,10 @@ import Shell from '../../layouts/Shell.astro';
           <span class="toc-num">28</span>
           <span class="toc-label">STEREO-A Imagery</span>
         </a>
+        <a href="#band-activity" class="toc-item">
+          <span class="toc-num">29</span>
+          <span class="toc-label">Observed Band Activity</span>
+        </a>
       </nav>
     </div>
   </section>
@@ -1321,6 +1325,71 @@ import Shell from '../../layouts/Shell.astro';
           <div class="aside-box">
             <p class="aside-head">Spacecraft status</p>
             <p>STEREO-A was launched in 2006 and is still operational as of 2026, far past its 2-year design life. Its orbit means it periodically passes behind the sun from Earth's perspective — during those windows (solar conjunctions), imagery may be temporarily unavailable.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════ 29 — BAND ACTIVITY -->
+  <section id="band-activity" class="learn-section" aria-label="Observed band activity">
+    <div class="wrap">
+      <p class="seclabel">Concept 29</p>
+      <h2>Observed band activity — live WSJT-X decodes</h2>
+      <p class="sec-intro">While predicted propagation tells you what <em>should</em> work, observed band activity tells you what is <em>actually</em> happening right now. This panel captures real FT8 and FT4 decodes from a receive station and presents them as a band-by-band activity snapshot updated every 15 minutes.</p>
+
+      <div class="explainer-block">
+        <div class="expl-text">
+          <h3>FT8 and FT4 — weak-signal digital modes</h3>
+          <p>FT8 and FT4 are weak-signal digital modes developed by Joe Taylor (K1JT) and Steve Franke (K9AN) and distributed as part of the WSJT-X software suite. They are designed to complete two-way contacts under conditions where SSB voice and even CW would fail.</p>
+          <ul class="learn-list">
+            <li><strong>FT8</strong> (14.074 MHz and other band segments) — 15-second transmit/receive cycles; works down to −24 dB SNR relative to a 2.5 kHz noise floor. One complete QSO takes about 90 seconds.</li>
+            <li><strong>FT4</strong> — a faster variant with 7.5-second cycles, used primarily in contests. Slightly less sensitive than FT8 but moves more traffic per hour.</li>
+          </ul>
+          <p>Because these modes are so sensitive, they decode signals that are completely inaudible to the human ear. A station that cannot be heard at all on 40m SSB will often still produce a clean FT8 decode — making the decode count a far more honest measure of actual propagation than "can you hear anything on the band?"</p>
+
+          <h3>What WSJT-X logs</h3>
+          <p>Every time WSJT-X decodes a transmission, it logs: the UTC timestamp, the signal-to-noise ratio in dB, the sending callsign, and the sending station's 4-character Maidenhead grid locator. The dashboard station (W4GGJ) runs WSJT-X receive-only and relays those decode records in real time.</p>
+
+          <h3>The four tile metrics</h3>
+          <p>Each band tile on the dashboard shows a 15-minute rolling window of decode data aggregated by band:</p>
+          <ul class="learn-list">
+            <li><strong>Decodes</strong> — total number of individual transmissions decoded in the window. High decode counts indicate an open band with many stations. A band with zero decodes is either closed or quiet.</li>
+            <li><strong>Unique calls</strong> — distinct callsigns heard. This filters out repeated transmissions from the same station, giving a cleaner count of how many stations are actually reachable.</li>
+            <li><strong>Best SNR</strong> — the strongest signal received in the window, in dB relative to the 2.5 kHz noise floor. Values above 0 dB are strong; −10 dB is moderate; −20 dB and below is weak but still decodable. A best SNR near −20 dB with many decodes means the band is marginal but open.</li>
+            <li><strong>Grids</strong> — unique Maidenhead grid squares heard. Grids heard from multiple directions (e.g., EN, FM, FN in the Northeast US; EM in the Midwest; DM in the Southwest; EL in the Gulf Coast; FK in the Caribbean) confirm the band is open in multiple paths, not just one.</li>
+          </ul>
+
+          <h3>The 15-minute window</h3>
+          <p>Data is bucketed into discrete 15-minute intervals aligned to the UTC clock (00:00–00:15, 00:15–00:30, etc.). The current window closes at :00, :15, :30, and :45 each hour. Because FT8 operates in 15-second cycles, up to 60 decoding attempts occur per transmitter per 15 minutes — the window is wide enough to catch intermittent propagation that might otherwise miss a shorter snapshot, yet short enough to track conditions as they evolve during a grey-line pass or afternoon opening.</p>
+
+          <h3>Observed vs predicted — reading both together</h3>
+          <p>The band activity panel is most useful when read alongside the predicted HF conditions panel above it. Predicted conditions are model outputs — they show what ionospheric science says <em>should</em> be possible based on solar flux, K-index, and time of day. Observed decodes show what is <em>actually</em> happening at this station right now.</p>
+          <p>Common patterns:</p>
+          <ul class="learn-list">
+            <li><strong>Predicted "Good" + many decodes</strong> — model and reality agree. Go operate.</li>
+            <li><strong>Predicted "Good" + few or no decodes</strong> — conditions may be degrading ahead of a geomagnetic event, or the band has faded locally. Watch K-index for a rising trend.</li>
+            <li><strong>Predicted "Poor" + many decodes</strong> — the model is conservative or a sporadic-E opening is in progress. Observed beats predicted; get on the air.</li>
+            <li><strong>Predicted "Poor" + no decodes</strong> — band is genuinely closed. Try a lower band or wait for greyline.</li>
+          </ul>
+          <p class="tip-line"><strong>Operator tip:</strong> Watch the Grids metric during the first 30 minutes after sunrise or before sunset. A sudden jump from a handful of grids to 40+ grids across multiple directions is a greyline opening — often the best propagation of the day on 40m and 80m.</p>
+        </div>
+        <div class="expl-aside">
+          <div class="aside-box">
+            <p class="aside-head">Data source</p>
+            <p>All decode data comes from a single receive station (W4GGJ) located in Florida. W4GGJ runs WSJT-X full-time and relays decoded records via Mission Control, a local relay agent, to the dashboard API. The data reflects one station's receive horizon — not a global aggregate.</p>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">Geographic bias</p>
+            <p>W4GGJ's Florida location means 40m decodes skew toward stations in the eastern United States, the Caribbean, and South America on ground-wave or short-hop F2. Trans-Atlantic paths open regularly on 40m at night and near greyline. West Coast stations and Pacific paths are less frequently heard due to skip distance — if you're operating from the western US, treat 40m decode counts as a lower bound on actual band activity.</p>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">SNR reference level</p>
+            <p>The SNR values shown are relative to a 2.5 kHz noise bandwidth as measured at the W4GGJ receiver. Antenna gain, local noise floor, and receiver noise figure all affect the absolute numbers. The relative trend — improving vs degrading SNR across consecutive 15-minute windows — is more useful than the absolute value.</p>
+          </div>
+          <div class="aside-box">
+            <p class="aside-head">Update cadence</p>
+            <p>Decode records are ingested and bucketed every 15 minutes by the backend cron. The dashboard tile refreshes every 10 minutes client-side. There may be up to a ~25-minute lag between a live decode at the station and its appearance in the current window — but the previous window's data is always complete and final.</p>
           </div>
         </div>
       </div>
