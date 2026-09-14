@@ -42,6 +42,76 @@ async function fetchJson<T>(url: string): Promise<T | null> {
   }
 }
 
+// ── Band activity (observed, from Mission Control's WSJT-X decode relay) ──
+// Mission Control's Home Agent pushes real WSJT-X decode telemetry up to its
+// Render app; /api/band-activity is a public-read endpoint summarizing the
+// last several 15-minute windows per band. This cron run pulls it the same
+// way it pulls every SWPC feed — fetch, cache to KV for the page's fast
+// read, backfill D1 for history — and degrades the same way too: if
+// Mission Control's free/starter-tier Render app is asleep or slow to wake,
+// fetchJson() returns null and writeBandActivity() no-ops, same as any
+// other source in this file failing for one run.
+const MISSION_CONTROL_BAND_ACTIVITY_URL =
+  'https://w4ggj-mission-control.onrender.com/api/band-activity';
+
+interface BandActivityRow {
+  band: string;
+  window_start: string;
+  window_minutes?: number;
+  decode_count?: number;
+  unique_calls?: number;
+  best_snr?: number | null;
+  grids?: string[];
+}
+
+async function fetchBandActivity(): Promise<{ rows: BandActivityRow[] } | null> {
+  return fetchJson<{ rows: BandActivityRow[] }>(MISSION_CONTROL_BAND_ACTIVITY_URL);
+}
+
+/**
+ * Writes the latest band-activity snapshot to KV (fast read for the page)
+ * and inserts one D1 row per (band, window_start) not already stored —
+ * same dedupe-by-NOT-EXISTS idiom backfillHistory()/backfillKpHistory() use.
+ */
+async function writeBandActivity(env: Env, rows: BandActivityRow[] | null | undefined): Promise<void> {
+  if (!Array.isArray(rows) || rows.length === 0) return;
+
+  await env.SOLAR_CACHE.put(
+    'band-activity',
+    JSON.stringify({ updated: new Date().toISOString(), rows }),
+    { expirationTtl: 7200 } // same TTL as the existing "live"/"solarwind" keys
+  );
+
+  const nowIso = new Date().toISOString();
+  const stmts = rows.map(r =>
+    env.DB.prepare(
+      `INSERT INTO band_activity_history
+         (recorded_at, band, window_start, window_minutes, decode_count, unique_calls, best_snr, grids)
+       SELECT ?, ?, ?, ?, ?, ?, ?, ?
+       WHERE NOT EXISTS (
+         SELECT 1 FROM band_activity_history
+         WHERE band = ? AND window_start = ?
+       )`
+    ).bind(
+      nowIso,
+      r.band,
+      r.window_start,
+      r.window_minutes ?? 15,
+      r.decode_count ?? 0,
+      r.unique_calls ?? 0,
+      r.best_snr ?? null,
+      JSON.stringify(r.grids ?? []),
+      r.band,
+      r.window_start
+    )
+  );
+
+  for (let i = 0; i < stmts.length; i += 100) {
+    await env.DB.batch(stmts.slice(i, i + 100));
+  }
+  console.log(`solar-cron: band-activity — ${rows.length} window(s) from Mission Control`);
+}
+
 /** Daily 10.7 cm flux (30-day series) — most recent non-null entry */
 function parseSfi10cm(rows: any[] | null): number | null {
   if (!Array.isArray(rows) || !rows.length) return null;
@@ -505,7 +575,7 @@ export default {
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
     console.log('solar-cron: fetch start');
 
-    const [flux10Raw, cycleRaw, kpRaw, xray7dRaw, xray3dRaw, xray1dRaw, alertsRaw, kpHistRaw, swWindRaw, swMagRaw] = await Promise.all([
+    const [flux10Raw, cycleRaw, kpRaw, xray7dRaw, xray3dRaw, xray1dRaw, alertsRaw, kpHistRaw, swWindRaw, swMagRaw, bandActivityRaw] = await Promise.all([
       fetchJson<any[]>(SWPC.flux10cm),
       fetchJson<any[]>(SWPC.solarCycle),
       fetchJson<any[]>(SWPC.kpCurrent),
@@ -516,6 +586,7 @@ export default {
       fetchJson<any[]>(SWPC.kpHistory),
       fetchJson<SwWindItem[]>(SWPC.swWind),
       fetchJson<SwMagItem[]>(SWPC.swMag),
+      fetchBandActivity(),
     ]);
 
     const sfi = parseSfi10cm(flux10Raw) ?? parseSfi(cycleRaw);
@@ -562,5 +633,6 @@ export default {
     try { await backfillHistory(env, flux10Raw, cycleRaw); } catch (e) { console.error('solar-cron: backfillHistory error', e); }
     try { await backfillKpHistory(env, kpHistRaw); } catch (e) { console.error('solar-cron: backfillKpHistory error', e); }
     try { await sendPushAlerts(env, live); } catch (e) { console.error('solar-cron: sendPushAlerts error', e); }
+    try { await writeBandActivity(env, bandActivityRaw?.rows); } catch (e) { console.error('solar-cron: writeBandActivity error', e); }
   },
 };
