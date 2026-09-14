@@ -224,6 +224,18 @@ import Shell from '../layouts/Shell.astro';
     </div>
   </section>
 
+  <section id="band-activity" aria-label="Observed band activity">
+    <div class="wrap">
+      <p class="seclabel">From W4GGJ Station · Live WSJT-X Decodes</p>
+      <h2>Observed band activity <a class="learn-chip" href="/learn/#band-activity">Learn →</a></h2>
+      <p class="sec-intro">Real FT8/FT4 decodes heard at the W4GGJ station, bucketed into 15-minute windows — see how the predicted conditions above actually compare to what's being heard right now.</p>
+      <div class="ba-grid" id="ba-grid">
+        <p class="data-updated" id="ba-status">Loading observed activity…</p>
+      </div>
+      <p class="data-updated" id="ba-updated" style="margin-top:14px"></p>
+    </div>
+  </section>
+
   <section id="greyline" aria-label="Solar terminator map">
     <div class="wrap">
       <p class="seclabel">Solar Terminator</p>
@@ -900,6 +912,57 @@ import Shell from '../layouts/Shell.astro';
     font-size: .65rem;
     color: var(--muted);
     opacity: .55;
+  }
+
+  /* ── Observed band activity (Mission Control WSJT-X relay) ── */
+  .ba-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .ba-tile {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    transition: border-color .18s;
+  }
+  .ba-tile:hover { border-color: var(--green-dk); }
+  .ba-tile.ba-quiet { opacity: .55; }
+  .ba-band {
+    font-family: var(--mono);
+    font-size: .85rem;
+    font-weight: 700;
+    color: var(--green-lt);
+  }
+  .ba-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-top: 8px;
+  }
+  .ba-stat {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-family: var(--mono);
+    font-size: .7rem;
+    color: var(--muted);
+  }
+  .ba-stat b { color: var(--text); font-weight: 600; }
+  .ba-window {
+    font-family: var(--mono);
+    font-size: .62rem;
+    color: var(--muted);
+    opacity: .6;
+    margin-top: 6px;
+  }
+  .ba-empty {
+    font-family: var(--mono);
+    font-size: .78rem;
+    color: var(--muted);
+    opacity: .65;
   }
 
   /* ── Greyline map ── */
@@ -1882,6 +1945,7 @@ import Shell from '../layouts/Shell.astro';
     nextRefreshAt = Date.now() + 10 * 60_000;
     loadSolar();
     loadHistory(currentHours);
+    loadBandActivity();
   }, 10 * 60_000);
 
   // Refresh solar images every 15 minutes
@@ -2198,6 +2262,66 @@ import Shell from '../layouts/Shell.astro';
     } catch { /* non-fatal */ }
   }
 
+  /* ── Observed band activity (Mission Control WSJT-X relay) ── */
+  interface BandActivityRow {
+    band: string;
+    window_start: string;
+    window_minutes?: number;
+    decode_count?: number;
+    unique_calls?: number;
+    best_snr?: number | null;
+    grids?: string[];
+  }
+
+  async function loadBandActivity(): Promise<void> {
+    const grid = document.getElementById('ba-grid');
+    const stat = document.getElementById('ba-status');
+    const updatedEl = document.getElementById('ba-updated');
+    if (!grid) return;
+    try {
+      const res = await fetch('/api/band-activity');
+      if (!res.ok) {
+        if (stat) stat.textContent = 'No observed activity yet — the cron worker will populate this on its first 15-minute cycle.';
+        return;
+      }
+      const d = await res.json() as { updated: string; rows: BandActivityRow[] };
+      if (!d.rows?.length) {
+        if (stat) stat.textContent = 'No decodes heard in the last window.';
+        return;
+      }
+
+      // One tile per band, latest window first per band, sorted by decode count
+      const latestByBand = new Map<string, BandActivityRow>();
+      for (const r of d.rows) {
+        const prev = latestByBand.get(r.band);
+        if (!prev || r.window_start > prev.window_start) latestByBand.set(r.band, r);
+      }
+      const tiles = [...latestByBand.values()].sort((a, b) => (b.decode_count ?? 0) - (a.decode_count ?? 0));
+
+      if (stat) stat.remove();
+      grid.innerHTML = tiles.map(r => {
+        const quiet = (r.decode_count ?? 0) === 0;
+        const gridCount = r.grids?.length ?? 0;
+        const windowTime = new Date(r.window_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return `<div class="ba-tile${quiet ? ' ba-quiet' : ''}">
+          <span class="ba-band">${r.band}</span>
+          <div class="ba-stats">
+            <span class="ba-stat">Decodes <b>${r.decode_count ?? 0}</b></span>
+            <span class="ba-stat">Unique calls <b>${r.unique_calls ?? 0}</b></span>
+            <span class="ba-stat">Best SNR <b>${r.best_snr !== null && r.best_snr !== undefined ? (r.best_snr > 0 ? '+' : '') + r.best_snr : '—'}</b></span>
+            <span class="ba-stat">Grids <b>${gridCount}</b></span>
+          </div>
+          <div class="ba-window">${r.window_minutes ?? 15}-min window · ${windowTime}</div>
+        </div>`;
+      }).join('');
+
+      if (updatedEl) {
+        const mins = Math.round((Date.now() - new Date(d.updated).getTime()) / 60_000);
+        updatedEl.textContent = `Station: W4GGJ · updated ${mins <= 0 ? 'just now' : mins + ' min ago'}`;
+      }
+    } catch { /* non-fatal */ }
+  }
+
   /* ── Ham contest calendar ── */
   function renderContestCalendar(): void {
     const el = document.getElementById('contest-list');
@@ -2352,6 +2476,7 @@ import Shell from '../layouts/Shell.astro';
   updateAurora(null);
   loadSpaceWx();
   loadSolarRegions();
+  loadBandActivity();
   loadProtons();
   loadFlares();
   loadKp3day();
