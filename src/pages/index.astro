@@ -914,35 +914,35 @@ import Shell from '../layouts/Shell.astro';
     opacity: .55;
   }
 
-  /* ── Observed band activity (Mission Control WSJT-X relay) ── */
-  .ba-grid {
+  /* ── Observed band activity — :global() because tiles are injected via innerHTML ── */
+  :global(.ba-grid) {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 10px;
     margin-top: 20px;
   }
-  .ba-tile {
+  :global(.ba-tile) {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 12px 14px;
     transition: border-color .18s;
   }
-  .ba-tile:hover { border-color: var(--green-dk); }
-  .ba-tile.ba-quiet { opacity: .55; }
-  .ba-band {
+  :global(.ba-tile:hover) { border-color: var(--green-dk); }
+  :global(.ba-tile.ba-quiet) { opacity: .55; }
+  :global(.ba-band) {
     font-family: var(--mono);
     font-size: .85rem;
     font-weight: 700;
     color: var(--green-lt);
   }
-  .ba-stats {
+  :global(.ba-stats) {
     display: flex;
     flex-direction: column;
     gap: 3px;
     margin-top: 8px;
   }
-  .ba-stat {
+  :global(.ba-stat) {
     display: flex;
     justify-content: space-between;
     gap: 10px;
@@ -950,15 +950,15 @@ import Shell from '../layouts/Shell.astro';
     font-size: .7rem;
     color: var(--muted);
   }
-  .ba-stat b { color: var(--text); font-weight: 600; }
-  .ba-window {
+  :global(.ba-stat b) { color: var(--text); font-weight: 600; }
+  :global(.ba-window) {
     font-family: var(--mono);
     font-size: .62rem;
     color: var(--muted);
     opacity: .6;
     margin-top: 6px;
   }
-  .ba-empty {
+  :global(.ba-empty) {
     font-family: var(--mono);
     font-size: .78rem;
     color: var(--muted);
