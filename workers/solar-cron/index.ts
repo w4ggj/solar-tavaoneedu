@@ -571,6 +571,40 @@ function parseSolarWind(windArr: SwWindItem[] | null, magArr: SwMagItem[] | null
   return { bz, bt, speed, density, updated, series: { labels: [], bz: [], bt: [], speed: [], density: [] } };
 }
 
+const STEREO_SOURCES = [
+  'https://stereo-ssc.nascom.nasa.gov/beacon/latest_256_A_195.jpg',
+  'https://stereo.gsfc.nasa.gov/img/latest/latest_A_195_256.jpg',
+  'https://stereo-ssc.nascom.nasa.gov/browse/latest/latest_256_A_195.jpg',
+];
+
+async function fetchStereoImage(env: Env): Promise<void> {
+  for (const url of STEREO_SOURCES) {
+    try {
+      const res = await fetch(url, {
+        headers: {
+          'User-Agent': 'TavaOneSolar/1.0 (+https://solar.tavaoneeducation.org)',
+          'Accept': 'image/jpeg,image/*',
+          'Referer': 'https://stereo-ssc.nascom.nasa.gov/',
+        },
+      });
+      if (!res.ok) continue;
+      const buf = await res.arrayBuffer();
+      if (buf.byteLength < 1000) continue; // reject empty/error responses
+      // Store as base64 — KV values are strings; ArrayBuffer not natively supported
+      const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+      await env.SOLAR_CACHE.put('stereo-a-195', b64, {
+        expirationTtl: 86400, // keep last good image for 24 h
+        metadata: { fetched: new Date().toISOString(), source: url },
+      });
+      console.log(`solar-cron: STEREO-A image cached (${buf.byteLength} bytes) from ${url}`);
+      return;
+    } catch (e) {
+      console.warn(`solar-cron: STEREO-A fetch failed for ${url}`, e);
+    }
+  }
+  console.warn('solar-cron: STEREO-A image unavailable from all sources — keeping previous cached image');
+}
+
 export default {
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
     console.log('solar-cron: fetch start');
@@ -634,5 +668,6 @@ export default {
     try { await backfillKpHistory(env, kpHistRaw); } catch (e) { console.error('solar-cron: backfillKpHistory error', e); }
     try { await sendPushAlerts(env, live); } catch (e) { console.error('solar-cron: sendPushAlerts error', e); }
     try { await writeBandActivity(env, bandActivityRaw?.rows); } catch (e) { console.error('solar-cron: writeBandActivity error', e); }
+    try { await fetchStereoImage(env); } catch (e) { console.error('solar-cron: fetchStereoImage error', e); }
   },
 };
