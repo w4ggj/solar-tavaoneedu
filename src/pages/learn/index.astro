@@ -15,7 +15,7 @@ import Shell from '../../layouts/Shell.astro';
     </div>
     <div class="signal" aria-hidden="true">
       <svg viewBox="0 0 1200 80" preserveAspectRatio="none">
-        <g class="wave-grp" fill="none" stroke="#10b981" stroke-width="2" opacity="0.65">
+        <g class="wave-grp" fill="none" stroke="#00a8cc" stroke-width="2" opacity="0.65">
           <path d="M -200,40 C -167,12 -133,12 -100,40 C -67,68 -33,68 0,40 C 33,12 67,12 100,40 C 133,68 167,68 200,40 C 233,12 267,12 300,40 C 333,68 367,68 400,40 C 433,12 467,12 500,40 C 533,68 567,68 600,40 C 633,12 667,12 700,40 C 733,68 767,68 800,40 C 833,12 867,12 900,40 C 933,68 967,68 1000,40 C 1033,12 1067,12 1100,40 C 1133,68 1167,68 1200,40 C 1233,12 1267,12 1300,40 C 1333,68 1367,68 1400,40 C 1433,12 1467,12 1500,40 C 1533,68 1567,68 1600,40 C 1633,12 1667,12 1700,40 C 1733,68 1767,68 1800,40 C 1833,12 1867,12 1900,40 C 1933,68 1967,68 2000,40 C 2033,12 2067,12 2100,40 C 2133,68 2167,68 2200,40"/>
         </g>
       </svg>
@@ -1149,7 +1149,7 @@ import Shell from '../../layouts/Shell.astro';
 
           <h3>The S-Scale</h3>
           <div class="scale-table">
-            <div class="scale-row"><span class="scale-badge" style="background:rgba(16,185,129,.15);color:#10b981">S0</span><span class="scale-desc">&lt; 10 PFU — background level, no impact</span></div>
+            <div class="scale-row"><span class="scale-badge" style="background:rgba(0,168,204,.15);color:#00a8cc">S0</span><span class="scale-desc">&lt; 10 PFU — background level, no impact</span></div>
             <div class="scale-row"><span class="scale-badge" style="background:rgba(251,191,36,.12);color:#fbbf24">S1</span><span class="scale-desc">≥ 10 PFU — minor; polar HF slightly degraded, satellite operators notified</span></div>
             <div class="scale-row"><span class="scale-badge" style="background:rgba(251,146,60,.12);color:#fb923c">S2</span><span class="scale-desc">≥ 100 PFU — moderate; polar HF blackout possible; high-latitude passengers at risk</span></div>
             <div class="scale-row"><span class="scale-badge" style="background:rgba(239,68,68,.12);color:#f87171">S3</span><span class="scale-desc">≥ 1,000 PFU — strong; single-event upsets in satellites; transpolar aviation disrupted</span></div>
@@ -1225,7 +1225,7 @@ import Shell from '../../layouts/Shell.astro';
           <div class="scale-table">
             <div class="scale-row"><span class="scale-badge" style="background:rgba(148,163,184,.08);color:#94a3b8">A</span><span class="scale-desc">&lt; 10⁻⁷ W/m² — background; no detectable HF impact</span></div>
             <div class="scale-row"><span class="scale-badge" style="background:rgba(148,163,184,.08);color:#94a3b8">B</span><span class="scale-desc">10⁻⁷ to 10⁻⁶ W/m² — very minor; essentially harmless to radio</span></div>
-            <div class="scale-row"><span class="scale-badge" style="background:rgba(110,231,183,.12);color:#6ee7b7">C</span><span class="scale-desc">10⁻⁶ to 10⁻⁵ W/m² — minor; small short-wave fadeouts possible on sunlit side</span></div>
+            <div class="scale-row"><span class="scale-badge" style="background:rgba(0,212,255,.12);color:#7ee8fa">C</span><span class="scale-desc">10⁻⁶ to 10⁻⁵ W/m² — minor; small short-wave fadeouts possible on sunlit side</span></div>
             <div class="scale-row"><span class="scale-badge" style="background:rgba(251,191,36,.12);color:#fbbf24">M</span><span class="scale-desc">10⁻⁵ to 10⁻⁴ W/m² — moderate; R1–R2 blackout; 10–20 MHz degraded on sunlit side</span></div>
             <div class="scale-row"><span class="scale-badge" style="background:rgba(248,113,113,.14);color:#f87171">X</span><span class="scale-desc">≥ 10⁻⁴ W/m² — strong to extreme; R3–R5 blackout; wide-area HF loss possible</span></div>
           </div>
@@ -1444,7 +1444,7 @@ import Shell from '../../layouts/Shell.astro';
   text-decoration: none;
   transition: border-color 0.15s, background 0.15s;
 }
-.toc-item:hover { border-color: var(--green); background: rgba(16,185,129,0.06); }
+.toc-item:hover { border-color: var(--green); background: rgba(0,168,204,0.06); }
 .toc-num { font-family: var(--mono); font-size: 0.75rem; color: var(--green); min-width: 24px; }
 .toc-label { font-size: 0.9rem; font-weight: 500; color: var(--fg); }
 
@@ -1496,14 +1496,14 @@ import Shell from '../../layouts/Shell.astro';
   text-align: center;
   font-weight: 600;
 }
-.st-val.excel { background: rgba(16,185,129,.12); color: #10b981; }
+.st-val.excel { background: rgba(0,168,204,.12); color: #00a8cc; }
 .st-val.good  { background: rgba(251,191,36,.10); color: #fbbf24; }
 .st-val.mod   { background: rgba(251,146,60,.10); color: #fb923c; }
 .st-val.low   { background: rgba(248,113,113,.10); color: #f87171; }
 .st-val.bad   { background: rgba(220,38,38,.12); color: #ef4444; }
 .st-desc { font-size: 0.88rem; color: var(--muted); line-height: 1.5; }
 
-.kp-color-0 { background: rgba(16,185,129,.12); color: #10b981; }
+.kp-color-0 { background: rgba(0,168,204,.12); color: #00a8cc; }
 .kp-color-3 { background: rgba(251,191,36,.10); color: #fbbf24; }
 .kp-color-5 { background: rgba(251,146,60,.10); color: #fb923c; }
 .kp-color-7 { background: rgba(248,113,113,.10); color: #f87171; }
@@ -1539,14 +1539,14 @@ import Shell from '../../layouts/Shell.astro';
 .tile-mock.sfi .tm-value { color: #fbbf24; }
 .tile-mock.aindex .tm-value { color: #fbbf24; }
 .tile-mock.kindex .tm-value { color: #fbbf24; }
-.tile-mock.xray .tm-value { color: #10b981; }
+.tile-mock.xray .tm-value { color: #00a8cc; }
 
 .tile-explain-body h3 { font-size: 1.1rem; font-weight: 600; color: var(--fg); margin-bottom: 0.6rem; }
 .tile-explain-body p { color: var(--muted); line-height: 1.7; margin-bottom: 0.8rem; font-size: 0.95rem; }
 
 /* ── Band condition examples ───────────────────────────────── */
 .cond-ex { padding: 0.1em 0.4em; border-radius: 3px; font-size: 0.85em; }
-.cond-ex.excellent { background: rgba(16,185,129,.15); color: #10b981; }
+.cond-ex.excellent { background: rgba(0,168,204,.15); color: #00a8cc; }
 .cond-ex.good { background: rgba(132,204,22,.12); color: #84cc16; }
 .cond-ex.fair { background: rgba(251,191,36,.10); color: #fbbf24; }
 .cond-ex.poor { background: rgba(251,146,60,.10); color: #fb923c; }
@@ -1580,7 +1580,7 @@ import Shell from '../../layouts/Shell.astro';
 
 code {
   font-family: var(--mono);
-  background: rgba(16,185,129,.08);
+  background: rgba(0,168,204,.08);
   color: var(--green);
   padding: 0.1em 0.35em;
   border-radius: 3px;

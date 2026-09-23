@@ -26,7 +26,7 @@ import Shell from '../layouts/Shell.astro';
     </div>
     <div class="signal" aria-hidden="true">
       <svg viewBox="0 0 1200 80" preserveAspectRatio="none">
-        <g class="wave-grp" fill="none" stroke="#10b981" stroke-width="2" opacity="0.65">
+        <g class="wave-grp" fill="none" stroke="#00a8cc" stroke-width="2" opacity="0.65">
           <path d="M -200,40 C -167,12 -133,12 -100,40 C -67,68 -33,68 0,40 C 33,12 67,12 100,40 C 133,68 167,68 200,40 C 233,12 267,12 300,40 C 333,68 367,68 400,40 C 433,12 467,12 500,40 C 533,68 567,68 600,40 C 633,12 667,12 700,40 C 733,68 767,68 800,40 C 833,12 867,12 900,40 C 933,68 967,68 1000,40 C 1033,12 1067,12 1100,40 C 1133,68 1167,68 1200,40 C 1233,12 1267,12 1300,40 C 1333,68 1367,68 1400,40 C 1433,12 1467,12 1500,40 C 1533,68 1567,68 1600,40 C 1633,12 1667,12 1700,40 C 1733,68 1767,68 1800,40 C 1833,12 1867,12 1900,40 C 1933,68 1967,68 2000,40 C 2033,12 2067,12 2100,40 C 2133,68 2167,68 2200,40"/>
         </g>
       </svg>
@@ -583,12 +583,12 @@ import Shell from '../layouts/Shell.astro';
     transition: border-color .18s, background .18s;
   }
   .sw-badge.sw-south { border-color: rgba(239,68,68,.4); background: rgba(239,68,68,.05); }
-  .sw-badge.sw-north { border-color: rgba(16,185,129,.35); background: rgba(16,185,129,.05); }
+  .sw-badge.sw-north { border-color: rgba(0,168,204,.35); background: rgba(0,168,204,.05); }
   .sw-val {
     font-family: var(--mono); font-size: .98rem; font-weight: 700; color: var(--text); line-height: 1;
   }
   .sw-badge.sw-south .sw-val { color: #f87171; }
-  .sw-badge.sw-north .sw-val { color: #10b981; }
+  .sw-badge.sw-north .sw-val { color: #00a8cc; }
   .sw-sub { font-family: var(--mono); font-size: .58rem; color: var(--muted); margin-top: 3px; letter-spacing: .04em; white-space: nowrap; }
   .sw-mini-chart { border-radius: 4px; background: rgba(0,0,0,.2); flex-shrink: 0; }
   .sw-updated { font-family: var(--mono); font-size: .65rem; color: var(--muted); }
@@ -645,7 +645,7 @@ import Shell from '../layouts/Shell.astro';
     transition: background .15s;
   }
   .push-sub-btn { background: var(--green-dk); color: var(--green-lt); }
-  .push-sub-btn:hover { background: #10b981; color: #fff; }
+  .push-sub-btn:hover { background: #00a8cc; color: #fff; }
   .push-unsub-btn { background: rgba(248,113,113,.12); color: #f87171; border: 1px solid rgba(248,113,113,.2); }
   .push-unsub-btn:hover { background: rgba(248,113,113,.22); }
 
@@ -904,7 +904,7 @@ import Shell from '../layouts/Shell.astro';
     cursor: pointer;
   }
   .bc-reset-btn:hover { border-color: var(--green-dk); color: var(--green-lt); }
-  .bc-slider { width: 100%; accent-color: #10b981; cursor: pointer; }
+  .bc-slider { width: 100%; accent-color: #00a8cc; cursor: pointer; }
   .bc-slider-ticks {
     display: flex;
     justify-content: space-between;
@@ -1123,7 +1123,7 @@ import Shell from '../layouts/Shell.astro';
   .ar-table tr:hover td { background: rgba(255,255,255,.02); }
   .ar-num { color: var(--green-lt); font-weight: 700; }
   .ar-mag { color: var(--muted); }
-  .ar-prob-c { color: #6ee7b7; }
+  .ar-prob-c { color: #7ee8fa; }
   .ar-prob-m { color: #fbbf24; }
   .ar-prob-x { color: #f87171; }
   .ar-empty { color: var(--muted); opacity: .5; font-family: var(--mono); font-size: .75rem; }
@@ -1147,7 +1147,7 @@ import Shell from '../layouts/Shell.astro';
   .flare-table tr:last-child td { border-bottom: none; }
   .flare-table tr:hover td { background: rgba(255,255,255,.02); }
   .flare-cls-a, .flare-cls-b { color: var(--muted); }
-  .flare-cls-c { color: #6ee7b7; }
+  .flare-cls-c { color: #7ee8fa; }
   .flare-cls-m { color: #fbbf24; font-weight: 700; }
   .flare-cls-x { color: #f87171; font-weight: 700; }
   .flare-empty { color: var(--muted); opacity: .5; font-family: var(--mono); font-size: .75rem; }
@@ -1183,8 +1183,8 @@ import Shell from '../layouts/Shell.astro';
   }
   .contest-item:hover { border-color: var(--green-dk); }
   .contest-item.contest-soon {
-    border-color: rgba(16,185,129,.4);
-    background: rgba(16,185,129,.03);
+    border-color: rgba(0,168,204,.4);
+    background: rgba(0,168,204,.03);
   }
   .contest-header {
     display: flex; align-items: center; justify-content: space-between; gap: 8px;
@@ -1202,9 +1202,9 @@ import Shell from '../layouts/Shell.astro';
     flex-shrink: 0; white-space: nowrap;
   }
   .contest-item.contest-soon .contest-countdown {
-    background: rgba(16,185,129,.12);
-    border-color: rgba(16,185,129,.25);
-    color: #6ee7b7;
+    background: rgba(0,168,204,.12);
+    border-color: rgba(0,168,204,.25);
+    color: #7ee8fa;
   }
   .contest-name {
     font-family: var(--mono); font-size: .86rem; font-weight: 700;
@@ -1217,7 +1217,7 @@ import Shell from '../layouts/Shell.astro';
     color: var(--muted); border: 1px solid var(--border);
     background: rgba(255,255,255,.04);
   }
-  .contest-tag.mode-cw    { border-color: rgba(16,185,129,.35);  color: #6ee7b7; background: rgba(16,185,129,.07); }
+  .contest-tag.mode-cw    { border-color: rgba(0,168,204,.35);  color: #7ee8fa; background: rgba(0,168,204,.07); }
   .contest-tag.mode-ssb   { border-color: rgba(251,191,36,.35);  color: #fbbf24; background: rgba(251,191,36,.07); }
   .contest-tag.mode-mixed { border-color: rgba(167,139,250,.35); color: #a78bfa; background: rgba(167,139,250,.07); }
 
@@ -1238,8 +1238,8 @@ import Shell from '../layouts/Shell.astro';
     padding: 16px 14px 14px;
     transition: border-color .18s, background .18s;
   }
-  :global(.band-tile.bc-excellent) { border-color: #10b981; background: rgba(16,185,129,.07); }
-  :global(.band-tile.bc-good)      { border-color: #34d399; background: rgba(52,211,153,.05); }
+  :global(.band-tile.bc-excellent) { border-color: #00a8cc; background: rgba(0,168,204,.07); }
+  :global(.band-tile.bc-good)      { border-color: #00d4ff; background: rgba(0,212,255,.05); }
   :global(.band-tile.bc-fair)      { border-color: #fbbf24; background: rgba(251,191,36,.05); }
   :global(.band-tile.bc-poor)      { border-color: #f87171; background: rgba(248,113,113,.05); }
   :global(.band-tile.bc-closed)    { border-color: #1e293b; }
@@ -1262,8 +1262,8 @@ import Shell from '../layouts/Shell.astro';
     letter-spacing: .14em;
     text-transform: uppercase;
   }
-  :global(.bc-excellent .bt-label) { color: #10b981; }
-  :global(.bc-good      .bt-label) { color: #34d399; }
+  :global(.bc-excellent .bt-label) { color: #00a8cc; }
+  :global(.bc-good      .bt-label) { color: #00d4ff; }
   :global(.bc-fair      .bt-label) { color: #fbbf24; }
   :global(.bc-poor      .bt-label) { color: #f87171; }
   :global(.bc-closed    .bt-label) { color: #334155; }
@@ -1284,8 +1284,8 @@ import Shell from '../layouts/Shell.astro';
   :global(.bt-seg:nth-child(3)) { height: 64%; }
   :global(.bt-seg:nth-child(4)) { height: 81%; }
   :global(.bt-seg:nth-child(5)) { height: 100%; }
-  :global(.bc-excellent .bt-seg.on) { background: #10b981; }
-  :global(.bc-good      .bt-seg.on) { background: #34d399; }
+  :global(.bc-excellent .bt-seg.on) { background: #00a8cc; }
+  :global(.bc-good      .bt-seg.on) { background: #00d4ff; }
   :global(.bc-fair      .bt-seg.on) { background: #fbbf24; }
   :global(.bc-poor      .bt-seg.on) { background: #f87171; }
   :global(.bc-closed    .bt-seg.on) { background: #334155; }
@@ -1300,8 +1300,8 @@ import Shell from '../layouts/Shell.astro';
     letter-spacing: .08em;
     text-transform: uppercase;
     color: var(--green-lt);
-    background: rgba(16,185,129,.08);
-    border: 1px solid rgba(16,185,129,.22);
+    background: rgba(0,168,204,.08);
+    border: 1px solid rgba(0,168,204,.22);
     border-radius: 6px;
     padding: 3px 9px;
     text-decoration: none;
@@ -1313,8 +1313,8 @@ import Shell from '../layouts/Shell.astro';
     top: -2px;
   }
   .learn-chip:hover {
-    background: rgba(16,185,129,.16);
-    border-color: rgba(16,185,129,.4);
+    background: rgba(0,168,204,.16);
+    border-color: rgba(0,168,204,.4);
   }
   /* inline variant for sub-rows that have no h2 */
   .wwv-label .learn-chip,
@@ -1872,10 +1872,10 @@ import Shell from '../layouts/Shell.astro';
       const sfis = rows.filter(r => r.sfi !== null).map(r => Number(r.sfi));
       const sfiMin = sfis.length ? Math.max(0, Math.floor(Math.min(...sfis) - 10)) : 60;
       const sfiMax = sfis.length ? Math.ceil(Math.max(...sfis) + 10) : 250;
-      sparkline('chart-sfi', rows, 'sfi', sfiMin, sfiMax, '#10b981');
+      sparkline('chart-sfi', rows, 'sfi', sfiMin, sfiMax, '#00a8cc');
 
       // K-index — fixed 0–9
-      sparkline('chart-kp', rows, 'k_index', 0, 9, '#10b981', 5);
+      sparkline('chart-kp', rows, 'k_index', 0, 9, '#00a8cc', 5);
 
       // Current value + trend in chart headers
       const latestSfi = sfis[sfis.length - 1];
@@ -2029,7 +2029,7 @@ import Shell from '../layouts/Shell.astro';
       const x = toX(i), y = toY(bz[i]!);
       if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
     }
-    ctx.strokeStyle = '#6ee7b7'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.strokeStyle = '#7ee8fa'; ctx.lineWidth = 1.5; ctx.stroke();
   }
 
   async function loadSolarWind(): Promise<void> {
@@ -2188,7 +2188,7 @@ import Shell from '../layouts/Shell.astro';
 
       daysEl.innerHTML = d.days.map(day => {
         const storm  = day.gScale >= 3 ? 'swx-severe' : day.gScale >= 1 ? 'swx-active' : '';
-        const kpCol  = day.kpMax >= 5 ? '#f87171' : day.kpMax >= 3 ? '#fbbf24' : '#34d399';
+        const kpCol  = day.kpMax >= 5 ? '#f87171' : day.kpMax >= 3 ? '#fbbf24' : '#00d4ff';
         const kpTxt  = 'Kp' + (day.kpMax >= 5 ? '≥' : '≤') + day.kpMax;
         const probes = [
           day.rMinor > 0 ? `<span class="swx-pill swx-pill-r">R1+ <b>${day.rMinor}%</b></span>` : '',
@@ -2206,7 +2206,7 @@ import Shell from '../layouts/Shell.astro';
       const today = d.days[0];
       if (today) {
         const probs = [
-          { lbl: 'C-flare', val: today.rMinor, color: '#6ee7b7' },
+          { lbl: 'C-flare', val: today.rMinor, color: '#7ee8fa' },
           { lbl: 'M-flare', val: today.rMajor, color: '#fbbf24' },
           { lbl: 'G-storm', val: today.gProb,  color: '#a78bfa' },
         ];
@@ -2448,7 +2448,7 @@ import Shell from '../layouts/Shell.astro';
       const chart = document.getElementById('kp3day-chart');
       if (!chart) return;
       function kpCol(kp: number): string {
-        return kp >= 5 ? '#f87171' : kp >= 3 ? '#fbbf24' : '#10b981';
+        return kp >= 5 ? '#f87171' : kp >= 3 ? '#fbbf24' : '#00a8cc';
       }
       chart.innerHTML = pts.map(p => {
         const dt    = new Date(p.t);
@@ -2588,7 +2588,7 @@ import Shell from '../layouts/Shell.astro';
 
     function kpColor(v: number | null): string {
       if (v === null) return '#334155';
-      if (v <= 2) return '#10b981';
+      if (v <= 2) return '#00a8cc';
       if (v <= 4) return '#fbbf24';
       return '#f87171';
     }
@@ -2610,11 +2610,11 @@ import Shell from '../layouts/Shell.astro';
             label: 'Kp forecast',
             type: 'line',
             data: fcstData,
-            borderColor: '#6ee7b7',
+            borderColor: '#7ee8fa',
             borderWidth: 2,
             borderDash: [5, 3],
             pointRadius: fcstLabels.length < 20 ? 3 : 0,
-            pointBackgroundColor: '#6ee7b7',
+            pointBackgroundColor: '#7ee8fa',
             fill: false,
             tension: 0.3,
           },
@@ -2673,7 +2673,7 @@ import Shell from '../layouts/Shell.astro';
     strip.innerHTML = future.map(f => {
       const h      = new Date(f.t).getUTCHours().toString().padStart(2, '0') + 'Z';
       const kp     = f.v;
-      const col    = kp >= 5 ? '#f87171' : kp >= 3 ? '#fbbf24' : '#10b981';
+      const col    = kp >= 5 ? '#f87171' : kp >= 3 ? '#fbbf24' : '#00a8cc';
       const barH   = Math.max(3, Math.round((kp / 9) * 44));
       return `<div class="fc-slot" role="listitem" aria-label="Kp ${kp.toFixed(1)} at ${h}">
         <div class="fc-bars-area">
@@ -2689,7 +2689,7 @@ import Shell from '../layouts/Shell.astro';
     const canvas = document.getElementById(id) as HTMLCanvasElement;
     const ctx = canvas.getContext('2d')!;
     function kpColor(v: number): string {
-      return v <= 2 ? '#10b981' : v <= 4 ? '#fbbf24' : '#f87171';
+      return v <= 2 ? '#00a8cc' : v <= 4 ? '#fbbf24' : '#f87171';
     }
     return new Chart(ctx, {
       type: 'bar',
@@ -2770,7 +2770,7 @@ import Shell from '../layouts/Shell.astro';
   async function loadTrends() {
     // SFI
     const sfiData = await fetchSeries('sfi', 30);
-    if (sfiData) charts['sfi'] = makeLineChart('canvas-sfi', sfiData, '#10b981');
+    if (sfiData) charts['sfi'] = makeLineChart('canvas-sfi', sfiData, '#00a8cc');
 
     // K-index + forecast
     const [kpData, fcstRaw] = await Promise.all([
@@ -2806,7 +2806,7 @@ import Shell from '../layouts/Shell.astro';
 
     // Sunspots
     const ssnData = await fetchSeries('sunspots', 30);
-    if (ssnData) charts['ssn'] = makeLineChart('canvas-ssn', ssnData, '#6ee7b7');
+    if (ssnData) charts['ssn'] = makeLineChart('canvas-ssn', ssnData, '#7ee8fa');
 
     // Solar Cycle 25 position
     try {
@@ -2840,8 +2840,8 @@ import Shell from '../layouts/Shell.astro';
           {
             label: 'Observed SSN',
             data: data.map(r => r.observed),
-            borderColor: '#10b981',
-            backgroundColor: '#10b98118',
+            borderColor: '#00a8cc',
+            backgroundColor: '#00a8cc18',
             borderWidth: 2,
             pointRadius: 0,
             fill: true,
@@ -2851,7 +2851,7 @@ import Shell from '../layouts/Shell.astro';
           {
             label: 'NOAA Predicted',
             data: data.map(r => r.predicted),
-            borderColor: '#6ee7b7',
+            borderColor: '#7ee8fa',
             borderWidth: 1.5,
             borderDash: [5, 4],
             pointRadius: 0,
@@ -2862,7 +2862,7 @@ import Shell from '../layouts/Shell.astro';
           {
             label: 'High',
             data: data.map(r => r.high),
-            borderColor: '#6ee7b722',
+            borderColor: '#7ee8fa22',
             borderWidth: 0,
             pointRadius: 0,
             fill: '+1',
@@ -2872,8 +2872,8 @@ import Shell from '../layouts/Shell.astro';
           {
             label: 'Low',
             data: data.map(r => r.low),
-            borderColor: '#6ee7b710',
-            backgroundColor: '#6ee7b710',
+            borderColor: '#7ee8fa10',
+            backgroundColor: '#7ee8fa10',
             borderWidth: 0,
             pointRadius: 0,
             fill: false,
@@ -2909,7 +2909,7 @@ import Shell from '../layouts/Shell.astro';
     sfi: 'sfi', ssn: 'sunspots', aindex: 'aindex', kp: 'kindex',
   };
   const CHART_COLOR: Record<string, string> = {
-    sfi: '#10b981', ssn: '#6ee7b7', aindex: '#a78bfa', kp: '#10b981',
+    sfi: '#00a8cc', ssn: '#7ee8fa', aindex: '#a78bfa', kp: '#00a8cc',
   };
   const CHART_REF: Record<string, number | undefined> = {
     aindex: 50,
@@ -2927,7 +2927,7 @@ import Shell from '../layouts/Shell.astro';
     }
     const old = charts[chartKey];
     if (old) old.destroy();
-    charts[chartKey] = makeLineChart(`canvas-${chartKey}`, data, CHART_COLOR[chartKey] ?? '#10b981', CHART_REF[chartKey]);
+    charts[chartKey] = makeLineChart(`canvas-${chartKey}`, data, CHART_COLOR[chartKey] ?? '#00a8cc', CHART_REF[chartKey]);
   }
 
   // Tab wiring

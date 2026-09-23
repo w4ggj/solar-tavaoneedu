@@ -14,7 +14,7 @@ import Shell from '../../layouts/Shell.astro';
     </div>
     <div class="signal" aria-hidden="true">
       <svg viewBox="0 0 1200 80" preserveAspectRatio="none">
-        <g class="wave-grp" fill="none" stroke="#10b981" stroke-width="2" opacity="0.65">
+        <g class="wave-grp" fill="none" stroke="#00a8cc" stroke-width="2" opacity="0.65">
           <path d="M -200,40 C -167,12 -133,12 -100,40 C -67,68 -33,68 0,40 C 33,12 67,12 100,40 C 133,68 167,68 200,40 C 233,12 267,12 300,40 C 333,68 367,68 400,40 C 433,12 467,12 500,40 C 533,68 567,68 600,40 C 633,12 667,12 700,40 C 733,68 767,68 800,40 C 833,12 867,12 900,40 C 933,68 967,68 1000,40 C 1033,12 1067,12 1100,40 C 1133,68 1167,68 1200,40 C 1233,12 1267,12 1300,40 C 1333,68 1367,68 1400,40 C 1433,12 1467,12 1500,40 C 1533,68 1567,68 1600,40 C 1633,12 1667,12 1700,40 C 1733,68 1767,68 1800,40 C 1833,12 1867,12 1900,40 C 1933,68 1967,68 2000,40 C 2033,12 2067,12 2100,40 C 2133,68 2167,68 2200,40"/>
         </g>
       </svg>
@@ -89,13 +89,13 @@ import Shell from '../../layouts/Shell.astro';
 
             <!-- User location -->
             <g id="user-marker" style="display:none">
-              <circle id="user-dot" cx="0" cy="0" r="1.8" fill="#6ee7b7"/>
-              <circle id="user-ring" cx="0" cy="0" r="3.5" fill="none" stroke="#6ee7b7" stroke-width="0.7" opacity="0.55"/>
+              <circle id="user-dot" cx="0" cy="0" r="1.8" fill="#7ee8fa"/>
+              <circle id="user-ring" cx="0" cy="0" r="3.5" fill="none" stroke="#7ee8fa" stroke-width="0.7" opacity="0.55"/>
             </g>
 
             <!-- Selected cell highlight -->
             <rect id="highlight" x="0" y="0" width="20" height="10" fill="none"
-                  stroke="#34d399" stroke-width="0.9" rx="0.4" opacity="0" pointer-events="none"/>
+                  stroke="#00d4ff" stroke-width="0.9" rx="0.4" opacity="0" pointer-events="none"/>
             <!-- Great-circle path (rendered by JS) -->
             <g id="gc-layer" pointer-events="none"></g>
           </svg>
@@ -144,9 +144,9 @@ import Shell from '../../layouts/Shell.astro';
       <div class="map-legend">
         <span class="legend-title">Propagation:</span>
         <div class="legend-items">
-          <span class="legend-item"><span class="swatch" style="background:rgba(16,185,129,0.55)"></span>Excellent (SFI&gt;150)</span>
-          <span class="legend-item"><span class="swatch" style="background:rgba(16,185,129,0.38)"></span>Good (SFI&gt;120)</span>
-          <span class="legend-item"><span class="swatch" style="background:rgba(16,185,129,0.20)"></span>Moderate (SFI&gt;90)</span>
+          <span class="legend-item"><span class="swatch" style="background:rgba(0,168,204,0.55)"></span>Excellent (SFI&gt;150)</span>
+          <span class="legend-item"><span class="swatch" style="background:rgba(0,168,204,0.38)"></span>Good (SFI&gt;120)</span>
+          <span class="legend-item"><span class="swatch" style="background:rgba(0,168,204,0.20)"></span>Moderate (SFI&gt;90)</span>
           <span class="legend-item"><span class="swatch" style="background:rgba(251,191,36,0.50)"></span>Polar unsettled</span>
           <span class="legend-item"><span class="swatch" style="background:rgba(220,38,38,0.55)"></span>Polar storm</span>
         </div>
@@ -368,15 +368,15 @@ import Shell from '../../layouts/Shell.astro';
     background: rgba(255,255,255,.03); border: 1px solid var(--border);
     border-radius: 9px; padding: 10px 12px;
   }
-  .bp-band.bc-excellent { border-color: rgba(16,185,129,.65); }
-  .bp-band.bc-good      { border-color: rgba(16,185,129,.38); }
+  .bp-band.bc-excellent { border-color: rgba(0,168,204,.65); }
+  .bp-band.bc-good      { border-color: rgba(0,168,204,.38); }
   .bp-band.bc-fair      { border-color: rgba(245,158,11,.45); }
   .bp-band.bc-poor      { border-color: rgba(220,38,38,.38); }
   .bp-band.bc-closed    { opacity: .42; }
   .bp-band-name { font-size: .95rem; font-weight: 700; display: block; color: var(--text); }
   .bp-band-label { font-family: var(--mono); font-size: .66rem; display: block; margin-top: 3px; }
-  .bp-band.bc-excellent .bp-band-label { color: #10b981; }
-  .bp-band.bc-good      .bp-band-label { color: #34d399; }
+  .bp-band.bc-excellent .bp-band-label { color: #00a8cc; }
+  .bp-band.bc-good      .bp-band-label { color: #00d4ff; }
   .bp-band.bc-fair      .bp-band-label { color: #fbbf24; }
   .bp-band.bc-poor      .bp-band-label { color: #f87171; }
   .bp-band.bc-closed    .bp-band-label { color: var(--muted); }
@@ -466,11 +466,11 @@ import Shell from '../../layouts/Shell.astro';
     if (polarFactor > 0.30) return 'rgba(245,158,11,0.50)';
     if (polarFactor > 0.12) return 'rgba(251,191,36,0.32)';
 
-    if (sfi === null) return 'rgba(16,185,129,0.12)';
-    if (sfi >= 150)   return 'rgba(16,185,129,0.55)';
-    if (sfi >= 120)   return 'rgba(16,185,129,0.38)';
-    if (sfi >= 90)    return 'rgba(16,185,129,0.20)';
-    return                   'rgba(16,185,129,0.08)';
+    if (sfi === null) return 'rgba(0,168,204,0.12)';
+    if (sfi >= 150)   return 'rgba(0,168,204,0.55)';
+    if (sfi >= 120)   return 'rgba(0,168,204,0.38)';
+    if (sfi >= 90)    return 'rgba(0,168,204,0.20)';
+    return                   'rgba(0,168,204,0.08)';
   }
 
   function conditionLabel(row: number, kp: number | null, sfi: number | null): string {

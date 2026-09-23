@@ -10,9 +10,9 @@ import Shell from '../../layouts/Shell.astro';
     :root {
       --surf:   #0f172a;
       --surf2:  #1a2540;
-      --em:     #10b981;
-      --em-lt:  #34d399;
-      --em-dk:  #065f46;
+      --em:     #00a8cc;
+      --em-lt:  #00d4ff;
+      --em-dk:  #003a52;
       --warn:   #f59e0b;
       --danger: #ef4444;
     }
@@ -182,7 +182,7 @@ import Shell from '../../layouts/Shell.astro';
       width: 100%;
       padding: 11px;
       background: var(--em);
-      color: #04221a;
+      color: #020a14;
       border: none;
       border-radius: 10px;
       font-family: var(--sans);
@@ -252,7 +252,7 @@ import Shell from '../../layouts/Shell.astro';
       transition: border-color .12s, color .12s, background .12s;
     }
     .htag-btn:hover { border-color: var(--bord2); color: var(--text); }
-    .htag-btn.active { border-color: var(--em-dk); background: rgba(16,185,129,.07); color: var(--em-lt); }
+    .htag-btn.active { border-color: var(--em-dk); background: rgba(0,168,204,.07); color: var(--em-lt); }
 
     /* Skeleton */
     .skeleton { animation: sk 1.4s ease-in-out infinite; }
@@ -269,12 +269,12 @@ import Shell from '../../layouts/Shell.astro';
       overflow: hidden;
       font-family: 'JetBrains Mono', ui-monospace, monospace;
     }
-    .ec-bar { height: 4px; background: linear-gradient(90deg,#10b981,#3b82f6,#10b981); flex-shrink: 0; }
+    .ec-bar { height: 4px; background: linear-gradient(90deg,#00a8cc,#3b82f6,#00a8cc); flex-shrink: 0; }
     .ec-body { flex: 1; display: flex; flex-direction: column; padding: 28px 24px 22px; gap: 16px; }
     .ec-head { display: flex; justify-content: space-between; align-items: flex-start; }
     .ec-brand { font-size: 14px; font-weight: 700; color: #f1f5f9; letter-spacing: -.01em; }
-    .ec-brand .sl { color: #10b981; }
-    .ec-brand .sw { color: #10b981; }
+    .ec-brand .sl { color: #00a8cc; }
+    .ec-brand .sw { color: #00a8cc; }
     .ec-date  { font-size: 9px; color: #64748b; text-align: right; line-height: 1.4; }
     .ec-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .ec-tile  { background: #1a2540; border-radius: 10px; padding: 14px 10px; text-align: center; }
@@ -285,7 +285,7 @@ import Shell from '../../layouts/Shell.astro';
     .ec-c-lbl { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
     .ec-c-bnd { font-size: 10px; color: #94a3b8; line-height: 1.5; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
     .ec-foot  { margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 12px; border-top: 1px solid #1e293b; }
-    .ec-f-site { font-size: 9px; color: #10b981; }
+    .ec-f-site { font-size: 9px; color: #00a8cc; }
     .ec-f-hndl { font-size: 9px; color: #64748b; text-align: right; }
   </style>
 
@@ -411,27 +411,27 @@ import Shell from '../../layouts/Shell.astro';
     <div class="ec-tiles">
       <div class="ec-tile">
         <div class="ec-t-lbl">Solar Flux</div>
-        <div class="ec-t-val" id="ec-sfi" style="color:#10b981">—</div>
+        <div class="ec-t-val" id="ec-sfi" style="color:#00a8cc">—</div>
         <div class="ec-t-sub">SFI (10.7 cm)</div>
       </div>
       <div class="ec-tile">
         <div class="ec-t-lbl">K-Index</div>
-        <div class="ec-t-val" id="ec-kp" style="color:#10b981">—</div>
+        <div class="ec-t-val" id="ec-kp" style="color:#00a8cc">—</div>
         <div class="ec-t-sub">Planetary Kp</div>
       </div>
       <div class="ec-tile">
         <div class="ec-t-lbl">A-Index</div>
-        <div class="ec-t-val" id="ec-ai" style="color:#10b981">—</div>
+        <div class="ec-t-val" id="ec-ai" style="color:#00a8cc">—</div>
         <div class="ec-t-sub">Ap (3-hour)</div>
       </div>
       <div class="ec-tile">
         <div class="ec-t-lbl">X-Ray Class</div>
-        <div class="ec-t-val" id="ec-xray" style="color:#10b981">—</div>
+        <div class="ec-t-val" id="ec-xray" style="color:#00a8cc">—</div>
         <div class="ec-t-sub">GOES satellite</div>
       </div>
     </div>
     <div class="ec-cond">
-      <div class="ec-c-lbl" id="ec-cond-label" style="color:#10b981">—</div>
+      <div class="ec-c-lbl" id="ec-cond-label" style="color:#00a8cc">—</div>
       <div class="ec-c-bnd" id="ec-cond-bands"></div>
     </div>
     <div class="ec-foot">
@@ -460,14 +460,14 @@ import Shell from '../../layouts/Shell.astro';
   function condFrom(sfi: number | null, kp: number | null) {
     if (kp !== null && kp > 5)     return { label: 'Disturbed',  color: '#ef4444', bands: 'Geomagnetic storm in progress — HF unreliable, polar routes degraded' };
     if (kp !== null && kp > 3)     return { label: 'Unsettled',  color: '#f59e0b', bands: '40m/80m degraded · high bands fair at best · auroral noise possible' };
-    if (sfi !== null && sfi > 150) return { label: 'Excellent',  color: '#10b981', bands: '10m–17m wide open · 40m/80m reliable · long-path DX favorable' };
-    if (sfi !== null && sfi > 120) return { label: 'Good',       color: '#10b981', bands: '15m–20m good · 40m reliable · upper bands possible' };
+    if (sfi !== null && sfi > 150) return { label: 'Excellent',  color: '#00a8cc', bands: '10m–17m wide open · 40m/80m reliable · long-path DX favorable' };
+    if (sfi !== null && sfi > 120) return { label: 'Good',       color: '#00a8cc', bands: '15m–20m good · 40m reliable · upper bands possible' };
     if (sfi !== null && sfi > 90)  return { label: 'Fair',       color: '#f59e0b', bands: '20m–40m fair · skip varies · 80m reliable at night' };
     return                                { label: 'Poor',        color: '#ef4444', bands: '40m/80m best bet · higher bands unreliable · low solar flux' };
   }
 
-  function sfiColor(v: number) { return v > 150 ? '#10b981' : v > 100 ? '#f59e0b' : '#ef4444'; }
-  function kpColor(v: number)  { return v <= 3  ? '#10b981' : v <= 5  ? '#f59e0b' : '#ef4444'; }
+  function sfiColor(v: number) { return v > 150 ? '#00a8cc' : v > 100 ? '#f59e0b' : '#ef4444'; }
+  function kpColor(v: number)  { return v <= 3  ? '#00a8cc' : v <= 5  ? '#f59e0b' : '#ef4444'; }
 
   // ── Text generators ──
   function overlayText(sfi: number | null, kp: number | null, xray: string | null, cond: ReturnType<typeof condFrom>): string {
