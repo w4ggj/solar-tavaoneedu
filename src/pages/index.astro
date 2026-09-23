@@ -1721,7 +1721,7 @@ import Shell from '../layouts/Shell.astro';
       ['img-aia193', `https://sdo.gsfc.nasa.gov/assets/img/latest/latest_256_0193.jpg?t=${t}`],
       ['img-hmi',    `https://sdo.gsfc.nasa.gov/assets/img/latest/latest_256_HMIIC.jpg?t=${t}`],
       ['img-lasco',  `https://soho.nascom.nasa.gov/data/realtime/c3/512/latest.jpg?t=${t}`],
-      ['img-stereo', `https://stereo-ssc.nascom.nasa.gov/beacon/latest_256_A_195.jpg?t=${t}`],
+      ['img-stereo', `/api/stereo-img?t=${t}`],
     ];
     imgs.forEach(([id, url]) => {
       const el = document.getElementById(id) as HTMLImageElement | null;
