@@ -573,9 +573,42 @@ function parseSolarWind(windArr: SwWindItem[] | null, magArr: SwMagItem[] | null
 
 const STEREO_SOURCES = [
   'https://stereo-ssc.nascom.nasa.gov/beacon/latest_256_A_195.jpg',
+  'https://stereo-ssc.nascom.nasa.gov/beacon/latest_512_A_195.jpg',
   'https://stereo.gsfc.nasa.gov/img/latest/latest_A_195_256.jpg',
-  'https://stereo-ssc.nascom.nasa.gov/browse/latest/latest_256_A_195.jpg',
+  'https://stereo.gsfc.nasa.gov/img/latest/latest_A_195_512.jpg',
 ];
+
+async function fetchHelioviewerImage(): Promise<ArrayBuffer | null> {
+  // sourceId 14 = STEREO-A EUVI 195 Å — public API designed for embedding
+  const params = new URLSearchParams({
+    imageScale: '2.4',
+    layers: JSON.stringify([{ sourceId: 14, visible: true, opacity: 100 }]),
+    events: '[]',
+    eventLabels: 'false',
+    scale: 'false',
+    scaleType: 'earth',
+    scaleX: '-1',
+    scaleY: '-1',
+    date: new Date().toISOString().slice(0, 19) + 'Z',
+    x0: '0',
+    y0: '0',
+    width: '512',
+    height: '512',
+    display: 'true',
+    watermark: 'false',
+  });
+  try {
+    const res = await fetch(`https://api.helioviewer.org/v2/takeScreenshot/?${params}`, {
+      headers: { 'User-Agent': 'TavaOneSolar/1.0 (+https://solar.tavaoneeducation.org)' },
+    });
+    if (!res.ok) return null;
+    const buf = await res.arrayBuffer();
+    return buf.byteLength > 1000 ? buf : null;
+  } catch (e) {
+    console.warn('solar-cron: Helioviewer fetch failed', e);
+    return null;
+  }
+}
 
 async function fetchStereoImage(env: Env): Promise<void> {
   for (const url of STEREO_SOURCES) {
@@ -587,22 +620,35 @@ async function fetchStereoImage(env: Env): Promise<void> {
           'Referer': 'https://stereo-ssc.nascom.nasa.gov/',
         },
       });
-      if (!res.ok) continue;
+      if (!res.ok) { console.warn(`solar-cron: STEREO-A ${res.status} from ${url}`); continue; }
       const buf = await res.arrayBuffer();
-      if (buf.byteLength < 1000) continue; // reject empty/error responses
-      // Store as base64 — KV values are strings; ArrayBuffer not natively supported
+      if (buf.byteLength < 1000) continue;
       const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
       await env.SOLAR_CACHE.put('stereo-a-195', b64, {
-        expirationTtl: 86400, // keep last good image for 24 h
+        expirationTtl: 86400,
         metadata: { fetched: new Date().toISOString(), source: url },
       });
-      console.log(`solar-cron: STEREO-A image cached (${buf.byteLength} bytes) from ${url}`);
+      console.log(`solar-cron: STEREO-A cached (${buf.byteLength} bytes) from ${url}`);
       return;
     } catch (e) {
-      console.warn(`solar-cron: STEREO-A fetch failed for ${url}`, e);
+      console.warn(`solar-cron: STEREO-A fetch error for ${url}`, e);
     }
   }
-  console.warn('solar-cron: STEREO-A image unavailable from all sources — keeping previous cached image');
+
+  // All NASA sources failed — try Helioviewer as reliable fallback
+  console.log('solar-cron: trying Helioviewer for STEREO-A...');
+  const hvBuf = await fetchHelioviewerImage();
+  if (hvBuf) {
+    const b64 = btoa(String.fromCharCode(...new Uint8Array(hvBuf)));
+    await env.SOLAR_CACHE.put('stereo-a-195', b64, {
+      expirationTtl: 86400,
+      metadata: { fetched: new Date().toISOString(), source: 'helioviewer-api' },
+    });
+    console.log(`solar-cron: STEREO-A cached via Helioviewer (${hvBuf.byteLength} bytes)`);
+    return;
+  }
+
+  console.warn('solar-cron: STEREO-A unavailable from all sources — keeping previous cached image');
 }
 
 export default {
